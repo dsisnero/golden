@@ -26,15 +26,25 @@ describe "MyClass" do
   it "produces expected output" do
     output = MyClass.new.generate_output
 
-    # Compare with testdata/MyClass/produces_expected_output.golden
+    # Compare with testdata/MyClass/produces_expected_output.golden (default)
     Golden.require_equal("MyClass/produces_expected_output", output)
+
+    # Or specify custom directory
+    Golden.require_equal("MyClass/produces_expected_output", output,
+                        test_data_dir: "spec/testdata")
+
+    # Or use spec directory detection
+    if spec_testdata = Golden.spec_test_data_dir
+      Golden.require_equal("MyClass/produces_expected_output", output,
+                          test_data_dir: spec_testdata)
+    end
   end
 end
 ```
 
 ### How it works
 
-1.  `Golden.require_equal(test_name, output)` looks for a golden file at `#{Golden.dir}/#{test_name}.golden`
+1.  `Golden.require_equal(test_name, output, test_data_dir = nil)` looks for a golden file at `#{test_data_dir || Golden.dir}/#{test_name}.golden`
 2.  If `Golden.update?` is `true`, the golden file is updated with the current output
 3.  Otherwise, the output is compared with the golden file content
 4.  If they differ, a diff is shown and the test fails
@@ -54,6 +64,30 @@ Golden.update = true
 # Initialize from environment variable (call in spec_helper)
 Golden.init  # Checks GOLDEN_UPDATE environment variable
 ```
+
+### Directory Detection
+
+Golden can help locate your spec directory and test data:
+
+```crystal
+# Find the spec directory (searches upward from current dir)
+spec_dir = Golden.find_spec_dir
+# => "path/to/your/project/spec"
+
+# Get the test data directory within spec (spec/testdata)
+spec_testdata = Golden.spec_test_data_dir
+# => "path/to/your/project/spec/testdata"
+
+# Use custom directory for a specific test
+Golden.require_equal("test_name", output, test_data_dir: "custom/path")
+
+# Or use the spec test data directory
+if spec_testdata = Golden.spec_test_data_dir
+  Golden.require_equal("test_name", output, test_data_dir: spec_testdata)
+end
+```
+
+The `test_data_dir` parameter in `require_equal` overrides `Golden.dir` for that call.
 
 ### Updating golden files
 

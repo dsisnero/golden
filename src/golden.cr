@@ -8,20 +8,31 @@
 # You can update the golden files by setting `Golden.update = true` in your tests,
 # or by setting the environment variable `GOLDEN_UPDATE=1`.
 #
-# Example:
-# ```
-# require "spec"
-# require "golden"
+  # Example:
+  # ```
+  # require "spec"
+  # require "golden"
+  #
+  # describe "MyClass" do
+  #   it "produces expected output" do
+  #     output = MyClass.new.generate_output
+  #     # Uses Golden.dir (default: "testdata")
+  #     Golden.require_equal("MyClass/produces_expected_output", output)
+  #
+  #     # Or specify custom directory
+  #     Golden.require_equal("MyClass/produces_expected_output", output,
+  #                         test_data_dir: "spec/testdata")
+  #
+  #     # Or use spec directory detection
+  #     if spec_testdata = Golden.spec_test_data_dir
+  #       Golden.require_equal("MyClass/produces_expected_output", output,
+  #                           test_data_dir: spec_testdata)
+  #     end
+  #   end
+  # end
+  # ```
 #
-# describe "MyClass" do
-#   it "produces expected output" do
-#     output = MyClass.new.generate_output
-#     Golden.require_equal("MyClass/produces_expected_output", output)
-#   end
-# end
-# ```
-#
-# This will compare `output` with the contents of `testdata/MyClass/produces_expected_output.golden`.
+# By default this will compare `output` with the contents of `testdata/MyClass/produces_expected_output.golden`.
 # If the files differ, a diff will be shown.
 require "file_utils"
 
@@ -45,21 +56,6 @@ module Golden
     @@update = value
   end
 
-  def self.update?
-    @@update
-  end
-
-  # Parse command line arguments for --update flag.
-  # Note: This only works if the flag is passed to the spec runner.
-  def self.parse_args
-    @@update = ARGV.includes?("--update")
-  end
-
-  # Set whether golden files should be updated.
-  def self.update=(value : Bool)
-    @@update = value
-  end
-
   # Check if golden files should be updated.
   def self.update?
     @@update
@@ -75,19 +71,62 @@ module Golden
     @@dir
   end
 
+  # Find the spec directory by searching upward from the current directory
+  # for a directory named "spec". Returns nil if not found.
+  def self.find_spec_dir(start_dir : String = Dir.current) : String?
+    dir = start_dir
+    while true
+      spec_dir = File.join(dir, "spec")
+      if Dir.exists?(spec_dir)
+        return spec_dir
+      end
+      parent = File.dirname(dir)
+      break if parent == dir  # reached root
+      dir = parent
+    end
+    nil
+  end
+
+  # Find the project root directory by searching upward for shard.yml
+  def self.find_project_root(start_dir : String = Dir.current) : String?
+    dir = start_dir
+    while true
+      shard_yml = File.join(dir, "shard.yml")
+      if File.exists?(shard_yml)
+        return dir
+      end
+      parent = File.dirname(dir)
+      break if parent == dir
+      dir = parent
+    end
+    nil
+  end
+
+  # Get the test data directory within the spec directory (spec/testdata).
+  # Returns nil if spec directory cannot be found.
+  def self.spec_test_data_dir : String?
+    if spec_dir = find_spec_dir
+      File.join(spec_dir, "testdata")
+    else
+      nil
+    end
+  end
+
   # Asserts that the given output matches the golden file for the test.
   #
   # * `test_name` is the name of the test, which will be used to construct the
   #   golden file path: `#{dir}/#{test_name}.golden`
   # * `output` is the actual output to compare, either a String or Bytes
+  # * `test_data_dir` optional directory for golden files (overrides Golden.dir)
   #
   # If the output doesn't match the golden file, a diff will be shown and the
   # test will fail.
   #
   # If `Golden.update` is `true`, the golden file will be updated with the
   # current output instead of comparing.
-  def self.require_equal(test_name : String, output : String | Bytes)
-    golden_path = File.join(@@dir, "#{test_name}.golden")
+  def self.require_equal(test_name : String, output : String | Bytes, test_data_dir : String? = nil)
+    dir = test_data_dir || @@dir
+    golden_path = File.join(dir, "#{test_name}.golden")
 
     if @@update
       FileUtils.mkdir_p(File.dirname(golden_path), mode: 0o750)
