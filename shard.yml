@@ -1,0 +1,13 @@
+name: golden
+version: 0.1.0
+
+authors:
+  - your-name-here <your-email-here>
+
+targets:
+  golden:
+    main: src/golden.cr
+
+crystal: '>= 1.19.1'
+
+license: MIT
