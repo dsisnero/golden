@@ -33,31 +33,27 @@ bd sync
 ### Working with Issues
 
 Issues in Beads are:
-
-* **Git-native**: Stored in `.beads/issues.jsonl` and synced like code
-* **AI-friendly**: CLI-first design works perfectly with AI coding agents
-* **Branch-aware**: Issues can follow your branch workflow
-* **Always in sync**: Auto-syncs with your commits
+- **Git-native**: Stored in `.beads/issues.jsonl` and synced like code
+- **AI-friendly**: CLI-first design works perfectly with AI coding agents
+- **Branch-aware**: Issues can follow your branch workflow
+- **Always in sync**: Auto-syncs with your commits
 
 ## Why Beads?
 
 ✨ **AI-Native Design**
-
-*   Built specifically for AI-assisted development workflows
-*   CLI-first interface works seamlessly with AI coding agents
-*   No context switching to web UIs
+- Built specifically for AI-assisted development workflows
+- CLI-first interface works seamlessly with AI coding agents
+- No context switching to web UIs
 
 🚀 **Developer Focused**
-
-*   Issues live in your repo, right next to your code
-*   Works offline, syncs when you push
-*   Fast, lightweight, and stays out of your way
+- Issues live in your repo, right next to your code
+- Works offline, syncs when you push
+- Fast, lightweight, and stays out of your way
 
 🔧 **Git Integration**
-
-*   Automatic sync with git commits
-*   Branch-aware issue tracking
-*   Intelligent JSONL merge resolution
+- Automatic sync with git commits
+- Branch-aware issue tracking
+- Intelligent JSONL merge resolution
 
 ## Get Started with Beads
 
@@ -76,9 +72,9 @@ bd create "Try out Beads"
 
 ## Learn More
 
-* **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)
-* **Quick Start Guide**: Run `bd quickstart`
-* **Examples**: [github.com/steveyegge/beads/examples](https://github.com/steveyegge/beads/tree/main/examples)
+- **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)
+- **Quick Start Guide**: Run `bd quickstart`
+- **Examples**: [github.com/steveyegge/beads/examples](https://github.com/steveyegge/beads/tree/main/examples)
 
 ---
 

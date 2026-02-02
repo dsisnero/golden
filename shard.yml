@@ -2,12 +2,16 @@ name: golden
 version: 0.1.0
 
 authors:
-  - your-name-here <your-email-here>
+  - dsisnero <dsisnero@gmail.com>
+
+dependencies:
+  similar:
+    github: dsisnero/similar.cr
 
 targets:
   golden:
     main: src/golden.cr
 
-crystal: '>= 1.19.1'
+crystal: ">= 1.19.1"
 
 license: MIT

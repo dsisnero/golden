@@ -8,33 +8,34 @@
 # You can update the golden files by setting `Golden.update = true` in your tests,
 # or by setting the environment variable `GOLDEN_UPDATE=1`.
 #
-  # Example:
-  # ```
-  # require "spec"
-  # require "golden"
-  #
-  # describe "MyClass" do
-  #   it "produces expected output" do
-  #     output = MyClass.new.generate_output
-  #     # Uses Golden.dir (default: "testdata")
-  #     Golden.require_equal("MyClass/produces_expected_output", output)
-  #
-  #     # Or specify custom directory
-  #     Golden.require_equal("MyClass/produces_expected_output", output,
-  #                         test_data_dir: "spec/testdata")
-  #
-  #     # Or use spec directory detection
-  #     if spec_testdata = Golden.spec_test_data_dir
-  #       Golden.require_equal("MyClass/produces_expected_output", output,
-  #                           test_data_dir: spec_testdata)
-  #     end
-  #   end
-  # end
-  # ```
+# Example:
+# ```
+# require "spec"
+# require "golden"
+#
+# describe "MyClass" do
+#   it "produces expected output" do
+#     output = MyClass.new.generate_output
+#     # Uses Golden.dir (default: "testdata")
+#     Golden.require_equal("MyClass/produces_expected_output", output)
+#
+#     # Or specify custom directory
+#     Golden.require_equal("MyClass/produces_expected_output", output,
+#       test_data_dir: "spec/testdata")
+#
+#     # Or use spec directory detection
+#     if spec_testdata = Golden.spec_test_data_dir
+#       Golden.require_equal("MyClass/produces_expected_output", output,
+#         test_data_dir: spec_testdata)
+#     end
+#   end
+# end
+# ```
 #
 # By default this will compare `output` with the contents of `testdata/MyClass/produces_expected_output.golden`.
 # If the files differ, a diff will be shown.
 require "file_utils"
+require "similar"
 
 module Golden
   VERSION = "0.1.0"
@@ -81,7 +82,7 @@ module Golden
         return spec_dir
       end
       parent = File.dirname(dir)
-      break if parent == dir  # reached root
+      break if parent == dir # reached root
       dir = parent
     end
     nil
@@ -164,33 +165,7 @@ module Golden
 
   # Simple unified diff implementation
   private def self.unified_diff(a_label : String, b_label : String, a : String, b : String) : String
-    lines_a = a.split("\n")
-    lines_b = b.split("\n")
-
-    # Simple diff for now - just show both versions
-    <<-DIFF
-    --- #{a_label}
-    +++ #{b_label}
-    #{diff_lines(lines_a, lines_b)}
-    DIFF
-  end
-
-  private def self.diff_lines(a : Array(String), b : Array(String)) : String
-    result = [] of String
-    max_len = {a.size, b.size}.max
-
-    max_len.times do |i|
-      line_a = a[i]?
-      line_b = b[i]?
-
-      if line_a == line_b
-        result << " #{line_a}"
-      else
-        result << "-#{line_a}" if line_a
-        result << "+#{line_b}" if line_b
-      end
-    end
-
-    result.join("\n")
+    diff = Similar::TextDiff.from_lines(a, b)
+    diff.unified_diff.header(a_label, b_label).to_s
   end
 end

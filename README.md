@@ -133,6 +133,7 @@ Golden files are created with permissions `0o600` (read/write for owner only) an
 *   Control codes and escape sequences are escaped using Crystal's `String#inspect`
 *   Windows line endings (`\r\n`) are normalized to `\n` on non-Windows systems
 *   Both `String` and `Bytes` output are supported
+*   Diffs are generated using the [similar](https://github.com/dsisnero/similar.cr) library with unified diff format
 
 ## Development
 
