@@ -5,4 +5,5 @@
 /charm_x/
 /vendor/
 !/vendor/insta/
+!/vendor/insta-ruby/
 *.dwarf

@@ -4,3 +4,6 @@
 [submodule "vendor/insta"]
 	path = vendor/insta
 	url = https://github.com/mitsuhiko/insta.git
+[submodule "vendor/insta-ruby"]
+	path = vendor/insta-ruby
+	url = https://github.com/marcoroth/insta-ruby.git
