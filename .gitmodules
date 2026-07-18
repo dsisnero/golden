@@ -1,3 +1,6 @@
 [submodule "vendor/x"]
 	path = vendor/x
 	url = https://github.com/charmbracelet/x.git
+[submodule "vendor/insta"]
+	path = vendor/insta
+	url = https://github.com/mitsuhiko/insta.git

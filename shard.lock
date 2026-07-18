@@ -1,0 +1,94 @@
+version: 2.0
+shards:
+  ansi:
+    git: https://github.com/dsisnero/ansi.git
+    version: 0.1.0+git.commit.4cf33c14c2ff5da0ac7ed38a2f0aa7eb4128f209
+
+  baked_file_system:
+    git: https://github.com/schovi/baked_file_system.git
+    version: 0.14.0+git.commit.425bf6195fb41173216e68e11e5f63e6fc9487da
+
+  bubbles:
+    git: https://github.com/dsisnero/bubbles.git
+    version: 2.1.0
+
+  bubbletea:
+    git: https://github.com/dsisnero/bubbletea.cr.git
+    version: 2.0.6
+
+  cancel_reader:
+    git: https://github.com/dsisnero/cancel_reader.git
+    version: 0.1.0+git.commit.c727d5163e61afa406a22f6daef4dbcc417adeef
+
+  cellwrap:
+    git: https://github.com/dsisnero/cellwrap.git
+    version: 0.1.0+git.commit.d898f154af8cdf6ac85cfc72a24f4a354be3d88b
+
+  colorful:
+    git: https://github.com/dsisnero/colorful.git
+    version: 0.1.0+git.commit.f6fbe31e048dab06783e34b82f52d7527763f7eb
+
+  colorprofile:
+    git: https://github.com/dsisnero/colorprofile.git
+    version: 0.1.0+git.commit.c689a6d8a71c5d8fb3b863a1eb6dc10e7fa0f931
+
+  crimage:
+    git: https://github.com/naqvis/crimage.git
+    version: 1.0.5+git.commit.7d3244a3850646e3d398cef071f7c3e3f52c7518
+
+  easyclip:
+    git: https://github.com/kojix2/easyclip.git
+    version: 0.2.0
+
+  golden:
+    git: https://github.com/dsisnero/golden.git
+    version: 0.1.0+git.commit.82c92f031cbd48f150d8c76d321b5f9211d6d440
+
+  harmonica:
+    git: https://github.com/dsisnero/harmonica.git
+    version: 0.8.0
+
+  lipgloss:
+    git: https://github.com/dsisnero/lipgloss.git
+    version: 2.0.2
+
+  mosaic:
+    git: https://github.com/dsisnero/mosaic.git
+    version: 0.1.0+git.commit.afef1373e37de29845d762daf31b12f93c05f153
+
+  nucleoc:
+    git: https://github.com/dsisnero/nucleoc.git
+    version: 0.1.0+git.commit.2c822209690d1b82f5b7c8f0b13d433a1663b7ba
+
+  similar:
+    git: https://github.com/dsisnero/similar.cr.git
+    version: 0.1.0+git.commit.52cfbb2cf1295fabc0a4bf2405819181bcae6046
+
+  stumpy_core:
+    git: https://github.com/stumpycr/stumpy_core.git
+    version: 1.9.1
+
+  stumpy_png:
+    git: https://github.com/stumpycr/stumpy_png.git
+    version: 5.0.1
+
+  teatest:
+    git: https://github.com/dsisnero/teatest.git
+    version: 0.8.0
+
+  terminfo:
+    git: https://github.com/docelic/terminfo.git
+    version: 0.8.1
+
+  textseg:
+    git: https://github.com/naqvis/uni_text_seg.git
+    version: 0.1.3
+
+  ultraviolet:
+    git: https://github.com/dsisnero/ultraviolet.git
+    version: 1.0.1
+
+  uniwidth:
+    git: https://github.com/naqvis/uni_char_width.git
+    version: 0.1.3
+

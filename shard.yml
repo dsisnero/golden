@@ -1,5 +1,5 @@
 name: golden
-version: 0.1.0
+version: 0.2.0
 
 authors:
   - dsisnero <dsisnero@gmail.com>
@@ -7,6 +7,10 @@ authors:
 dependencies:
   similar:
     github: dsisnero/similar.cr
+  bubbles:
+    github: dsisnero/bubbles
+  teatest:
+    github: dsisnero/teatest
 
 targets:
   golden:

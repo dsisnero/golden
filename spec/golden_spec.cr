@@ -3,6 +3,7 @@ require "./spec_helper"
 describe Golden do
   before_each do
     Golden.update = false
+    Golden.group = ""
   end
 
   it "TestRequireEqualUpdate" do
