@@ -203,6 +203,53 @@ Golden.init  # already calls auto_configure!
 Golden.configure_with(".golden.yml")
 ```
 
+### Force Pass Mode
+
+Skip test failures for new snapshots (writes `.golden.new` instead):
+
+```bash
+GOLDEN_FORCE_PASS=1 crystal spec
+```
+
+### Status Reporting
+
+Inspect snapshot state at a glance:
+
+```crystal
+status = Golden.status
+status["snapshots"]  # total .golden files
+status["pending"]    # .golden.new files
+status["metadata"]   # .golden.meta sidecars
+status["orphans"]    # unreferenced golden files
+```
+
+### Serializers
+
+Register named serializers for custom output processing:
+
+```crystal
+Golden.register_serializer(:upcase, ->(v : String) { v.upcase })
+
+Golden.with_settings(serializer: :upcase) do
+  Golden.assert_snapshot("test", "hello")  # stores "HELLO"
+end
+```
+
+### Path-Based Redactions
+
+Redact specific JSON paths before comparison (jq-style):
+
+```crystal
+Golden.add_path_redaction("password", "***")
+Golden.add_path_redaction("user.email", "[email]")
+Golden.add_path_redaction("users[*].id", "[id]")
+
+# Applied automatically in assert_json_snapshot
+output = {"user" => {"email" => "a@b.com", "name" => "test"}}
+Golden.assert_json_snapshot("user", output)
+# Stores: {"user": {"email": "[email]", "name": "test"}}
+```
+
 ## Configuration
 
 ```crystal

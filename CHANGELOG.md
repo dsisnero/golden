@@ -17,12 +17,19 @@
 - `Golden.configure_with` and `Golden.auto_configure!` for `.golden.yml` config files
 - `Golden.review!` interactive TUI using `bubbles` for reviewing pending snapshots
 - `Golden.reset_tracking!` for snapshot access tracking
+- Atomic file writes: temp file + `File.rename` prevents partial golden files
+- `GOLDEN_FORCE_PASS` env var: creates `.golden.new` without test failure
+- `Golden.status` reporting: snapshot, pending, metadata, and orphan counts
+- Serializer registry: `Golden.register_serializer(:name, ->(v) { ... })` with `serializer:` setting
+- Structured path redactions: `Golden.add_path_redaction("key.nested", "***")` for JSON values
 
 ### Changed
 - `Golden.update=` now maps to `UpdateMode::Always`/`No` backward compat
 - `Golden.init` now checks `GOLDEN_UPDATE` environment variable internally
 - `Golden.require_equal` accepts optional `metadata_line` parameter
 - `Golden.dir=` delegates to `Golden.settings.dir`
+- `Golden.with_settings` now accepts `serializer:` kwarg and preserves all settings
+- `process_output` made public as `apply_path_redactions` for structured JSON redaction
 
 ## 0.1.0 (2025)
 

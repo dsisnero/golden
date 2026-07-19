@@ -31,6 +31,20 @@ module Golden
     abstract def matches?(expected : String, actual : String) : Bool
   end
 
+  @@serializers = {} of Symbol => String -> String
+
+  def self.register_serializer(name : Symbol, serializer : String -> String)
+    @@serializers[name] = serializer
+  end
+
+  def self.serialize(value : String, name : Symbol) : String
+    if s = @@serializers[name]?
+      s.call(value)
+    else
+      raise "Unknown serializer: #{name.inspect}"
+    end
+  end
+
   class FuzzyComparator
     include Comparator
     getter threshold : Float64
@@ -65,12 +79,16 @@ module Golden
     property dir : String
     property filters : Array(String -> String)
     property redactions : Array(Redaction)
+    property path_redactions : Array({path: String, replacement: String})
     property comparator : Comparator?
+    property serializer : Symbol?
 
     def initialize(@update_mode = UpdateMode::Auto, @dir = "testdata")
       @filters = [] of String -> String
       @redactions = [] of Redaction
+      @path_redactions = [] of {path: String, replacement: String}
       @comparator = nil
+      @serializer = nil
     end
   end
 
@@ -84,21 +102,25 @@ module Golden
     @@settings = s
   end
 
-  def self.with_settings(update_mode : UpdateMode? = nil, dir : String? = nil)
+  def self.with_settings(update_mode : UpdateMode? = nil, dir : String? = nil, serializer : Symbol? = nil, &)
     old = @@settings
     begin
+      s = Settings.new(@@settings.update_mode, @@settings.dir)
+      s.filters = @@settings.filters.dup
+      s.redactions = @@settings.redactions.dup
+      s.path_redactions = @@settings.path_redactions.dup
+      s.comparator = @@settings.comparator
+      s.serializer = @@settings.serializer
       if um = update_mode
-        @@settings = Settings.new(um, @@settings.dir)
-        @@settings.filters = old.filters.dup
-        @@settings.redactions = old.redactions.dup
-        @@settings.comparator = old.comparator
+        s.update_mode = um
       end
       if d = dir
-        @@settings = Settings.new(@@settings.update_mode, d)
-        @@settings.filters = old.filters.dup
-        @@settings.redactions = old.redactions.dup
-        @@settings.comparator = old.comparator
+        s.dir = d
       end
+      if ser = serializer
+        s.serializer = ser
+      end
+      @@settings = s
       yield
     ensure
       @@settings = old
@@ -115,6 +137,10 @@ module Golden
 
   def self.add_redaction(pattern : Regex, replacement : String)
     @@settings.redactions << Redaction.new(pattern, replacement)
+  end
+
+  def self.add_path_redaction(path : String, replacement : String)
+    @@settings.path_redactions << {path: path, replacement: replacement}
   end
 
   def self.init
@@ -181,6 +207,16 @@ module Golden
     all.reject { |path| @@accessed_snapshots.includes?(path) }
   end
 
+  def self.status(dir : String? = nil) : Hash(String, Int32)
+    search_dir = dir || @@settings.dir
+    all_golden = Dir.glob(File.join(search_dir, "**/*.golden")).sort
+    snapshots = all_golden.reject { |p| p.ends_with?(".golden.new") || p.ends_with?(".golden.meta") }.size
+    pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).size
+    meta_count = Dir.glob(File.join(search_dir, "**/*.golden.meta")).size
+    orphans = unreferenced_snapshots(search_dir).size
+    {"snapshots" => snapshots, "pending" => pending, "metadata" => meta_count, "orphans" => orphans}
+  end
+
   def self.cleanup!(dir : String? = nil, dry_run : Bool = false) : Array(String)
     orphans = unreferenced_snapshots(dir)
     unless dry_run
@@ -223,21 +259,21 @@ module Golden
 
   macro assert_json_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{args[0]}}, {{args[1]}}.to_pretty_json, metadata_line: __LINE__)
+      Golden.require_equal({{args[0]}}, Golden.apply_path_redactions({{args[1]}}.to_pretty_json), metadata_line: __LINE__)
     {% elsif @def %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, {{args[0]}}.to_pretty_json, metadata_line: __LINE__)
+      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, Golden.apply_path_redactions({{args[0]}}.to_pretty_json), metadata_line: __LINE__)
     {% else %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", {{args[0]}}.to_pretty_json, metadata_line: __LINE__)
+      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", Golden.apply_path_redactions({{args[0]}}.to_pretty_json), metadata_line: __LINE__)
     {% end %}
   end
 
   macro assert_yaml_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{args[0]}}, {{args[1]}}.to_yaml, metadata_line: __LINE__)
+      Golden.require_equal({{args[0]}}, Golden.apply_path_redactions({{args[1]}}.to_yaml), metadata_line: __LINE__)
     {% elsif @def %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, {{args[0]}}.to_yaml, metadata_line: __LINE__)
+      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, Golden.apply_path_redactions({{args[0]}}.to_yaml), metadata_line: __LINE__)
     {% else %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", {{args[0]}}.to_yaml, metadata_line: __LINE__)
+      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", Golden.apply_path_redactions({{args[0]}}.to_yaml), metadata_line: __LINE__)
     {% end %}
   end
 
@@ -325,6 +361,9 @@ module Golden
     pending_path = golden_path + ".new"
     output_str = output.is_a?(Bytes) ? String.new(output) : output
     processed_output = process_output(output_str)
+    if (ser_name = @@settings.serializer) && (ser = @@serializers[ser_name]?)
+      processed_output = ser.call(processed_output)
+    end
     @@accessed_snapshots.add(golden_path)
 
     mode = effective_update_mode
@@ -356,9 +395,15 @@ module Golden
     ENV["CI"]? == "true" || ENV["TF_BUILD"]? != nil
   end
 
+  private def self.force_pass? : Bool
+    ENV["GOLDEN_FORCE_PASS"]? == "1"
+  end
+
   private def self.write_file(path : String, content : String)
     FileUtils.mkdir_p(File.dirname(path), mode: 0o750)
-    File.write(path, content, perm: 0o600)
+    tmp = File.join(File.dirname(path), ".golden_tmp_#{Process.pid}_#{Random.rand(10_000)}")
+    File.write(tmp, content, perm: 0o600)
+    File.rename(tmp, path)
   end
 
   def self.write_metadata(golden_path : String, name : String, line : Int32?)
@@ -376,6 +421,59 @@ module Golden
     meta_path = File.join(dir, "#{full_name}.golden.meta")
     return nil unless File.exists?(meta_path)
     JSON.parse(File.read(meta_path)).as_h
+  end
+
+  def self.apply_path_redactions(output : String) : String
+    return output if @@settings.path_redactions.empty?
+    begin
+      parsed = JSON.parse(output)
+      @@settings.path_redactions.each do |pr|
+        parsed = walk_and_replace_json(parsed, parse_path(pr[:path]), JSON::Any.new(pr[:replacement].strip('"')))
+      end
+      parsed.to_pretty_json
+    rescue
+      output
+    end
+  end
+
+  private def self.parse_path(path : String) : Array(String)
+    segments = [] of String
+    path.split(".").each do |part|
+      if bracket_idx = part.index('[')
+        segments << part[0...bracket_idx] if part[0...bracket_idx] != ""
+        inner = part[bracket_idx..]
+        inner.scan(/\[([^\]]+)\]/) do |m|
+          segments << m[1]
+        end
+      else
+        segments << part
+      end
+    end
+    segments
+  end
+
+  private def self.walk_and_replace_json(node : JSON::Any, segs : Array(String), replacement : JSON::Any) : JSON::Any
+    return replacement if segs.empty?
+    head = segs.first
+    tail = segs[1..]
+    case node.raw
+    when Hash
+      h = node.as_h
+      if h.has_key?(head)
+        h[head] = walk_and_replace_json(h[head], tail, replacement)
+      end
+      JSON::Any.new(h)
+    when Array
+      a = node.as_a
+      if head == "*"
+        a = a.map { |elem| walk_and_replace_json(elem, tail, replacement) }
+      elsif idx = head.to_i?
+        a[idx] = walk_and_replace_json(a[idx], tail, replacement) if idx < a.size
+      end
+      JSON::Any.new(a)
+    else
+      node
+    end
   end
 
   private def self.process_output(input : String) : String
@@ -420,10 +518,16 @@ module Golden
       end
 
       write_file(pending_path, output)
+      if force_pass?
+        return
+      end
       diff = unified_diff("golden", "run", golden_str, out_str)
       raise "output does not match, expected:\n\n#{golden_str}\n\ngot:\n\n#{out_str}\n\ndiff:\n\n#{diff}"
     else
       write_file(pending_path, output)
+      if force_pass?
+        return
+      end
       raise "New golden file: #{golden_path}. Run with GOLDEN_UPDATE=1 or cargo-insta to accept."
     end
   end

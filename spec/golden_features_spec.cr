@@ -284,7 +284,6 @@ describe Golden do
         end
       end
     end
-
   end
 
   describe "assert_snapshot macro" do
@@ -508,6 +507,47 @@ describe Golden do
         Golden.add_filter(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, "[ts]")
         Golden.require_equal("combined_test", output)
       end
+    end
+  end
+
+  describe "path_redactions" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+      Golden.settings.path_redactions.clear
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+      Golden.settings.path_redactions.clear
+    end
+
+    it "redacts a top-level key in JSON" do
+      Golden.add_path_redaction("password", "***")
+      output = %({"password":"secret","name":"test"})
+      result = Golden.apply_path_redactions(output)
+      result.should contain("\"password\": \"***\"")
+    end
+
+    it "redacts a nested key in JSON" do
+      Golden.add_path_redaction("user.email", "***")
+      output = %({"user":{"email":"a@b.com","name":"test"}})
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.assert_json_snapshot("nested_redact", JSON.parse(output))
+      end
+      saved = File.read(File.join(temp_dir, "nested_redact.golden"))
+      saved.should contain("\"email\": \"***\"")
+    end
+
+    it "redacts array wildcard in JSON" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.add_path_redaction("[*].id", "***")
+        Golden.assert_json_snapshot("arr_redact", [{"id" => "1", "name" => "a"}, {"id" => "2", "name" => "b"}])
+      end
+      saved = File.read(File.join(temp_dir, "arr_redact.golden"))
+      saved.scan(/"id": "(.+?)"/).size.should eq(2)
+      saved.scan(/"id": "\*\*\*"/).size.should eq(2)
     end
   end
 
@@ -750,7 +790,7 @@ describe Golden do
       FileUtils.mkdir_p(temp_dir)
       File.write(File.join(temp_dir, "shard.yml"), "name: test\n")
       File.write(File.join(temp_dir, ".golden.yml"), "update_mode: \"no\"\n")
-      Golden.settings.update_mode = Golden::UpdateMode::Auto  # reset
+      Golden.settings.update_mode = Golden::UpdateMode::Auto # reset
       Golden.auto_configure!(temp_dir)
       Golden.settings.update_mode.should eq(Golden::UpdateMode::No)
     end
@@ -852,6 +892,140 @@ describe Golden do
       Golden.accept_all!(temp_dir)
       meta = Golden.snapshot_metadata("promoted", temp_dir)
       meta.should_not be_nil
+    end
+  end
+
+  describe "force_pass" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+      ENV["GOLDEN_FORCE_PASS"] = "1"
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+      ENV.delete("GOLDEN_FORCE_PASS")
+    end
+
+    it "does not raise on new snapshot when GOLDEN_FORCE_PASS is set" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Auto, dir: temp_dir) do
+        Golden.assert_snapshot("new_snap", "content")
+      end
+      File.exists?(File.join(temp_dir, "new_snap.golden.new")).should be_true
+    end
+
+    it "does not raise on mismatch when GOLDEN_FORCE_PASS is set" do
+      File.write(File.join(temp_dir, "mismatch.golden"), "old")
+      Golden.with_settings(update_mode: Golden::UpdateMode::Auto, dir: temp_dir) do
+        Golden.assert_snapshot("mismatch", "new")
+      end
+      File.exists?(File.join(temp_dir, "mismatch.golden.new")).should be_true
+    end
+
+    it "still raises on new snapshot when GOLDEN_FORCE_PASS is not set" do
+      ENV.delete("GOLDEN_FORCE_PASS")
+      Golden.with_settings(update_mode: Golden::UpdateMode::Auto, dir: temp_dir) do
+        expect_raises(Exception, /New golden file/) do
+          Golden.assert_snapshot("no_env", "output")
+        end
+      end
+    end
+
+    it "still raises on mismatch when GOLDEN_FORCE_PASS is not set" do
+      File.write(File.join(temp_dir, "mismatch.golden"), "expected")
+      ENV.delete("GOLDEN_FORCE_PASS")
+      Golden.with_settings(update_mode: Golden::UpdateMode::Auto, dir: temp_dir) do
+        expect_raises(Exception, /output does not match/) do
+          Golden.assert_snapshot("mismatch", "actual")
+        end
+      end
+    end
+  end
+
+  describe "status" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+    end
+
+    it "reports snapshot counts" do
+      File.write(File.join(temp_dir, "a.golden"), "a")
+      File.write(File.join(temp_dir, "b.golden.new"), "b")
+      File.write(File.join(temp_dir, "c.golden"), "c")
+      File.write(File.join(temp_dir, "c.golden.meta"), "{}")
+      Golden.with_settings(update_mode: Golden::UpdateMode::No, dir: temp_dir) do
+        Golden.reset_tracking!
+        Golden.assert_snapshot("a", "a")
+        Golden.assert_snapshot("c", "c")
+      end
+      s = Golden.status(temp_dir)
+      s["snapshots"].should eq(2)
+      s["pending"].should eq(1)
+      s["metadata"].should eq(1)
+      s["orphans"].should eq(0)
+    end
+
+    it "reports orphans" do
+      File.write(File.join(temp_dir, "orphan.golden"), "x")
+      Golden.reset_tracking!
+      s = Golden.status(temp_dir)
+      s["orphans"].should eq(1)
+    end
+
+    it "reports zero counts for empty dir" do
+      s = Golden.status(temp_dir)
+      s["snapshots"].should eq(0)
+      s["pending"].should eq(0)
+    end
+
+    it "defaults to Golden.dir" do
+      old_dir = Golden.dir
+      begin
+        Golden.dir = temp_dir
+        File.write(File.join(temp_dir, "x.golden"), "x")
+        s = Golden.status
+        s["snapshots"].should eq(1)
+      ensure
+        Golden.dir = old_dir
+      end
+    end
+  end
+
+  describe "serializer_registry" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+    end
+
+    it "registers and uses a custom serializer" do
+      Golden.register_serializer(:upcase, ->(v : String) { v.upcase })
+      result = Golden.serialize("hello", :upcase)
+      result.should eq("HELLO")
+    end
+
+    it "uses serializer from settings" do
+      Golden.register_serializer(:reverse, ->(v : String) { v.reverse })
+      Golden.with_settings(serializer: :reverse, update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.require_equal("by_serializer", "hello")
+      end
+      File.read(File.join(temp_dir, "by_serializer.golden")).should eq("olleh")
+    end
+
+    it "raises on unknown serializer" do
+      expect_raises(Exception, /Unknown serializer/) do
+        Golden.serialize("x", :nonexistent)
+      end
     end
   end
 
