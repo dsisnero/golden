@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0 (2026-07-19)
+
+### Added
+- `CLI binary` — `golden review|accept|reject|pending|status|clean|show|test-review` with `--snapshot`, `--json`, `--dry-run`, `--spec-cmd` flags
+- `Golden.test_and_review!` — run `crystal spec` then launch review on success
+- `Golden.show_snapshot` — read snapshot file contents from path
+- `Makefile` with `test-review` target (`crystal spec && golden review`)
+- Review TUI: `d` toggles unified diff display via `Bubbles::Viewport::Model`
+- Review TUI: `i` toggles source context (reads `.golden.meta`, shows 3 lines before assertion)
+- Review TUI: inline word-level diff highlighting (insertions green, deletions red, replacements bold+underline)
+- Review TUI: `s` skip, `A`/`R`/`S` batch accept/reject/skip all, `g`/`G` go top/bottom
+- Review TUI: `?` help overlay, review summary (accepted/rejected/skipped on exit)
+- `Golden.report_pending!` — end-of-run notification for pending snapshots
+- `Golden.normalize` and `Golden.unified_diff` made public for reuse
+
+### Changed
+- `shard.yml` target changed from `src/golden.cr` to `src/golden_cli.cr`
+- All CLI dispatch methods return `String` for consistent output formatting
+
 ## 0.2.0 (2026-07-18)
 
 ### Added

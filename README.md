@@ -41,9 +41,21 @@ First run creates pending `.golden.new` files. Review them:
 # Accept all pending snapshots
 GOLDEN_UPDATE=1 crystal spec
 
-# Or use the interactive review TUI
-crystal run src/golden.cr  # requires bubbles dependency
-Golden.review!
+# CLI binary — review pending snapshots interactively
+golden review
+
+# Accept/reject all at once
+golden accept
+golden reject
+
+# List pending, check status, clean orphans
+golden pending --json
+golden status
+golden clean --dry-run
+
+# Run tests then launch review (single command)
+golden test-review
+make test-review
 ```
 
 ## Features
@@ -154,8 +166,21 @@ Golden.reject_all!
 ```crystal
 # Launch TUI to review pending snapshots (requires bubbles shard)
 Golden.review!
-# Keys: y = accept, n = reject, j/k = navigate, q = quit
 ```
+
+| Key | Action |
+|-----|--------|
+| `y` / `n` | Accept / reject current snapshot |
+| `s` | Skip (leave as `.golden.new`) |
+| `j` / `k` | Navigate down / up |
+| `g` / `G` | Go to top / bottom |
+| `d` | Toggle unified diff display |
+| `i` | Toggle source context (file, line, code) |
+| `A` / `R` / `S` | Accept / reject / skip all remaining |
+| `?` | Toggle help overlay |
+| `q` | Quit (shows review summary) |
+
+Inline word-level diff highlights insertions (green), deletions (red), and changed segments (bold+underline).
 
 ### Orphan Cleanup
 
