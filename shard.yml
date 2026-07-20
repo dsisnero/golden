@@ -7,10 +7,6 @@ authors:
 dependencies:
   similar:
     github: dsisnero/similar.cr
-  bubbles:
-    github: dsisnero/bubbles
-  teatest:
-    github: dsisnero/teatest
 
 targets:
   golden:
@@ -19,3 +15,9 @@ targets:
 crystal: ">= 1.19.1"
 
 license: MIT
+
+development_dependencies:
+  bubbles:
+    github: dsisnero/bubbles
+  ameba:
+    github: crystal-ameba/ameba
