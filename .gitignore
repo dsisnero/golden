@@ -7,3 +7,7 @@
 !/vendor/insta/
 !/vendor/insta-ruby/
 *.dwarf
+
+# Apple Double files (macOS extended attributes on non-APFS volumes)
+._*
+
