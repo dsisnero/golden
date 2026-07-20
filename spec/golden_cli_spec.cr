@@ -117,4 +117,23 @@ describe "Golden::CLI" do
     result.should be_a(String)
     result.should be_empty
   end
+
+  it "test-review with --snapshot runs review on successful spec" do
+    dir = temp_dir
+    result = Golden::CLI.dispatch(["test-review", "--spec-cmd", "echo ok", "--snapshot", dir])
+    result.should be_a(String)
+  end
+
+  it "test-review returns error when spec command fails" do
+    dir = temp_dir
+    result = Golden::CLI.dispatch(["test-review", "--spec-cmd", "false", "--snapshot", dir])
+    result.should contain("failed")
+  end
+
+  it "Makefile has test-review target" do
+    File.exists?("Makefile").should be_true
+    content = File.read("Makefile")
+    content.should contain("test-review:")
+    content.should contain("golden review")
+  end
 end

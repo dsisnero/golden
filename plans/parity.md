@@ -279,6 +279,6 @@ golden-test-review:
 | 1.6   | Inline diff highlighting | Medium | Small | ✅ Done |
 | 1.7   | Help keybinding | Low | Small | ✅ Done |
 | 2.1   | Pending reporter | High | Small | ✅ Done |
-| 3.1   | CLI binary | Medium | Medium | ❌ Pending |
+| 3.1   | CLI binary | Medium | Medium | ✅ Done |
 | 4.1   | Inline snapshots | Low | Large | ❌ Pending |
-| 5.1   | Test runner integration | Low | Small | ❌ Pending |
+| 5.1   | Test runner integration | Low | Small | ✅ Done |

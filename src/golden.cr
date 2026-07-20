@@ -233,6 +233,15 @@ module Golden
     File.read(path) if File.exists?(path)
   end
 
+  def self.test_and_review!(spec_cmd : String = "crystal spec", snapshot_dir : String? = nil) : Array(Tuple(String, String))
+    result = Process.run(spec_cmd, shell: true)
+    if result.success?
+      review!(snapshot_dir)
+    else
+      [{"error", "spec command '#{spec_cmd}' failed with exit code #{result.exit_code}"}]
+    end
+  end
+
   @@group = ""
 
   def self.group=(group : String)

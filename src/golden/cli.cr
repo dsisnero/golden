@@ -13,11 +13,13 @@ module Golden
       snapshot_dir = nil
       json_output = false
       dry_run = false
+      spec_cmd = "crystal spec"
 
       parser = OptionParser.new do |opts|
         opts.on("--snapshot DIR", "") { |d| snapshot_dir = d }
         opts.on("--json", "") { json_output = true }
         opts.on("--dry-run", "") { dry_run = true }
+        opts.on("--spec-cmd CMD", "") { |c| spec_cmd = c }
         opts.invalid_option { }
       end
       parser.parse(remaining)
@@ -35,6 +37,8 @@ module Golden
         format_status(snapshot_dir)
       when "clean"
         format_strings(Golden.cleanup!(snapshot_dir, dry_run: dry_run))
+      when "test-review"
+        format_review(Golden.test_and_review!(spec_cmd, snapshot_dir))
       when "show"
         show_snapshot_cli(remaining)
       else
@@ -97,9 +101,11 @@ module Golden
         s << "  pending             List pending snapshots\n"
         s << "  status              Snapshot overview\n"
         s << "  clean               Remove unreferenced snapshots\n"
+        s << "  test-review         Run specs then launch review\n"
         s << "  show <path>         Display snapshot contents\n\n"
         s << "Options:\n"
         s << "  --snapshot DIR      Snapshot directory\n"
+        s << "  --spec-cmd CMD      Spec command (default: crystal spec)\n"
         s << "  --dry-run           Dry run (for clean)"
       end
     end
