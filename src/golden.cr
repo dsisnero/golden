@@ -229,6 +229,10 @@ module Golden
     orphans
   end
 
+  def self.show_snapshot(path : String) : String?
+    File.read(path) if File.exists?(path)
+  end
+
   @@group = ""
 
   def self.group=(group : String)

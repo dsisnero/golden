@@ -10,7 +10,7 @@ dependencies:
 
 targets:
   golden:
-    main: src/golden.cr
+    main: src/golden_cli.cr
 
 crystal: ">= 1.19.1"
 
