@@ -417,7 +417,7 @@ describe Golden do
       File.write(File.join(temp_dir, "block_filter_test.golden"), "hello [redacted]")
       output = "hello secret123"
       Golden.with_settings(update_mode: Golden::UpdateMode::No, dir: temp_dir) do
-        Golden.add_filter { |s| s.gsub(/secret\d+/, "[redacted]") }
+        Golden.add_filter(&.gsub(/secret\d+/, "[redacted]"))
         Golden.require_equal("block_filter_test", output)
       end
     end

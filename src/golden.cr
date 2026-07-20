@@ -249,47 +249,47 @@ module Golden
 
   macro assert_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{args[0]}}, {{args[1]}}, metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, {{ args[1] }}, metadata_line: __LINE__)
     {% elsif @def %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, {{args[0]}}, metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, {{ args[0] }}, metadata_line: __LINE__)
     {% else %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", {{args[0]}}, metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", {{ args[0] }}, metadata_line: __LINE__)
     {% end %}
   end
 
   macro assert_json_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{args[0]}}, Golden.apply_path_redactions({{args[1]}}.to_pretty_json), metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_pretty_json), metadata_line: __LINE__)
     {% elsif @def %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, Golden.apply_path_redactions({{args[0]}}.to_pretty_json), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__)
     {% else %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", Golden.apply_path_redactions({{args[0]}}.to_pretty_json), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__)
     {% end %}
   end
 
   macro assert_yaml_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{args[0]}}, Golden.apply_path_redactions({{args[1]}}.to_yaml), metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_yaml), metadata_line: __LINE__)
     {% elsif @def %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, Golden.apply_path_redactions({{args[0]}}.to_yaml), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__)
     {% else %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", Golden.apply_path_redactions({{args[0]}}.to_yaml), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__)
     {% end %}
   end
 
   macro assert_binary_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{args[0]}}, Base64.encode({{args[1]}}), metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, Base64.encode({{ args[1] }}), metadata_line: __LINE__)
     {% elsif @def %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/" + {{@def.name.stringify}}, Base64.encode({{args[0]}}), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Base64.encode({{ args[0] }}), metadata_line: __LINE__)
     {% else %}
-      Golden.require_equal({{@type.name.id.stringify}} + "/snapshot_at_{{__LINE__}}", Base64.encode({{args[0]}}), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Base64.encode({{ args[0] }}), metadata_line: __LINE__)
     {% end %}
   end
 
   def self.find_spec_dir(start_dir : String = Dir.current) : String?
     dir = start_dir
-    while true
+    loop do
       spec_dir = File.join(dir, "spec")
       if Dir.exists?(spec_dir)
         return spec_dir
@@ -303,7 +303,7 @@ module Golden
 
   def self.find_project_root(start_dir : String = Dir.current) : String?
     dir = start_dir
-    while true
+    loop do
       shard_yml = File.join(dir, "shard.yml")
       if File.exists?(shard_yml)
         return dir
@@ -320,6 +320,19 @@ module Golden
     Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
   end
 
+  def self.report_pending!(dir : String? = nil) : String
+    search_dir = dir || @@settings.dir
+    pending = pending_snapshots(search_dir)
+    return "" if pending.empty?
+    msg = String.build do |s|
+      s << "\n#{pending.size} pending snapshot(s) found.\n"
+      pending.each { |p| s << "  #{p}\n" }
+      s << "Run `Golden.review!` to review them."
+    end
+    STDERR.puts msg
+    msg
+  end
+
   def self.accept_all!(dir : String? = nil) : Array(String)
     search_dir = dir || @@settings.dir
     pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
@@ -328,7 +341,7 @@ module Golden
       FileUtils.mv(pending_path, golden_path)
       write_metadata(golden_path, File.basename(golden_path, ".golden"), nil)
     end
-    pending.map { |p| p.rchop(".new") }
+    pending.map(&.rchop(".new"))
   end
 
   def self.reject_all!(dir : String? = nil) : Array(String)
@@ -338,7 +351,7 @@ module Golden
     pending
   end
 
-  def self.glob_snapshots(pattern : String, test_data_dir : String? = nil, &block : String -> String)
+  def self.glob_snapshots(pattern : String, test_data_dir : String? = nil, & : String -> String)
     Dir.glob(pattern).sort.each do |path|
       test_name = File.basename(path, File.extname(path))
       output = yield path
@@ -349,8 +362,6 @@ module Golden
   def self.spec_test_data_dir : String?
     if spec_dir = find_spec_dir
       File.join(spec_dir, "testdata")
-    else
-      nil
     end
   end
 
@@ -419,7 +430,7 @@ module Golden
     dir = test_data_dir || @@settings.dir
     full_name = @@group.empty? ? name : File.join(@@group, name)
     meta_path = File.join(dir, "#{full_name}.golden.meta")
-    return nil unless File.exists?(meta_path)
+    return unless File.exists?(meta_path)
     JSON.parse(File.read(meta_path)).as_h
   end
 
@@ -557,9 +568,14 @@ module Golden
     File.delete(path) if File.exists?(path)
   end
 
-  private def self.normalize(input : String) : String
+  def self.normalize(input : String) : String
     str = normalize_windows_line_breaks(input)
     escape_seqs(str)
+  end
+
+  def self.unified_diff(a_label : String, b_label : String, a : String, b : String) : String
+    diff = Similar::TextDiff.from_lines(a, b)
+    diff.unified_diff.header(a_label, b_label).to_s
   end
 
   private def self.escape_seqs(input : String) : String
@@ -574,10 +590,5 @@ module Golden
     else
       str
     end
-  end
-
-  private def self.unified_diff(a_label : String, b_label : String, a : String, b : String) : String
-    diff = Similar::TextDiff.from_lines(a, b)
-    diff.unified_diff.header(a_label, b_label).to_s
   end
 end
