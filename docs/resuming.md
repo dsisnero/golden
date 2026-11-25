@@ -23,7 +23,7 @@ back to a known-good state.
   ```
 
   The ledger baseline is `mitsuhiko/insta 1.48.0` scoped to `insta/src` and
-  `insta/tests`. Current shape: 71 ported, 30 partial, 64 missing, 389 skipped.
+  `insta/tests`. Current shape: 81 ported, 30 partial, 54 missing, 389 skipped.
   `skipped` rows are insta's content/serialization engine and cargo internals
   that Crystal replaces with stdlib or does not expose.
 

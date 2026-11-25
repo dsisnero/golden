@@ -86,6 +86,9 @@ module Golden
     property info : String?
     property input_file : String?
     property? omit_expression : Bool
+    property? strip_ansi_escape_codes : Bool
+    property? sort_maps : Bool
+    property? allow_empty_glob : Bool
     property snapshot_suffix : String
     property? prepend_module_to_snapshot : Bool
     property? allow_duplicates : Bool
@@ -94,7 +97,8 @@ module Golden
                    @description : String? = nil, @info : String? = nil,
                    @input_file : String? = nil, @omit_expression = false,
                    @snapshot_suffix = "", @prepend_module_to_snapshot = false,
-                   @allow_duplicates = false)
+                   @allow_duplicates = false, @strip_ansi_escape_codes = false,
+                   @sort_maps = false, @allow_empty_glob = false)
       @filters = [] of String -> String
       @redactions = [] of Redaction
       @path_redactions = [] of {path: String, replacement: String}
@@ -118,7 +122,9 @@ module Golden
     s = Settings.new(@@settings.update_mode, @@settings.dir,
       @@settings.description, @@settings.info, @@settings.input_file,
       @@settings.omit_expression?, @@settings.snapshot_suffix,
-      @@settings.prepend_module_to_snapshot?, @@settings.allow_duplicates?)
+      @@settings.prepend_module_to_snapshot?, @@settings.allow_duplicates?,
+      @@settings.strip_ansi_escape_codes?, @@settings.sort_maps?,
+      @@settings.allow_empty_glob?)
     s.filters = @@settings.filters.dup
     s.redactions = @@settings.redactions.dup
     s.path_redactions = @@settings.path_redactions.dup
@@ -131,45 +137,43 @@ module Golden
                          description : String? = nil, info : String? = nil,
                          input_file : String? = nil, omit_expression : Bool? = nil,
                          snapshot_suffix : String? = nil, prepend_module_to_snapshot : Bool? = nil,
-                         allow_duplicates : Bool? = nil, &)
+                         allow_duplicates : Bool? = nil, strip_ansi_escape_codes : Bool? = nil,
+                         sort_maps : Bool? = nil, allow_empty_glob : Bool? = nil, &)
     old = @@settings
     begin
       s = clone_settings
-      if um = update_mode
-        s.update_mode = um
-      end
-      if d = dir
-        s.dir = d
-      end
-      if ser = serializer
-        s.serializer = ser
-      end
-      if desc = description
-        s.description = desc
-      end
-      if inf = info
-        s.info = inf
-      end
-      if inp = input_file
-        s.input_file = inp
-      end
-      if oe = omit_expression
-        s.omit_expression = oe
-      end
-      if sfx = snapshot_suffix
-        s.snapshot_suffix = sfx
-      end
-      if pms = prepend_module_to_snapshot
-        s.prepend_module_to_snapshot = pms
-      end
-      if ad = allow_duplicates
-        s.allow_duplicates = ad
-      end
+      apply_value_settings(s, update_mode, dir, serializer, description, info, input_file, omit_expression)
+      apply_toggle_settings(s, snapshot_suffix, prepend_module_to_snapshot, allow_duplicates,
+        strip_ansi_escape_codes, sort_maps, allow_empty_glob)
       @@settings = s
       yield
     ensure
       @@settings = old
     end
+  end
+
+  private def self.apply_value_settings(s : Settings, update_mode : UpdateMode?, dir : String?,
+                                        serializer : Symbol?, description : String?, info : String?,
+                                        input_file : String?, omit_expression : Bool?) : Nil
+    s.update_mode = update_mode || s.update_mode
+    s.dir = dir || s.dir
+    s.serializer = serializer || s.serializer
+    s.description = description || s.description
+    s.info = info || s.info
+    s.input_file = input_file || s.input_file
+    s.omit_expression = omit_expression || s.omit_expression?
+  end
+
+  private def self.apply_toggle_settings(s : Settings, snapshot_suffix : String?,
+                                         prepend_module_to_snapshot : Bool?, allow_duplicates : Bool?,
+                                         strip_ansi_escape_codes : Bool?, sort_maps : Bool?,
+                                         allow_empty_glob : Bool?) : Nil
+    s.snapshot_suffix = snapshot_suffix || s.snapshot_suffix
+    s.prepend_module_to_snapshot = prepend_module_to_snapshot || s.prepend_module_to_snapshot?
+    s.allow_duplicates = allow_duplicates || s.allow_duplicates?
+    s.strip_ansi_escape_codes = strip_ansi_escape_codes || s.strip_ansi_escape_codes?
+    s.sort_maps = sort_maps || s.sort_maps?
+    s.allow_empty_glob = allow_empty_glob || s.allow_empty_glob?
   end
 
   # Allows repeated assertions with the same snapshot name inside the block.
@@ -337,11 +341,11 @@ module Golden
 
   macro assert_json_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
+      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions(Golden.format_json({{ args[1] }})), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions(Golden.format_json({{ args[0] }})), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions(Golden.format_json({{ args[0] }})), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% end %}
   end
 
@@ -428,7 +432,11 @@ module Golden
   end
 
   def self.glob_snapshots(pattern : String, test_data_dir : String? = nil, & : String -> String)
-    Dir.glob(pattern).sort.each do |path|
+    matches = Dir.glob(pattern).sort
+    if matches.empty? && !@@settings.allow_empty_glob?
+      raise "glob pattern did not match any files: #{pattern}"
+    end
+    matches.each do |path|
       test_name = File.basename(path, File.extname(path))
       output = yield path
       require_equal(test_name, output, test_data_dir, input_file: path)
@@ -658,9 +666,41 @@ module Golden
 
   private def self.process_output(input : String) : String
     result = input
+    if @@settings.strip_ansi_escape_codes?
+      result = strip_ansi_escape_codes(result)
+    end
     @@settings.redactions.each { |redaction| result = redaction.apply(result) }
     @@settings.filters.each { |filter| result = filter.call(result) }
     result
+  end
+
+  # Strips ANSI CSI escape sequences (colors, styles, cursor movement).
+  def self.strip_ansi_escape_codes(input : String) : String
+    return input unless input.includes?('\e')
+    input.gsub(/\e\[[0-9;?]*[A-Za-z]/, "")
+  end
+
+  # Serializes a value as pretty JSON, sorting map keys when `sort_maps` is set.
+  def self.format_json(value) : String
+    json = value.to_pretty_json
+    @@settings.sort_maps? ? sort_json_maps(json) : json
+  end
+
+  private def self.sort_json_maps(json : String) : String
+    sort_json_value(JSON.parse(json)).to_pretty_json
+  end
+
+  private def self.sort_json_value(value : JSON::Any) : JSON::Any
+    case raw = value.raw
+    when Hash
+      sorted = {} of String => JSON::Any
+      raw.keys.sort!.each { |key| sorted[key] = sort_json_value(raw[key]) }
+      JSON::Any.new(sorted)
+    when Array
+      JSON::Any.new(raw.map { |element| sort_json_value(element) })
+    else
+      value
+    end
   end
 
   private def self.compare_outputs(expected : String, actual : String) : Bool

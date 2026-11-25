@@ -1558,4 +1558,68 @@ describe Golden do
       end
     end
   end
+
+  describe "output normalization settings" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+    end
+
+    it "strips ANSI escape codes when enabled" do
+      Golden.with_settings(
+        update_mode: Golden::UpdateMode::Always,
+        dir: temp_dir,
+        strip_ansi_escape_codes: true
+      ) do
+        Golden.require_equal("ansi/strip", "\e[31mred\e[0m text")
+      end
+
+      File.read(File.join(temp_dir, "ansi/strip.golden")).should eq("red text")
+    end
+
+    it "keeps ANSI escape codes by default" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.require_equal("ansi/keep", "\e[31mred\e[0m")
+      end
+
+      File.read(File.join(temp_dir, "ansi/keep.golden")).should eq("\e[31mred\e[0m")
+    end
+
+    it "sorts JSON map keys when sort_maps is enabled" do
+      value = {"b" => 2, "a" => {"d" => 4, "c" => 3}}
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir, sort_maps: true) do
+        Golden.assert_json_snapshot("json/sorted", value)
+      end
+
+      parsed = JSON.parse(File.read(File.join(temp_dir, "json/sorted.golden"))).as_h
+      parsed.keys.should eq(["a", "b"])
+      parsed["a"].as_h.keys.should eq(["c", "d"])
+    end
+
+    it "preserves JSON key order by default" do
+      value = {"b" => 2, "a" => 1}
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.assert_json_snapshot("json/unsorted", value)
+      end
+
+      JSON.parse(File.read(File.join(temp_dir, "json/unsorted.golden"))).as_h.keys.should eq(["b", "a"])
+    end
+
+    it "raises when a glob matches nothing" do
+      expect_raises(Exception, /did not match any files/) do
+        Golden.glob_snapshots(File.join(temp_dir, "nothing-*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
+      end
+    end
+
+    it "allows empty globs when enabled" do
+      Golden.with_settings(allow_empty_glob: true) do
+        Golden.glob_snapshots(File.join(temp_dir, "nothing-*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
+      end
+    end
+  end
 end

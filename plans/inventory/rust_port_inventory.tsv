@@ -318,7 +318,7 @@ insta/src/env.rs::method::ToolConfig.test_runner_fallback	method	skipped	-	cargo
 insta/src/env.rs::method::ToolConfig.test_unreferenced	method	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::method::UnreferencedSnapshots.from_str	method	skipped	-	Rust config parsing
 insta/src/filters.rs::class::Filters	class	ported	src/golden.cr::method::Golden.add_filter	filters live on Golden::Settings
-insta/src/filters.rs::function::strip_ansi_escape_codes	function	missing	-	no ANSI stripping
+insta/src/filters.rs::function::strip_ansi_escape_codes	function	ported	src/golden.cr::method::Golden.strip_ansi_escape_codes	Golden.strip_ansi_escape_codes
 insta/src/filters.rs::method::Filters.add	method	ported	src/golden.cr::method::Golden.add_filter	Golden.add_filter
 insta/src/filters.rs::method::Filters.apply_to	method	ported	src/golden.cr::method::Golden.process_output	filters run in process_output
 insta/src/filters.rs::method::Filters.clear	method	missing	-	no clear_filters API
@@ -419,7 +419,7 @@ insta/src/settings.rs::class::Settings	class	ported	src/golden.cr::class::Settin
 insta/src/settings.rs::class::SettingsBindDropGuard	class	skipped	-	async settings binding is not ported
 insta/src/settings.rs::function::_assert	function	skipped	-	Rust trait assertion helper
 insta/src/settings.rs::function::_assert_send_sync	function	skipped	-	Rust trait assertion helper
-insta/src/settings.rs::method::ActualSettings.allow_empty_glob	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.allow_empty_glob	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.clone	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.comparator	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.description	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
@@ -432,8 +432,8 @@ insta/src/settings.rs::method::ActualSettings.raw_info	method	ported	src/golden.
 insta/src/settings.rs::method::ActualSettings.redactions	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.snapshot_path	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.snapshot_suffix	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
-insta/src/settings.rs::method::ActualSettings.sort_maps	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.sort_maps	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
+insta/src/settings.rs::method::ActualSettings.strip_ansi_escape_codes	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::BindingFuture<F>.poll	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Redactions.apply_to_content	method	ported	src/golden.cr::method::Golden.process_output	redactions run in process_output
 insta/src/settings.rs::method::Redactions.from	method	skipped	-	Rust conversion helper
@@ -442,7 +442,7 @@ insta/src/settings.rs::method::Settings.add_dynamic_redaction	method	missing	-	c
 insta/src/settings.rs::method::Settings.add_filter	method	ported	src/golden.cr::method::Golden.add_filter	Golden.add_filter
 insta/src/settings.rs::method::Settings.add_redaction	method	ported	src/golden.cr::method::Golden.add_redaction	Golden.add_redaction
 insta/src/settings.rs::method::Settings.add_redaction_impl	method	skipped	-	internal helper
-insta/src/settings.rs::method::Settings.allow_empty_glob	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.allow_empty_glob	method	ported	src/golden.cr::class::Settings	Settings.allow_empty_glob property
 insta/src/settings.rs::method::Settings.apply_redactions	method	ported	src/golden.cr::method::Golden.process_output	redactions run in process_output
 insta/src/settings.rs::method::Settings.bind	method	partial	src/golden.cr::method::Golden.with_settings	no thread-local binding; scoped settings only
 insta/src/settings.rs::method::Settings.bind_async	method	skipped	-	async settings binding is not ported
@@ -464,7 +464,7 @@ insta/src/settings.rs::method::Settings.remove_description	method	missing	-	not 
 insta/src/settings.rs::method::Settings.remove_info	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.remove_input_file	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.remove_snapshot_suffix	method	missing	-	no remove_snapshot_suffix helper
-insta/src/settings.rs::method::Settings.set_allow_empty_glob	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_allow_empty_glob	method	ported	src/golden.cr::class::Settings	Settings.allow_empty_glob= property
 insta/src/settings.rs::method::Settings.set_comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator=
 insta/src/settings.rs::method::Settings.set_description	method	ported	src/golden.cr::class::Settings	Settings.description= property
 insta/src/settings.rs::method::Settings.set_filters	method	ported	src/golden.cr::class::Settings	Settings.filters=
@@ -476,13 +476,13 @@ insta/src/settings.rs::method::Settings.set_raw_info	method	ported	src/golden.cr
 insta/src/settings.rs::method::Settings.set_redactions	method	ported	src/golden.cr::class::Settings	Settings.redactions=
 insta/src/settings.rs::method::Settings.set_snapshot_path	method	ported	src/golden.cr::method::Golden.dir=	Golden.dir=
 insta/src/settings.rs::method::Settings.set_snapshot_suffix	method	ported	src/golden.cr::class::Settings	Settings.snapshot_suffix= appended as @suffix
-insta/src/settings.rs::method::Settings.set_sort_maps	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.set_strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_sort_maps	method	ported	src/golden.cr::class::Settings	Settings.sort_maps= sorts JSON object keys
+insta/src/settings.rs::method::Settings.set_strip_ansi_escape_codes	method	ported	src/golden.cr::class::Settings	Settings.strip_ansi_escape_codes= property
 insta/src/settings.rs::method::Settings.snapshot_path	method	ported	src/golden.cr::method::Golden.dir	Golden.dir
 insta/src/settings.rs::method::Settings.snapshot_suffix	method	ported	src/golden.cr::class::Settings	Settings.snapshot_suffix appended as @suffix
-insta/src/settings.rs::method::Settings.sort_maps	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.sort_maps	method	ported	src/golden.cr::class::Settings	Settings.sort_maps sorts JSON object keys
 insta/src/settings.rs::method::Settings.sort_selector	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	ported	src/golden.cr::class::Settings	Settings.strip_ansi_escape_codes property
 insta/src/settings.rs::method::Settings.with	method	ported	src/golden.cr::method::Golden.with_settings	Golden.with_settings
 insta/src/settings.rs::method::SettingsBindDropGuard.drop	method	missing	-	not implemented in the Crystal port
 insta/src/snapshot.rs::class::MetaData	class	ported	src/golden.cr::method::Golden.write_metadata	name, created_at and line sidecar

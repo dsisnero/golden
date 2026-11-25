@@ -112,7 +112,19 @@ Golden.add_redaction(/token=\w+/, "token=REDACTED")
 
 Filters run before comparison, cleaning up timestamps, IDs, paths, etc.
 
-### Custom Comparators
+### Output Normalization
+
+```crystal
+Golden.settings.strip_ansi_escape_codes = true  # drop terminal color codes
+Golden.settings.sort_maps = true                # sort JSON object keys
+Golden.settings.allow_empty_glob = true         # glob_snapshots may match nothing
+```
+
+All three are accepted by `Golden.with_settings`. `strip_ansi_escape_codes`
+runs before redactions and filters; `sort_maps` affects
+`assert_json_snapshot` output (YAML snapshots keep their emitted order); a
+`glob_snapshots` pattern that matches nothing raises unless
+`allow_empty_glob` is set.
 
 ```crystal
 # Fuzzy comparison with numeric tolerance

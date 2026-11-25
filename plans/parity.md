@@ -5,13 +5,13 @@
 - **Current focus:** Phase 6.3 — strict comparison
   (`DefaultComparator.matches_fully`, `require_full_match`).
 - **Next up:**
-  1. 6.3 strict comparison: `require_full_match` semantics and trailing-newline
-     handling.
+  1. 6.3 strict comparison: review `require_full_match` semantics and close or
+     implement the comparator rows.
   2. 6.4 redaction helpers plus the full path-selector grammar (the current
      `partial` rows).
-  3. 6.5 pending lifecycle: `clear_*`, `remove_*`, cleanup helpers.
-  4. 6.6 ANSI stripping and map ordering.
-  5. 4.1 inline snapshots (source patching; needs a design).
+  3. 6.5 settings and pending lifecycle helpers: `clear_*`, `remove_*`,
+     `has_info`, cleanup helpers.
+  4. 4.1 inline snapshots (source patching; needs a design).
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -19,9 +19,10 @@
   - Test runner integration (Phase 5.1): complete
   - Settings metadata (Phase 6.1): complete
   - Snapshot naming (Phase 6.2): complete
+  - Output normalization (Phase 6.6): complete
   - Inline snapshots (Phase 4.1): not started
-  - Rust parity inventory: bootstrapped — 554 rows (71 `ported`, 30 `partial`,
-    64 `missing`, 389 `skipped`)
+  - Rust parity inventory: bootstrapped — 554 rows (81 `ported`, 30 `partial`,
+    54 `missing`, 389 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
   - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
@@ -35,8 +36,8 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** snapshot naming (parent `a873f36`).
-- **Gates:** `make lint` pass; `make test` pass (190 examples); `make inventory`
+- **Last commit:** output normalization settings (parent `1e699bc`).
+- **Gates:** `make lint` pass; `make test` pass (196 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -50,7 +51,7 @@ batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
 display, source context, inline word-level highlighting).
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 71 are `ported`, 30 `partial`, 64 `missing`, and 389 `skipped` (insta's
+which 81 are `ported`, 30 `partial`, 54 `missing`, and 389 `skipped` (insta's
 content/serialization engine and cargo internals). Phase 6 turns the `missing`
 and `partial` groups into features; inline snapshots (Phase 4.1) remain the
 largest single gap.
@@ -342,8 +343,9 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - [ ] **6.5 Pending lifecycle** — `clear_filters` / `clear_redactions`, the
       `remove_*` settings helpers, `cleanup_passing`, and
       `cleanup_previous_pending_binary_snapshots`.
-- [ ] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes`, `sort_maps`,
-      and `sort_selector`.
+- [x] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes` removes CSI
+      sequences before redactions; `sort_maps` sorts JSON object keys in
+      `assert_json_snapshot`; `allow_empty_glob` controls empty glob matches.
 
 ---
 
@@ -367,7 +369,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 6.3   | Strict comparison | Medium | Small | ❌ Pending |
 | 6.4   | Redaction helpers + selector grammar | Medium | Medium | ❌ Pending |
 | 6.5   | Pending lifecycle | Medium | Small | ❌ Pending |
-| 6.6   | ANSI and map ordering | Low | Small | ❌ Pending |
+| 6.6   | ANSI and map ordering | Low | Small | ✅ Done |
 
 ## Intentional divergences
 
@@ -388,4 +390,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - **Glob snapshots keep basename names.** Upstream derives a suffix from the
   matched file's common-prefix-relative path; here the per-file snapshot name
   is supplied by the caller and `input_file` records the source path.
+- **`sort_maps` applies to JSON only.** Upstream sorts the content model before
+  emitting JSON or YAML; here `assert_json_snapshot` sorts parsed object keys
+  and YAML snapshots keep their emitted order.
 

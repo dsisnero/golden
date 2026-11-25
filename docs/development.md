@@ -99,7 +99,7 @@ redactions:
 
 `make inventory` runs the canonical checkers from the installed
 cross-language-crystal-parity skill over all three. The curated ledger currently
-reads: 71 `ported`, 30 `partial`, 64 `missing`, 389 `skipped`. Most `skipped`
+reads: 81 `ported`, 30 `partial`, 54 `missing`, 389 `skipped`. Most `skipped`
 rows are insta's content/serialization engine and cargo/nextest internals, which
 Crystal replaces with stdlib or does not expose; the `missing` rows are the
 feature backlog in `plans/parity.md` Phase 6.

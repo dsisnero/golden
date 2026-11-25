@@ -21,6 +21,11 @@
 - `Golden.allow_duplicates` block and `Golden.allow_duplicates?`: repeated
   snapshot names are allowed, but differing content inside the block raises
 - `require_equal` accepts `module_name` for callers that do not use the macros
+- `strip_ansi_escape_codes` setting (and `Golden.strip_ansi_escape_codes`)
+  removes ANSI CSI sequences before redactions and filters
+- `sort_maps` setting sorts JSON object keys in `assert_json_snapshot` output
+- `allow_empty_glob` setting lets `glob_snapshots` accept a pattern with no
+  matches; without it an empty match now raises
 
 ## 0.3.0 (2026-07-19)
 
