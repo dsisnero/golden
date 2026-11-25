@@ -144,6 +144,35 @@ Golden.assert_snapshot("users", output)
 # Stored in: testdata/API/users.golden
 ```
 
+### Snapshot Naming
+
+```crystal
+Golden.settings.snapshot_suffix = "unit"
+# name@unit.golden
+
+Golden.settings.prepend_module_to_snapshot = true
+# Module/name.golden (the module comes from the assertion macro)
+```
+
+`Golden.with_settings` accepts both settings. `prepend_module_to_snapshot`
+defaults to `false` in this shard (upstream insta defaults to `true`) so that
+existing snapshot paths keep working; enable it to opt into module-prefixed
+names.
+
+### Duplicate Assertions
+
+Repeated assertions with the same name are allowed. Wrap them in
+`Golden.allow_duplicates` when a loop is expected to produce identical content;
+a repeated name with different content raises a mismatch error:
+
+```crystal
+Golden.allow_duplicates do
+  items.each { |item| Golden.assert_snapshot("item", render(item)) }
+end
+```
+
+`Golden.allow_duplicates?` reports whether the block is active.
+
 ### Glob Batch Testing
 
 Test against multiple input files:

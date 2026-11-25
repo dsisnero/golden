@@ -1474,4 +1474,88 @@ describe Golden do
       end
     end
   end
+
+  describe "snapshot naming" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+    end
+
+    it "appends snapshot_suffix to the file name" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir, snapshot_suffix: "unit") do
+        Golden.require_equal("naming/suffix", "value")
+      end
+
+      File.exists?(File.join(temp_dir, "naming/suffix@unit.golden")).should be_true
+    end
+
+    it "applies the suffix to macro names" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir, snapshot_suffix: "unit") do
+        Golden.assert_snapshot("naming/macro", "value")
+      end
+
+      File.exists?(File.join(temp_dir, "naming/macro@unit.golden")).should be_true
+    end
+
+    it "prepends the module name when enabled" do
+      Golden.with_settings(
+        update_mode: Golden::UpdateMode::Always,
+        dir: temp_dir,
+        prepend_module_to_snapshot: true
+      ) do
+        Golden.require_equal("naming/named", "value", module_name: "MyClass")
+      end
+
+      File.exists?(File.join(temp_dir, "MyClass/naming/named.golden")).should be_true
+    end
+
+    it "does not prepend the module name by default" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.require_equal("naming/plain", "value", module_name: "MyClass")
+      end
+
+      File.exists?(File.join(temp_dir, "naming/plain.golden")).should be_true
+    end
+
+    it "composes suffix and module prefix" do
+      Golden.with_settings(
+        update_mode: Golden::UpdateMode::Always,
+        dir: temp_dir,
+        snapshot_suffix: "v2",
+        prepend_module_to_snapshot: true
+      ) do
+        Golden.require_equal("naming/both", "value", module_name: "Feature")
+      end
+
+      File.exists?(File.join(temp_dir, "Feature/naming/both@v2.golden")).should be_true
+    end
+
+    it "allows identical repeated assertions inside allow_duplicates" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.allow_duplicates do
+          Golden.require_equal("naming/dup", "same")
+          Golden.require_equal("naming/dup", "same")
+        end
+      end
+
+      Golden.allow_duplicates?.should be_false
+      File.read(File.join(temp_dir, "naming/dup.golden")).should eq("same")
+    end
+
+    it "raises when repeated assertions differ inside allow_duplicates" do
+      expect_raises(Exception, /does not match the previous snapshot/) do
+        Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+          Golden.allow_duplicates do
+            Golden.require_equal("naming/dup", "first")
+            Golden.require_equal("naming/dup", "second")
+          end
+        end
+      end
+    end
+  end
 end

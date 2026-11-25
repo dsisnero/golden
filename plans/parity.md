@@ -2,27 +2,26 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6.2 — snapshot naming (`snapshot_suffix`,
-  `prepend_module_to_snapshot`, duplicate handling).
+- **Current focus:** Phase 6.3 — strict comparison
+  (`DefaultComparator.matches_fully`, `require_full_match`).
 - **Next up:**
-  1. 6.2 snapshot naming: `snapshot_suffix`, `prepend_module_to_snapshot`, and
-     duplicate handling.
-  2. 6.3 strict comparison: `DefaultComparator.matches_fully` /
-     `require_full_match`.
-  3. 6.4 redaction helpers plus the full path-selector grammar (the current
+  1. 6.3 strict comparison: `require_full_match` semantics and trailing-newline
+     handling.
+  2. 6.4 redaction helpers plus the full path-selector grammar (the current
      `partial` rows).
-  4. 6.5 pending lifecycle: `clear_*`, `remove_*`, cleanup helpers.
-  5. 6.6 ANSI stripping and map ordering.
-  6. 4.1 inline snapshots (source patching; needs a design).
+  3. 6.5 pending lifecycle: `clear_*`, `remove_*`, cleanup helpers.
+  4. 6.6 ANSI stripping and map ordering.
+  5. 4.1 inline snapshots (source patching; needs a design).
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
   - CLI binary (Phase 3): complete
   - Test runner integration (Phase 5.1): complete
   - Settings metadata (Phase 6.1): complete
+  - Snapshot naming (Phase 6.2): complete
   - Inline snapshots (Phase 4.1): not started
-  - Rust parity inventory: bootstrapped — 554 rows (61 `ported`, 30 `partial`,
-    74 `missing`, 389 `skipped`)
+  - Rust parity inventory: bootstrapped — 554 rows (71 `ported`, 30 `partial`,
+    64 `missing`, 389 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
   - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
@@ -36,8 +35,8 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** metadata capture (parent `62c4340`).
-- **Gates:** `make lint` pass; `make test` pass (183 examples); `make inventory`
+- **Last commit:** snapshot naming (parent `a873f36`).
+- **Gates:** `make lint` pass; `make test` pass (190 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -51,7 +50,7 @@ batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
 display, source context, inline word-level highlighting).
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 61 are `ported`, 30 `partial`, 74 `missing`, and 389 `skipped` (insta's
+which 71 are `ported`, 30 `partial`, 64 `missing`, and 389 `skipped` (insta's
 content/serialization engine and cargo internals). Phase 6 turns the `missing`
 and `partial` groups into features; inline snapshots (Phase 4.1) remain the
 largest single gap.
@@ -329,9 +328,11 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
       `input_file`, and `source_file`; `Golden.with_settings` exposes
       `description`, `info`, `input_file`, and `omit_expression`; pending
       metadata is carried through accept (`settings.rs`, `snapshot.rs`).
-- [ ] **6.2 Snapshot naming** — `snapshot_suffix`, `allow_duplicates` /
-      `with_allow_duplicates`, `record_snapshot_duplicate`, and
-      `prepend_module_to_snapshot` (`settings.rs`, `runtime.rs`, `utils.rs`).
+- [x] **6.2 Snapshot naming** — `snapshot_suffix` appends `@suffix`;
+      `prepend_module_to_snapshot` prefixes the macro module name (default
+      `false` here, upstream `true`); `Golden.allow_duplicates` /
+      `allow_duplicates?` detect differing content for repeated names
+      (`settings.rs`, `runtime.rs`).
 - [ ] **6.3 Strict comparison** — `DefaultComparator.matches_fully`,
       `require_full_match`, and trailing-newline behavior
       (`comparator.rs`, `output.rs`, `runtime.rs`).
@@ -362,7 +363,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 4.1   | Inline snapshots | Low | Large | ❌ Pending |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
 | 6.1   | Settings metadata parity | High | Medium | ✅ Done |
-| 6.2   | Snapshot naming | Medium | Small | ❌ Pending |
+| 6.2   | Snapshot naming | Medium | Small | ✅ Done |
 | 6.3   | Strict comparison | Medium | Small | ❌ Pending |
 | 6.4   | Redaction helpers + selector grammar | Medium | Medium | ❌ Pending |
 | 6.5   | Pending lifecycle | Medium | Small | ❌ Pending |
@@ -379,4 +380,12 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - **The review TUI is opt-in.** `src/golden.cr` does not require `bubbles`;
   consumers that want `Golden.review!` require `golden/review` (the CLI binary
   does), so the core shard does not force a TUI stack on every user.
+- **`prepend_module_to_snapshot` defaults to `false`.** Upstream defaults to
+  `true`, which would move every existing explicit-name snapshot into a module
+  subdirectory. The setting is implemented and opt-in; separator style follows
+  this shard's directory layout (`Module/name`) instead of insta's
+  `Module__name` filename prefix.
+- **Glob snapshots keep basename names.** Upstream derives a suffix from the
+  matched file's common-prefix-relative path; here the per-file snapshot name
+  is supplied by the caller and `input_file` records the source path.
 

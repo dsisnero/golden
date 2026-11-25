@@ -383,16 +383,16 @@ insta/src/runtime.rs::class::BinarySnapshotValue	class	ported	src/golden.cr::mac
 insta/src/runtime.rs::class::InlineValue	class	missing	-	inline snapshots (Phase 4.1)
 insta/src/runtime.rs::class::SnapshotAssertionContext	class	partial	src/golden.cr::method::Golden.require_equal	single-pass assertion runtime
 insta/src/runtime.rs::class::SnapshotValue	class	partial	src/golden.cr::method::Golden.require_equal	values are String or Bytes
-insta/src/runtime.rs::function::add_suffix_to_snapshot_name	function	missing	-	snapshot_suffix is not implemented
-insta/src/runtime.rs::function::allow_duplicates	function	missing	-	duplicate snapshot allowance not implemented
+insta/src/runtime.rs::function::add_suffix_to_snapshot_name	function	ported	src/golden.cr::method::Golden.require_equal	name composition in require_equal
+insta/src/runtime.rs::function::allow_duplicates	function	ported	src/golden.cr::method::Golden.allow_duplicates?	Golden.allow_duplicates?
 insta/src/runtime.rs::function::assert_snapshot	function	ported	src/golden.cr::macro::assert_snapshot	Golden.assert_snapshot
 insta/src/runtime.rs::function::detect_snapshot_name	function	ported	src/golden.cr::macro::assert_snapshot	auto naming from class and method
 insta/src/runtime.rs::function::get_snapshot_filename	function	ported	src/golden.cr::method::Golden.require_equal	name resolution in require_equal
 insta/src/runtime.rs::function::is_doctest	function	skipped	-	Rust doctests
 insta/src/runtime.rs::function::path_relative_from	function	skipped	-	cargo workspace path helper
 insta/src/runtime.rs::function::prevent_inline_duplicate	function	missing	-	inline snapshots (Phase 4.1)
-insta/src/runtime.rs::function::record_snapshot_duplicate	function	missing	-	duplicate snapshot tracking not implemented
-insta/src/runtime.rs::function::with_allow_duplicates	function	missing	-	duplicate snapshot allowance not implemented
+insta/src/runtime.rs::function::record_snapshot_duplicate	function	ported	src/golden.cr::method::Golden.require_equal	duplicate content check in require_equal
+insta/src/runtime.rs::function::with_allow_duplicates	function	ported	src/golden.cr::method::Golden.allow_duplicates	Golden.allow_duplicates block
 insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_passing	method	missing	-	pending cleanup on pass is not implemented
 insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_previous_pending_binary_snapshots	method	missing	-	binary pending cleanup is not implemented
 insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.finalize	method	partial	src/golden.cr::method::Golden.require_equal	single-pass assertion runtime
@@ -427,11 +427,11 @@ insta/src/settings.rs::method::ActualSettings.filters	method	missing	-	not imple
 insta/src/settings.rs::method::ActualSettings.info	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.input_file	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.omit_expression	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
-insta/src/settings.rs::method::ActualSettings.prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.prepend_module_to_snapshot	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.raw_info	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.redactions	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.snapshot_path	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.snapshot_suffix	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.sort_maps	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::BindingFuture<F>.poll	method	missing	-	not implemented in the Crystal port
@@ -459,11 +459,11 @@ insta/src/settings.rs::method::Settings.info	method	ported	src/golden.cr::class:
 insta/src/settings.rs::method::Settings.input_file	method	ported	src/golden.cr::class::Settings	Settings.input_file property
 insta/src/settings.rs::method::Settings.new	method	ported	src/golden.cr::method::Settings.initialize	settings constructor
 insta/src/settings.rs::method::Settings.omit_expression	method	ported	src/golden.cr::class::Settings	Settings.omit_expression property
-insta/src/settings.rs::method::Settings.prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.prepend_module_to_snapshot	method	ported	src/golden.cr::class::Settings	Settings.prepend_module_to_snapshot defaults false here
 insta/src/settings.rs::method::Settings.remove_description	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.remove_info	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.remove_input_file	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.remove_snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.remove_snapshot_suffix	method	missing	-	no remove_snapshot_suffix helper
 insta/src/settings.rs::method::Settings.set_allow_empty_glob	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.set_comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator=
 insta/src/settings.rs::method::Settings.set_description	method	ported	src/golden.cr::class::Settings	Settings.description= property
@@ -471,15 +471,15 @@ insta/src/settings.rs::method::Settings.set_filters	method	ported	src/golden.cr:
 insta/src/settings.rs::method::Settings.set_info	method	ported	src/golden.cr::class::Settings	Settings.info= property
 insta/src/settings.rs::method::Settings.set_input_file	method	ported	src/golden.cr::class::Settings	Settings.input_file= property
 insta/src/settings.rs::method::Settings.set_omit_expression	method	ported	src/golden.cr::class::Settings	Settings.omit_expression= property
-insta/src/settings.rs::method::Settings.set_prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_prepend_module_to_snapshot	method	ported	src/golden.cr::class::Settings	Settings.prepend_module_to_snapshot= defaults false here
 insta/src/settings.rs::method::Settings.set_raw_info	method	ported	src/golden.cr::class::Settings	Settings.info stores text
 insta/src/settings.rs::method::Settings.set_redactions	method	ported	src/golden.cr::class::Settings	Settings.redactions=
 insta/src/settings.rs::method::Settings.set_snapshot_path	method	ported	src/golden.cr::method::Golden.dir=	Golden.dir=
-insta/src/settings.rs::method::Settings.set_snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_snapshot_suffix	method	ported	src/golden.cr::class::Settings	Settings.snapshot_suffix= appended as @suffix
 insta/src/settings.rs::method::Settings.set_sort_maps	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.set_strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.snapshot_path	method	ported	src/golden.cr::method::Golden.dir	Golden.dir
-insta/src/settings.rs::method::Settings.snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.snapshot_suffix	method	ported	src/golden.cr::class::Settings	Settings.snapshot_suffix appended as @suffix
 insta/src/settings.rs::method::Settings.sort_maps	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.sort_selector	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port

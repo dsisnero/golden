@@ -86,10 +86,15 @@ module Golden
     property info : String?
     property input_file : String?
     property? omit_expression : Bool
+    property snapshot_suffix : String
+    property? prepend_module_to_snapshot : Bool
+    property? allow_duplicates : Bool
 
     def initialize(@update_mode = UpdateMode::Auto, @dir = "testdata",
                    @description : String? = nil, @info : String? = nil,
-                   @input_file : String? = nil, @omit_expression = false)
+                   @input_file : String? = nil, @omit_expression = false,
+                   @snapshot_suffix = "", @prepend_module_to_snapshot = false,
+                   @allow_duplicates = false)
       @filters = [] of String -> String
       @redactions = [] of Redaction
       @path_redactions = [] of {path: String, replacement: String}
@@ -99,6 +104,7 @@ module Golden
   end
 
   @@settings = Settings.new
+  @@duplicate_snapshots = {} of String => String
 
   def self.settings : Settings
     @@settings
@@ -108,19 +114,27 @@ module Golden
     @@settings = s
   end
 
+  private def self.clone_settings : Settings
+    s = Settings.new(@@settings.update_mode, @@settings.dir,
+      @@settings.description, @@settings.info, @@settings.input_file,
+      @@settings.omit_expression?, @@settings.snapshot_suffix,
+      @@settings.prepend_module_to_snapshot?, @@settings.allow_duplicates?)
+    s.filters = @@settings.filters.dup
+    s.redactions = @@settings.redactions.dup
+    s.path_redactions = @@settings.path_redactions.dup
+    s.comparator = @@settings.comparator
+    s.serializer = @@settings.serializer
+    s
+  end
+
   def self.with_settings(update_mode : UpdateMode? = nil, dir : String? = nil, serializer : Symbol? = nil,
                          description : String? = nil, info : String? = nil,
-                         input_file : String? = nil, omit_expression : Bool? = nil, &)
+                         input_file : String? = nil, omit_expression : Bool? = nil,
+                         snapshot_suffix : String? = nil, prepend_module_to_snapshot : Bool? = nil,
+                         allow_duplicates : Bool? = nil, &)
     old = @@settings
     begin
-      s = Settings.new(@@settings.update_mode, @@settings.dir,
-        @@settings.description, @@settings.info, @@settings.input_file,
-        @@settings.omit_expression?)
-      s.filters = @@settings.filters.dup
-      s.redactions = @@settings.redactions.dup
-      s.path_redactions = @@settings.path_redactions.dup
-      s.comparator = @@settings.comparator
-      s.serializer = @@settings.serializer
+      s = clone_settings
       if um = update_mode
         s.update_mode = um
       end
@@ -142,11 +156,40 @@ module Golden
       if oe = omit_expression
         s.omit_expression = oe
       end
+      if sfx = snapshot_suffix
+        s.snapshot_suffix = sfx
+      end
+      if pms = prepend_module_to_snapshot
+        s.prepend_module_to_snapshot = pms
+      end
+      if ad = allow_duplicates
+        s.allow_duplicates = ad
+      end
       @@settings = s
       yield
     ensure
       @@settings = old
     end
+  end
+
+  # Allows repeated assertions with the same snapshot name inside the block.
+  # Repeated names must produce identical content; a mismatch raises.
+  def self.allow_duplicates(&)
+    old = @@settings
+    begin
+      s = clone_settings
+      s.allow_duplicates = true
+      @@settings = s
+      @@duplicate_snapshots = {} of String => String
+      yield
+    ensure
+      @@settings = old
+      @@duplicate_snapshots = {} of String => String
+    end
+  end
+
+  def self.allow_duplicates? : Bool
+    @@settings.allow_duplicates?
   end
 
   def self.add_filter(pattern : Regex, replacement : String)
@@ -284,41 +327,41 @@ module Golden
 
   macro assert_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, {{ args[1] }}, metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ args[0] }}, {{ args[1] }}, metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, {{ args[0] }}, metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, {{ args[0] }}, metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", {{ args[0] }}, metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", {{ args[0] }}, metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% end %}
   end
 
   macro assert_json_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% end %}
   end
 
   macro assert_yaml_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% end %}
   end
 
   macro assert_binary_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, Base64.encode({{ args[1] }}), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ args[0] }}, Base64.encode({{ args[1] }}), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Base64.encode({{ args[0] }}), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Base64.encode({{ args[0] }}), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Base64.encode({{ args[0] }}), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Base64.encode({{ args[0] }}), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% end %}
   end
 
@@ -400,9 +443,10 @@ module Golden
 
   def self.require_equal(test_name : String, output : String | Bytes, test_data_dir : String? = nil,
                          metadata_line : Int32? = nil, expression : String? = nil,
-                         source_file : String? = nil, input_file : String? = nil)
+                         source_file : String? = nil, input_file : String? = nil,
+                         module_name : String? = nil)
     dir = test_data_dir || @@settings.dir
-    full_name = @@group.empty? ? test_name : File.join(@@group, test_name)
+    full_name = compose_snapshot_name(test_name, module_name)
     golden_path = File.join(dir, "#{full_name}.golden")
     pending_path = golden_path + ".new"
     output_str = output.is_a?(Bytes) ? String.new(output) : output
@@ -410,6 +454,7 @@ module Golden
     if (ser_name = @@settings.serializer) && (ser = @@serializers[ser_name]?)
       processed_output = ser.call(processed_output)
     end
+    check_duplicate!(full_name, processed_output)
     @@accessed_snapshots.add(golden_path)
 
     mode = effective_update_mode
@@ -526,10 +571,36 @@ module Golden
 
   def self.snapshot_metadata(name : String, test_data_dir : String? = nil) : Hash(String, JSON::Any)?
     dir = test_data_dir || @@settings.dir
-    full_name = @@group.empty? ? name : File.join(@@group, name)
+    full_name = compose_snapshot_name(name, nil)
     meta_path = File.join(dir, "#{full_name}.golden.meta")
     return unless File.exists?(meta_path)
     JSON.parse(File.read(meta_path)).as_h
+  end
+
+  private def self.compose_snapshot_name(test_name : String, module_name : String?) : String
+    name = test_name
+    if @@settings.prepend_module_to_snapshot?
+      if mod = module_name
+        unless mod.empty? || name.starts_with?(mod + "/")
+          name = File.join(mod, name)
+        end
+      end
+    end
+    unless @@settings.snapshot_suffix.empty?
+      name = "#{name}@#{@@settings.snapshot_suffix}"
+    end
+    @@group.empty? ? name : File.join(@@group, name)
+  end
+
+  private def self.check_duplicate!(name : String, content : String)
+    return unless @@settings.allow_duplicates?
+    if previous = @@duplicate_snapshots[name]?
+      unless previous == content
+        raise "snapshot assertion for '#{name}' does not match the previous snapshot in the allow-duplicates block"
+      end
+    else
+      @@duplicate_snapshots[name] = content
+    end
   end
 
   def self.apply_path_redactions(output : String) : String

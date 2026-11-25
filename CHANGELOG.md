@@ -14,6 +14,13 @@
   `accept_all!` / the review TUI preserve metadata from the pending files
 - `Golden.require_equal` accepts `expression`, `source_file`, and `input_file`
   for callers that do not use the macros
+- `snapshot_suffix` support: names are stored as `name@suffix.golden`
+- `prepend_module_to_snapshot` support: assertion macros pass their module name
+  and opt in to `Module/name` snapshot paths. It defaults to `false` here
+  (upstream defaults to `true`) to keep existing snapshot paths stable
+- `Golden.allow_duplicates` block and `Golden.allow_duplicates?`: repeated
+  snapshot names are allowed, but differing content inside the block raises
+- `require_equal` accepts `module_name` for callers that do not use the macros
 
 ## 0.3.0 (2026-07-19)
 
