@@ -136,4 +136,80 @@ describe "Golden::CLI" do
     content.should contain("test-review:")
     content.should contain("golden review")
   end
+
+  it "dispatch inline-pending lists pending inline snapshots" do
+    dir = temp_dir
+    Golden.reset_tracking!
+    Golden.with_settings(dir: dir) do
+      expect_raises(Exception, /inline snapshot mismatch/) do
+        Golden.assert_inline("new", "old", "greeting", file: "spec/example_spec.cr", line: 4, root: dir)
+      end
+    end
+
+    result = Golden::CLI.dispatch(["inline-pending", "--snapshot", dir])
+    result.should contain("spec/example_spec.cr:4")
+    result.should contain("greeting")
+  end
+
+  it "dispatch inline-pending --json returns JSON" do
+    dir = temp_dir
+    Golden.reset_tracking!
+    Golden.with_settings(dir: dir) do
+      expect_raises(Exception, /inline snapshot mismatch/) do
+        Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 5, root: dir)
+      end
+    end
+
+    result = Golden::CLI.dispatch(["inline-pending", "--json", "--snapshot", dir])
+    result.should contain("\"old\"")
+    result.should contain("\"new\"")
+  end
+
+  it "dispatch inline-accept patches a source literal" do
+    dir = temp_dir
+    source = File.join(dir, "spec/example_spec.cr")
+    FileUtils.mkdir_p(File.dirname(source))
+    File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+    Golden.reset_tracking!
+    Golden.with_settings(dir: dir) do
+      expect_raises(Exception, /inline snapshot mismatch/) do
+        Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: dir)
+      end
+    end
+
+    result = Golden::CLI.dispatch(["inline-accept", "--snapshot", dir, "--root", dir])
+    result.should contain("patched")
+    File.read(source).should contain(%("new"))
+  end
+
+  it "dispatch inline-accept --dry-run does not patch" do
+    dir = temp_dir
+    source = File.join(dir, "spec/example_spec.cr")
+    FileUtils.mkdir_p(File.dirname(source))
+    File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+    Golden.reset_tracking!
+    Golden.with_settings(dir: dir) do
+      expect_raises(Exception, /inline snapshot mismatch/) do
+        Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: dir)
+      end
+    end
+
+    result = Golden::CLI.dispatch(["inline-accept", "--dry-run", "--snapshot", dir, "--root", dir])
+    result.should contain("patched")
+    File.read(source).should contain(%("old"))
+  end
+
+  it "dispatch inline-reject clears the registry" do
+    dir = temp_dir
+    Golden.reset_tracking!
+    Golden.with_settings(dir: dir) do
+      expect_raises(Exception, /inline snapshot mismatch/) do
+        Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 6, root: dir)
+      end
+    end
+
+    result = Golden::CLI.dispatch(["inline-reject", "--snapshot", dir])
+    result.should contain("Rejected 1")
+    Golden.pending_inline_snapshots(dir).should be_empty
+  end
 end

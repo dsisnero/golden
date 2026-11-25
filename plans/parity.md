@@ -2,12 +2,10 @@
 
 ## Where we are
 
-- **Current focus:** Phase 4.1d — CLI commands for inline pendings
-  (`inline-pending`, `inline-accept`, `inline-reject`).
+- **Current focus:** Phase 4.1e — review TUI integration for inline pendings
+  (show records, patch on accept).
 - **Next up:**
-  1. 4.1d CLI: `inline-pending` (with `--json`), `inline-accept` (`--dry-run`),
-     `inline-reject`.
-  2. 4.1e review TUI integration for inline pendings.
+  1. 4.1e review TUI: surface inline pendings and patch on accept.
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -20,8 +18,8 @@
   - Redaction helpers and selectors (Phase 6.4): complete
   - Settings/pending helpers (Phase 6.5): complete
   - Output normalization (Phase 6.6): complete
-  - Inline snapshots (Phase 4.1): 4.1b/4.1c done — assertions record pendings
-    and patch source on accept or in update mode; CLI/TUI pending
+  - Inline snapshots (Phase 4.1): 4.1b/4.1c/4.1d done — assertions record pendings
+    and patch source on accept, in update mode, or through the CLI; TUI pending
   - Rust parity inventory: bootstrapped — 554 rows (116 `ported`, 23 `partial`,
     0 `missing`, 415 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
@@ -37,8 +35,8 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** inline snapshot patcher and accept flow (parent `4dec49b`).
-- **Gates:** `make lint` pass; `make test` pass (229 examples); `make inventory`
+- **Last commit:** inline snapshot CLI commands (parent `cc80836`).
+- **Gates:** `make lint` pass; `make test` pass (234 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -284,7 +282,7 @@ patcher, CLI commands, and ledger mapping are specified in the design doc.
 - [x] **4.1c Source patcher** — single-literal replacement with ambiguity and
       multi-line refusal, atomic writes, `GOLDEN_UPDATE` auto-accept, and
       `accept_inline!` / `reject_inline!`.
-- [ ] **4.1d CLI** — `golden inline-pending`, `inline-accept`, `inline-reject`.
+- [x] **4.1d CLI** — `golden inline-pending` (`--json`), `inline-accept` (`--dry-run`), `inline-reject`.
 - [ ] **4.1e Review TUI** — show inline pendings in `golden review` and patch on
       accept.
 
@@ -362,7 +360,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 1.7   | Help keybinding | Low | Small | ✅ Done |
 | 2.1   | Pending reporter | High | Small | ✅ Done |
 | 3.1   | CLI binary | Medium | Medium | ✅ Done |
-| 4.1   | Inline snapshots | Low | Large | 🚧 4.1c done; CLI/TUI pending |
+| 4.1   | Inline snapshots | Low | Large | 🚧 4.1d done; TUI pending |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
 | 6.1   | Settings metadata parity | High | Medium | ✅ Done |
 | 6.2   | Snapshot naming | Medium | Small | ✅ Done |

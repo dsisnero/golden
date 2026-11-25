@@ -1,8 +1,8 @@
 # Inline Snapshots Design (Phase 4.1)
 
-Status: design complete; 4.1b (registry/runtime) and 4.1c (patcher/accept)
-implemented. CLI and review integration are still pending, so inline ledger
-rows stay `partial` until 4.1d/4.1e land.
+Status: design complete; 4.1b (registry/runtime), 4.1c (patcher/accept), and
+4.1d (CLI) implemented. Review-TUI integration (4.1e) is still pending, so
+inline ledger rows stay `partial` until it lands.
 
 ## Goal
 
@@ -70,7 +70,7 @@ is line-based and conservative:
 | 4.1a | this design (done) |
 | 4.1b | done: pending registry, runtime compare/record, duplicate guard |
 | 4.1c | done: source patcher, `GOLDEN_UPDATE` auto-accept, accept/reject API |
-| 4.1d | CLI commands |
+| 4.1d | done: CLI commands |
 | 4.1e | review TUI integration |
 
 ## Tests

@@ -45,8 +45,9 @@
   `Golden.accept_inline!` patches single-line literals atomically (with
   `dry_run:`), `Golden.reject_inline_snapshots!` clears the registry, and
   `GOLDEN_UPDATE=1` / `Golden.update = true` patches automatically. Ambiguous,
-  multi-line, or out-of-project edits fail safely. CLI commands arrive with
-  4.1d
+  multi-line, or out-of-project edits fail safely. CLI: `golden inline-pending
+  [--json]`, `golden inline-accept [--dry-run] [--root DIR]`, and
+  `golden inline-reject`; review-TUI integration arrives with 4.1e
 
 ## 0.3.0 (2026-07-19)
 

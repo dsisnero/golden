@@ -282,14 +282,21 @@ Golden.assert_inline_snapshot(output, %("expected"))
 ```
 
 A mismatch records a pending entry in `<Golden.dir>/.golden-inline.json`
-(default `testdata/`) and fails the spec. Accept with the library API — CLI
-commands arrive in the next release:
+(default `testdata/`) and fails the spec. Review and accept with the library API
+or the CLI:
 
 ```crystal
 Golden.pending_inline_snapshots       # records with file, line, old, and new
 Golden.accept_inline!(dry_run: true)  # preview
 Golden.accept_inline!                 # patch safely patchable entries
 Golden.reject_inline_snapshots!       # drop all pendings
+```
+
+```bash
+golden inline-pending --json
+golden inline-accept --dry-run   # preview
+golden inline-accept             # add --root DIR for workspaces
+golden inline-reject
 ```
 
 Running with `GOLDEN_UPDATE=1` (or `Golden.update = true`) patches inline
