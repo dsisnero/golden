@@ -1703,6 +1703,36 @@ describe Golden do
         Golden.glob_snapshots(File.join(temp_dir, "nothing-*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
       end
     end
+
+    it "returns true when the external diff tool succeeds" do
+      Golden.invoke_external_diff_tool("true", "old", "new", File.join(temp_dir, "x.golden")).should be_true
+    end
+
+    it "returns false when the external diff tool fails" do
+      Golden.invoke_external_diff_tool("false", "old", "new").should be_false
+    end
+
+    it "uses GOLDEN_DIFF_TOOL instead of the built-in diff on mismatch" do
+      previous = ENV["GOLDEN_DIFF_TOOL"]?
+      File.write(File.join(temp_dir, "extdiff.golden"), "expected")
+      begin
+        ENV["GOLDEN_DIFF_TOOL"] = "true"
+        error = expect_raises(Exception, /output does not match/) do
+          Golden.with_settings(update_mode: Golden::UpdateMode::No, dir: temp_dir) do
+            Golden.require_equal("extdiff", "actual")
+          end
+        end
+        if message = error.message
+          message.should_not contain("diff:")
+        end
+      ensure
+        if previous
+          ENV["GOLDEN_DIFF_TOOL"] = previous
+        else
+          ENV.delete("GOLDEN_DIFF_TOOL")
+        end
+      end
+    end
   end
 
   describe "settings controls" do

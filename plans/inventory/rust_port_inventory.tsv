@@ -330,7 +330,7 @@ insta/src/glob.rs::function::glob_exec	function	ported	src/golden.cr::method::Go
 insta/src/output.rs::class::SnapshotPrinter	class	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::function::detect_newlines	function	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::function::encode_file_link_escape	function	skipped	-	CLI returns strings and the TUI renders them
-insta/src/output.rs::function::invoke_external_diff_tool	function	missing	-	no external diff tool integration
+insta/src/output.rs::function::invoke_external_diff_tool	function	ported	src/golden.cr::method::Golden.invoke_external_diff_tool	GOLDEN_DIFF_TOOL / INSTA_DIFF_TOOL rendering, similar by default
 insta/src/output.rs::function::newlines_matter	function	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::function::print_info	function	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::function::print_line	function	skipped	-	CLI returns strings and the TUI renders them

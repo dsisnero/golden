@@ -1037,8 +1037,7 @@ module Golden
     out_str = normalize(output)
 
     unless compare_outputs(golden_str, out_str)
-      diff = unified_diff("golden", "run", golden_str, out_str)
-      raise "output does not match, expected:\n\n#{golden_str}\n\ngot:\n\n#{out_str}\n\ndiff:\n\n#{diff}"
+      raise mismatch_error(golden_path, golden_str, out_str)
     end
   end
 
@@ -1063,8 +1062,7 @@ module Golden
       if force_pass?
         return
       end
-      diff = unified_diff("golden", "run", golden_str, out_str)
-      raise "output does not match, expected:\n\n#{golden_str}\n\ngot:\n\n#{out_str}\n\ndiff:\n\n#{diff}"
+      raise mismatch_error(golden_path, golden_str, out_str)
     else
       write_file(pending_path, output)
       write_pending_metadata(pending_meta, test_name, metadata_line, expression, source_file, input_file)
@@ -1108,8 +1106,7 @@ module Golden
 
     write_file(pending_path, output)
     write_pending_metadata(pending_path + ".meta", test_name, metadata_line, expression, source_file, input_file)
-    diff = unified_diff("golden", "run", golden_str, out_str)
-    raise "output does not match, expected:\n\n#{golden_str}\n\ngot:\n\n#{out_str}\n\ndiff:\n\n#{diff}"
+    raise mismatch_error(golden_path, golden_str, out_str)
   end
 
   private def self.delete_file(path : String)
@@ -1124,6 +1121,41 @@ module Golden
   def self.unified_diff(a_label : String, b_label : String, a : String, b : String) : String
     diff = Similar::TextDiff.from_lines(a, b)
     diff.unified_diff.header(a_label, b_label).to_s
+  end
+
+  # Builds the mismatch message, delegating rendering to `GOLDEN_DIFF_TOOL`
+  # (or `INSTA_DIFF_TOOL`) when set. The built-in diff is still computed with
+  # `similar` and is the fallback.
+  private def self.mismatch_error(golden_path : String, expected : String, actual : String) : String
+    message = "output does not match, expected:\n\n#{expected}\n\ngot:\n\n#{actual}"
+    if tool = ENV["GOLDEN_DIFF_TOOL"]? || ENV["INSTA_DIFF_TOOL"]?
+      return message if invoke_external_diff_tool(tool, expected, actual, golden_path)
+    end
+    "#{message}\n\ndiff:\n\n#{unified_diff("golden", "run", expected, actual)}"
+  end
+
+  # Runs an external diff tool over temporary copies of the two snapshots.
+  # Returns false when the tool cannot be created or exits non-zero.
+  def self.invoke_external_diff_tool(tool : String, old_content : String, new_content : String,
+                                     snapshot_file : String? = nil) : Bool
+    dir = File.join(Dir.tempdir, "golden_diff_#{Process.pid}_#{Random.rand(1_000_000)}")
+    base = snapshot_file ? File.basename(snapshot_file, ".golden") : "snapshot"
+    old_path = File.join(dir, "#{base}.old.golden")
+    new_path = File.join(dir, "#{base}.new.golden")
+    FileUtils.mkdir_p(dir)
+    File.write(old_path, old_content)
+    File.write(new_path, new_content)
+    command = "#{tool} #{shell_quote(old_path)} #{shell_quote(new_path)}"
+    status = Process.run("sh", ["-c", command], chdir: dir, output: :inherit, error: :inherit)
+    status.success?
+  rescue
+    false
+  ensure
+    FileUtils.rm_rf(dir) if dir
+  end
+
+  private def self.shell_quote(value : String) : String
+    "'" + value.gsub("'", "'\\''") + "'"
   end
 
   private def self.escape_seqs(input : String) : String

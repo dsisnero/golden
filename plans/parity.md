@@ -2,12 +2,13 @@
 
 ## Where we are
 
-- **Current focus:** Phase 4.1 — inline snapshots (source patching design).
+- **Current focus:** Phase 4.1b — inline snapshot pending registry and runtime.
+  The design is in [plans/inline-snapshots.md](inline-snapshots.md).
 - **Next up:**
-  1. 4.1 inline snapshots: choose a source-patching approach, then port the
-     pending registry, normalization, and accept/reject flow.
-  2. `invoke_external_diff_tool` (optional external diff integration) remains
-     unimplemented.
+  1. 4.1b pending registry, runtime compare/record, and duplicate guard.
+  2. 4.1c line-based source patcher plus `GOLDEN_UPDATE` auto-accept.
+  3. 4.1d CLI: `inline-pending`, `inline-accept`, `inline-reject`.
+  4. 4.1e review TUI integration.
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -20,9 +21,9 @@
   - Redaction helpers and selectors (Phase 6.4): complete
   - Settings/pending helpers (Phase 6.5): complete
   - Output normalization (Phase 6.6): complete
-  - Inline snapshots (Phase 4.1): not started
-  - Rust parity inventory: bootstrapped — 554 rows (107 `ported`, 22 `partial`,
-    15 `missing`, 410 `skipped`)
+  - Inline snapshots (Phase 4.1): design complete; implementation not started
+  - Rust parity inventory: bootstrapped — 554 rows (108 `ported`, 22 `partial`,
+    14 `missing`, 410 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
   - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
@@ -36,8 +37,8 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** redaction helpers and selector grammar (parent `f44b907`).
-- **Gates:** `make lint` pass; `make test` pass (210 examples); `make inventory`
+- **Last commit:** inline snapshot design and external diff rendering (parent `d0280d5`).
+- **Gates:** `make lint` pass; `make test` pass (213 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -51,7 +52,7 @@ batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
 display, source context, inline word-level highlighting).
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 107 are `ported`, 22 `partial`, 15 `missing`, and 410 `skipped` (insta's
+which 108 are `ported`, 22 `partial`, 14 `missing`, and 410 `skipped` (insta's
 content/serialization engine and cargo internals). Phase 6 turns the `missing`
 and `partial` groups into features; inline snapshots (Phase 4.1) remain the
 largest single gap.
@@ -270,33 +271,26 @@ end
 
 ## Phase 4: Inline Snapshots (`src/golden/inline/`)
 
-### 4.1 Add inline snapshot macro
+Design: [plans/inline-snapshots.md](inline-snapshots.md). Crystal has no `syn`
+or Prism equivalent, so the patcher is line-based and refuses ambiguous edits.
 
-**Problem:** No inline snapshot support (snapshot value stored in source code).
+**4.1a Design** — done: API, runtime compare/record flow, conservative source
+patcher, CLI commands, and ledger mapping are specified in the design doc.
 
-**Required:**
-- `assert_inline_snapshot(value, @"expected")` macro — replaces inline content on accept
-- `match_inline_snapshot(value)` — auto-generates inline content
-- Cumbersome in Crystal due to macro limitations — inline snapshot strings stored in source file
+- [ ] **4.1b Pending registry and runtime** — `assert_inline_snapshot`,
+      `normalize_inline`, `.golden-inline.json` upsert, mismatch diff, and the
+      duplicate `file:line` guard.
+- [ ] **4.1c Source patcher** — single-literal replacement with ambiguity and
+      multi-line refusal, atomic writes, `GOLDEN_UPDATE` auto-accept, and
+      `accept_inline!` / `reject_inline!`.
+- [ ] **4.1d CLI** — `golden inline-pending`, `inline-accept`, `inline-reject`.
+- [ ] **4.1e Review TUI** — show inline pendings in `golden review` and patch on
+      accept.
 
-**Approach:**
+Acceptance for each sub-item: specs from the design doc pass, ledger rows for
+the covered upstream declarations move off `missing`, and the plan block stays
+accurate.
 
-In Crystal, inline snapshots mean the expected value is embedded in the source code:
-
-```crystal
-Golden.assert_inline_snapshot(compute_result, %("expected output"))
-```
-
-On first run, the macro auto-fills the string literal:
-```crystal
-Golden.assert_inline_snapshot(compute_result, %("computed output"))
-```
-
-**Pending storage:** JSON file in snapshot dir tracking `{file, line, content, old_content}`.
-**File patcher:** Rewrite source file lines around the assertion call.
-
-**Depends:** Crystal macro system, `Crystal::AST` (or regex-based source patching).
-**Complexity:** High. Rust uses `syn` parser, Ruby uses `Prism` parser. Crystal has no equivalent parser library — may need regex-based patching or a `Crystal::Compiler` API.
 
 ---
 
@@ -367,7 +361,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 1.7   | Help keybinding | Low | Small | ✅ Done |
 | 2.1   | Pending reporter | High | Small | ✅ Done |
 | 3.1   | CLI binary | Medium | Medium | ✅ Done |
-| 4.1   | Inline snapshots | Low | Large | ❌ Pending |
+| 4.1   | Inline snapshots | Low | Large | 🚧 Design done; 4.1b-e pending |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
 | 6.1   | Settings metadata parity | High | Medium | ✅ Done |
 | 6.2   | Snapshot naming | Medium | Small | ✅ Done |
@@ -398,6 +392,10 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - **`sort_maps` applies to JSON only.** Upstream sorts the content model before
   emitting JSON or YAML; here `assert_json_snapshot` sorts parsed object keys
   and YAML snapshots keep their emitted order.
+- **Diff rendering: `similar` by default, external tool optional.** Mismatch
+  messages and the review TUI render unified diffs with `similar`; setting
+  `GOLDEN_DIFF_TOOL` (or `INSTA_DIFF_TOOL`) delegates rendering to an external
+  tool such as `delta`, falling back to the built-in diff when it fails.
 - **There is no `require_full_match` mode.** Upstream compares metadata inside
   the snapshot file when `INSTA_REQUIRE_FULL_MATCH` is set; Golden stores
   metadata in a sidecar and always compares normalized content exactly, so the

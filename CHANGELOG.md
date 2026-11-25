@@ -35,6 +35,10 @@
   `Golden.sorted_redaction`, and `Golden.add_dynamic_redaction` for computed
   path redactions; `Golden.add_path_redaction` accepts a `ValueRedaction`
 - `sort_selector` setting sorts only the JSON objects matched by the selector
+- `Golden.invoke_external_diff_tool` and the `GOLDEN_DIFF_TOOL` /
+  `INSTA_DIFF_TOOL` env vars: mismatches can be rendered by an external diff
+  tool (`delta`, `difftastic`); the `similar`-backed unified diff stays the
+  default and the fallback
 
 ## 0.3.0 (2026-07-19)
 

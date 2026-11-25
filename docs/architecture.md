@@ -87,7 +87,8 @@ redactions, and review-state transitions. See [testing.md](testing.md).
 
 - Inline snapshots (Phase 4 in `plans/parity.md`) are not implemented. Rust uses
   the `syn` parser and insta-ruby uses Prism; Crystal has no equivalent source
-  patcher, so this needs a dedicated design.
+  patcher. The line-based approach and its guardrails are specified in
+  [inline-snapshots.md](../plans/inline-snapshots.md).
 - The Rust CLI subcommands (`cargo insta ...`) map to the `golden` binary;
   `test-review` is the equivalent of `cargo insta test --review`.
 - Charm's Go `x/exp/golden` inspired the original API but is not a parity
