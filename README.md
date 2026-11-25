@@ -1,8 +1,12 @@
 # golden
 
-A Crystal shard for golden file (snapshot) testing, inspired by [insta](https://github.com/mitsuhiko/insta) and ported from [charmbracelet/x/exp/golden](https://github.com/charmbracelet/x/tree/main/exp/golden).
+A Crystal shard for golden file (snapshot) testing, inspired by
+[insta](https://github.com/mitsuhiko/insta) and ported from
+[charmbracelet/x/exp/golden](https://github.com/charmbracelet/x/tree/main/exp/golden).
 
-Golden files contain the expected output of your tests. When you run your tests, the output is compared against the golden file. If they match, the test passes. If they don't, a diff is shown.
+Golden files contain the expected output of your tests. When you run your tests,
+the output is compared against the golden file. If they match, the test passes.
+If they don't, a diff is shown.
 
 ## Installation
 
@@ -92,7 +96,8 @@ Golden.settings.update_mode = Golden::UpdateMode::New
 Golden.settings.update_mode = Golden::UpdateMode::Unseen
 ```
 
-The `Auto` mode automatically detects CI environments (`CI=true`, `TF_BUILD`) and uses strict comparison.
+The `Auto` mode automatically detects CI environments (`CI=true`, `TF_BUILD`)
+and uses strict comparison.
 
 ### Filters & Redactions
 
@@ -180,7 +185,8 @@ Golden.review!
 | `?` | Toggle help overlay |
 | `q` | Quit (shows review summary) |
 
-Inline word-level diff highlights insertions (green), deletions (red), and changed segments (bold+underline).
+Inline word-level diff highlights insertions (green), deletions (red), and
+changed segments (bold+underline).
 
 ### Orphan Cleanup
 
@@ -294,7 +300,8 @@ Golden.init
 ## How It Works
 
 1. `Golden.require_equal` looks for `#{dir}/#{name}.golden`
-2. If the golden file doesn't exist (or update mode says so), a pending `.golden.new` is created
+2. If the golden file doesn't exist (or update mode says so), a pending
+   `.golden.new` is created
 3. On comparison, output is processed through redactions → filters, then compared
 4. Custom comparators can override the default equality check
 5. On mismatch, a unified diff is shown
@@ -302,10 +309,23 @@ Golden.init
 ## Development
 
 ```bash
-crystal spec
-crystal spec examples/
-GOLDEN_UPDATE=1 crystal spec
+make install        # shards install
+make format         # crystal tool format src spec examples
+make lint           # ameba src spec examples
+make test           # crystal spec
+make test-examples  # crystal spec examples
+GOLDEN_UPDATE=1 crystal spec   # rewrite baselines
 ```
+
+## Documentation
+
+- [Resuming work](docs/resuming.md) — start here for a new session
+- [Architecture](docs/architecture.md) — modules and snapshot lifecycle
+- [Development](docs/development.md) — upstream pins, repo layout, parity work
+- [Coding Guidelines](docs/coding-guidelines.md)
+- [Testing](docs/testing.md)
+- [PR Workflow](docs/pr-workflow.md)
+- [Parity plan](plans/parity.md)
 
 ## License
 

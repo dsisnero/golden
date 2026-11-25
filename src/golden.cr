@@ -175,13 +175,13 @@ module Golden
       @@settings.dir = d.to_s
     end
     config["filters"]?.try do |filters_val|
-      filters_val.as_a.each do |f|
-        add_filter(Regex.new(f["pattern"].to_s), f["replacement"].to_s)
+      filters_val.as_a.each do |filter_json|
+        add_filter(Regex.new(filter_json["pattern"].to_s), filter_json["replacement"].to_s)
       end
     end
     config["redactions"]?.try do |redactions_val|
-      redactions_val.as_a.each do |r|
-        add_redaction(Regex.new(r["pattern"].to_s), r["replacement"].to_s)
+      redactions_val.as_a.each do |redaction_json|
+        add_redaction(Regex.new(redaction_json["pattern"].to_s), redaction_json["replacement"].to_s)
       end
     end
   end
@@ -210,7 +210,7 @@ module Golden
   def self.status(dir : String? = nil) : Hash(String, Int32)
     search_dir = dir || @@settings.dir
     all_golden = Dir.glob(File.join(search_dir, "**/*.golden")).sort
-    snapshots = all_golden.reject { |p| p.ends_with?(".golden.new") || p.ends_with?(".golden.meta") }.size
+    snapshots = all_golden.count { |path| !path.ends_with?(".golden.new") && !path.ends_with?(".golden.meta") }
     pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).size
     meta_count = Dir.glob(File.join(search_dir, "**/*.golden.meta")).size
     orphans = unreferenced_snapshots(search_dir).size
@@ -337,10 +337,10 @@ module Golden
     search_dir = dir || @@settings.dir
     pending = pending_snapshots(search_dir)
     return "" if pending.empty?
-    msg = String.build do |s|
-      s << "\n#{pending.size} pending snapshot(s) found.\n"
-      pending.each { |p| s << "  #{p}\n" }
-      s << "Run `Golden.review!` to review them."
+    msg = String.build do |io|
+      io << "\n#{pending.size} pending snapshot(s) found.\n"
+      pending.each { |pending_path| io << "  #{pending_path}\n" }
+      io << "Run `Golden.review!` to review them."
     end
     STDERR.puts msg
     msg
@@ -360,7 +360,7 @@ module Golden
   def self.reject_all!(dir : String? = nil) : Array(String)
     search_dir = dir || @@settings.dir
     pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
-    pending.each { |p| File.delete(p) }
+    pending.each { |pending_path| File.delete(pending_path) }
     pending
   end
 
@@ -451,8 +451,8 @@ module Golden
     return output if @@settings.path_redactions.empty?
     begin
       parsed = JSON.parse(output)
-      @@settings.path_redactions.each do |pr|
-        parsed = walk_and_replace_json(parsed, parse_path(pr[:path]), JSON::Any.new(pr[:replacement].strip('"')))
+      @@settings.path_redactions.each do |path_redaction|
+        parsed = walk_and_replace_json(parsed, parse_path(path_redaction[:path]), JSON::Any.new(path_redaction[:replacement].strip('"')))
       end
       parsed.to_pretty_json
     rescue
@@ -466,8 +466,8 @@ module Golden
       if bracket_idx = part.index('[')
         segments << part[0...bracket_idx] if part[0...bracket_idx] != ""
         inner = part[bracket_idx..]
-        inner.scan(/\[([^\]]+)\]/) do |m|
-          segments << m[1]
+        inner.scan(/\[([^\]]+)\]/) do |match|
+          segments << match[1]
         end
       else
         segments << part
@@ -502,8 +502,8 @@ module Golden
 
   private def self.process_output(input : String) : String
     result = input
-    @@settings.redactions.each { |r| result = r.apply(result) }
-    @@settings.filters.each { |f| result = f.call(result) }
+    @@settings.redactions.each { |redaction| result = redaction.apply(result) }
+    @@settings.filters.each { |filter| result = filter.call(result) }
     result
   end
 

@@ -1,4 +1,12 @@
-/docs/
+# Local agent/tool settings
+.claude/
+
+# Local Crystal cache
+.crystal-cache/
+
+# Temporary working artifacts
+temp/
+
 /lib/
 /bin/
 /.shards/
@@ -11,3 +19,4 @@
 # Apple Double files (macOS extended attributes on non-APFS volumes)
 ._*
 
+/node_modules

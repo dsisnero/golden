@@ -22,8 +22,8 @@ describe Golden do
   describe ".find_spec_dir" do
     it "finds spec directory from project root" do
       spec_dir = Golden.find_spec_dir
-      spec_dir.should_not be_nil
-      spec_dir.not_nil!.should end_with("/spec")
+      spec_dir = spec_dir.should_not be_nil
+      spec_dir.should end_with("/spec")
     end
 
     it "returns nil when no spec directory found" do
@@ -1046,7 +1046,7 @@ describe Golden do
       File.write(File.join(input_dir, "hello.txt"), "hello world")
       File.write(File.join(input_dir, "goodbye.txt"), "goodbye world")
       Golden.update = true
-      Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |p| File.read(p) }
+      Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
       Golden.update = false
       File.read(File.join(temp_dir, "hello.golden")).should eq("hello world")
       File.read(File.join(temp_dir, "goodbye.golden")).should eq("goodbye world")
@@ -1056,7 +1056,7 @@ describe Golden do
       File.write(File.join(input_dir, "match.txt"), "content")
       File.write(File.join(temp_dir, "match.golden"), "content")
       Golden.update = false
-      Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |p| File.read(p) }
+      Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
     end
 
     it "raises on mismatch" do
@@ -1064,7 +1064,7 @@ describe Golden do
       File.write(File.join(temp_dir, "mismatch.golden"), "expected")
       Golden.update = false
       expect_raises(Exception, /output does not match/) do
-        Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |p| File.read(p) }
+        Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
       end
     end
 
@@ -1095,7 +1095,7 @@ describe Golden do
       File.write(File.join(input_dir, "grouped.txt"), "content")
       Golden.update = true
       Golden.group = "GlobTests"
-      Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |p| File.read(p) }
+      Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
       Golden.update = false
       File.read(File.join(temp_dir, "GlobTests/grouped.golden")).should eq("content")
     end
@@ -1324,7 +1324,7 @@ describe Golden do
     it "overwrites existing .golden files" do
       File.write(File.join(temp_dir, "existing.golden"), "old")
       File.write(File.join(temp_dir, "existing.golden.new"), "new")
-      accepted = Golden.accept_all!(temp_dir)
+      Golden.accept_all!(temp_dir)
       File.read(File.join(temp_dir, "existing.golden")).should eq("new")
     end
 

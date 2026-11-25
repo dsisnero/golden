@@ -16,10 +16,10 @@ module Golden
       spec_cmd = "crystal spec"
 
       parser = OptionParser.new do |opts|
-        opts.on("--snapshot DIR", "") { |d| snapshot_dir = d }
+        opts.on("--snapshot DIR", "") { |dir| snapshot_dir = dir }
         opts.on("--json", "") { json_output = true }
         opts.on("--dry-run", "") { dry_run = true }
-        opts.on("--spec-cmd CMD", "") { |c| spec_cmd = c }
+        opts.on("--spec-cmd CMD", "") { |cmd| spec_cmd = cmd }
         opts.invalid_option { }
       end
       parser.parse(remaining)
@@ -59,9 +59,9 @@ module Golden
     private def self.list_pending(dir : String?, json : Bool) : String
       pending = Golden.pending_snapshots(dir)
       if json
-        items = pending.map do |p|
-          name = File.basename(p, ".golden.new")
-          {name: name, path: p}
+        items = pending.map do |path|
+          name = File.basename(path, ".golden.new")
+          {name: name, path: path}
         end
         items.to_json
       else
@@ -71,9 +71,9 @@ module Golden
 
     private def self.format_status(dir : String?) : String
       stats = Golden.status(dir)
-      String.build do |s|
+      String.build do |io|
         stats.each do |key, count|
-          s << "#{key}: #{count}\n"
+          io << "#{key}: #{count}\n"
         end
       end
     end
@@ -92,21 +92,21 @@ module Golden
     end
 
     private def self.usage : String
-      String.build do |s|
-        s << "Usage: golden <command> [options]\n\n"
-        s << "Commands:\n"
-        s << "  review              Interactive TUI review\n"
-        s << "  accept              Accept all pending snapshots\n"
-        s << "  reject              Reject all pending snapshots\n"
-        s << "  pending             List pending snapshots\n"
-        s << "  status              Snapshot overview\n"
-        s << "  clean               Remove unreferenced snapshots\n"
-        s << "  test-review         Run specs then launch review\n"
-        s << "  show <path>         Display snapshot contents\n\n"
-        s << "Options:\n"
-        s << "  --snapshot DIR      Snapshot directory\n"
-        s << "  --spec-cmd CMD      Spec command (default: crystal spec)\n"
-        s << "  --dry-run           Dry run (for clean)"
+      String.build do |io|
+        io << "Usage: golden <command> [options]\n\n"
+        io << "Commands:\n"
+        io << "  review              Interactive TUI review\n"
+        io << "  accept              Accept all pending snapshots\n"
+        io << "  reject              Reject all pending snapshots\n"
+        io << "  pending             List pending snapshots\n"
+        io << "  status              Snapshot overview\n"
+        io << "  clean               Remove unreferenced snapshots\n"
+        io << "  test-review         Run specs then launch review\n"
+        io << "  show <path>         Display snapshot contents\n\n"
+        io << "Options:\n"
+        io << "  --snapshot DIR      Snapshot directory\n"
+        io << "  --spec-cmd CMD      Spec command (default: crystal spec)\n"
+        io << "  --dry-run           Dry run (for clean)"
       end
     end
   end

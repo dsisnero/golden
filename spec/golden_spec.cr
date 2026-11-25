@@ -7,8 +7,15 @@ describe Golden do
   end
 
   it "TestRequireEqualUpdate" do
-    Golden.update = true
-    Golden.require_equal("TestRequireEqualUpdate", "test")
+    temp_dir = File.join(Dir.tempdir, "golden_spec_update_#{Random::Secure.hex(8)}")
+    begin
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.require_equal("TestRequireEqualUpdate", "test")
+      end
+      File.read(File.join(temp_dir, "TestRequireEqualUpdate.golden")).should eq("test")
+    ensure
+      FileUtils.rm_rf(temp_dir)
+    end
   end
 
   it "TestRequireEqualNoUpdate" do

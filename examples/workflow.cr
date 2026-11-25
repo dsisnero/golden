@@ -44,7 +44,7 @@ describe "workflow" do
     File.write(File.join(inputs, "b.txt"), "data_b")
 
     Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
-      Golden.glob_snapshots(File.join(inputs, "*.txt")) { |p| File.read(p) }
+      Golden.glob_snapshots(File.join(inputs, "*.txt")) { |path| File.read(path) }
     end
 
     File.read(File.join(temp_dir, "a.golden")).should eq("data_a")

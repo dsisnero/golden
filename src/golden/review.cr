@@ -55,21 +55,21 @@ module Golden
       has_changes = diff.ops.any? { |op| op.tag != Similar::DiffTag::Equal }
       return "" unless has_changes
 
-      String.build do |sb|
+      String.build do |io|
         diff.ops.each do |op|
           tag = op.tag
           if tag == Similar::DiffTag::Equal || tag == Similar::DiffTag::Insert || tag == Similar::DiffTag::Delete
             diff.iter_changes(op).each do |change|
-              append_change_line(sb, change)
+              append_change_line(io, change)
             end
           else
             inline_changes = diff.iter_inline_changes(op)
-            inline_changes.each do |ic|
-              ic.values.each do |emphasized, value|
+            inline_changes.each do |inline_change|
+              inline_change.values.each do |emphasized, value|
                 if emphasized
-                  sb << "\e[1m\e[4m" << value << "\e[0m"
+                  io << "\e[1m\e[4m" << value << "\e[0m"
                 else
-                  sb << value
+                  io << value
                 end
               end
             end
@@ -235,28 +235,28 @@ module Golden
       end
 
       if @show_help
-        content = String.build do |s|
-          s << "Keybindings\n\n"
-          s << "  y   Accept current snapshot\n"
-          s << "  n   Reject current snapshot\n"
-          s << "  s   Skip current snapshot\n"
-          s << "  A   Accept all remaining\n"
-          s << "  R   Reject all remaining\n"
-          s << "  S   Skip all remaining\n"
-          s << "  j/k Navigate up/down\n"
-          s << "  g   Go to top\n"
-          s << "  G   Go to bottom\n"
-          s << "  ?   Toggle this help\n"
-          s << "  q   Quit\n"
-          s << "\nPress ? to close help."
+        content = String.build do |io|
+          io << "Keybindings\n\n"
+          io << "  y   Accept current snapshot\n"
+          io << "  n   Reject current snapshot\n"
+          io << "  s   Skip current snapshot\n"
+          io << "  A   Accept all remaining\n"
+          io << "  R   Reject all remaining\n"
+          io << "  S   Skip all remaining\n"
+          io << "  j/k Navigate up/down\n"
+          io << "  g   Go to top\n"
+          io << "  G   Go to bottom\n"
+          io << "  ?   Toggle this help\n"
+          io << "  q   Quit\n"
+          io << "\nPress ? to close help."
         end
         return Tea::View.new(content)
       end
 
-      content = String.build do |s|
-        s << "Reviewing Pending Snapshots\n\n"
-        s << @list.view
-        s << "\n[y] Accept  [n] Reject  [s] Skip  [j/k] Navigate  [?] Help  [q] Quit"
+      content = String.build do |io|
+        io << "Reviewing Pending Snapshots\n\n"
+        io << @list.view
+        io << "\n[y] Accept  [n] Reject  [s] Skip  [j/k] Navigate  [?] Help  [q] Quit"
       end
       Tea::View.new(content)
     end
@@ -264,20 +264,20 @@ module Golden
     private def info_content : String
       if item = @list.selected_item
         snap = item.as(ReviewItem)
-        String.build do |s|
-          s << "Snapshot Info\n\n"
-          s << "  Name: #{snap.name}\n"
-          s << "  File: #{snap.path}\n"
+        String.build do |io|
+          io << "Snapshot Info\n\n"
+          io << "  Name: #{snap.name}\n"
+          io << "  File: #{snap.path}\n"
           if line = snap.metadata_line
-            s << "  Line: #{line}\n"
+            io << "  Line: #{line}\n"
           end
           if sf = snap.metadata_source_file
-            s << "  Source: #{sf}\n"
+            io << "  Source: #{sf}\n"
           end
           unless snap.source_context.empty?
-            s << "\nSource Context:\n#{snap.source_context}\n"
+            io << "\nSource Context:\n#{snap.source_context}\n"
           end
-          s << "\nPress i to close."
+          io << "\nPress i to close."
         end
       else
         "No snapshot selected."

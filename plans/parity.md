@@ -1,8 +1,48 @@
 # Parity Plan: Crystal Golden vs Rust/Ruby insta
 
+## Where we are
+
+- **Current focus:** repository scaffolding is complete (entrypoint, docs,
+  gates, lint baseline). Next work is bootstrapping the parity inventory, then
+  Phase 4.1 inline snapshots.
+- **Next up:**
+  1. Bootstrap `plans/inventory/rust_port_inventory.tsv` from `vendor/insta`
+     with the cross-language-crystal-parity skill (`tree-sitter`), and
+     `ruby_port_inventory.tsv` from `vendor/insta-ruby` if Ruby stays in scope;
+     make `make inventory` green.
+  2. Design and implement Phase 4.1 inline snapshots (source patching).
+  3. Reconcile the statuses in this plan against the generated ledger and drop
+     anything the ledger shows as already covered.
+- **Status by area:**
+  - Review TUI (Phase 1): complete
+  - Pending reporter (Phase 2): complete
+  - CLI binary (Phase 3): complete
+  - Test runner integration (Phase 5.1): complete
+  - Inline snapshots (Phase 4.1): not started
+  - Parity inventory (`plans/inventory/`): not bootstrapped
+- **Scoping notes / gotchas:**
+  - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
+    `v0.3.0` (`500434b`). `vendor/x` (Charm Go) is declared but not checked out
+    and is not a parity target.
+  - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
+    describes `0.3.0`; bump both at the next release.
+  - Inline snapshots need a source patcher; Crystal has no `syn`/Prism
+    equivalent, so this stays a design task until the approach is chosen.
+- **Last commit:** scaffolding commit (parent `616e03b`).
+- **Gates:** `make lint` pass (Ameba, 0 failures); `make test` pass
+  (178 examples, 0 failures); `make inventory` red by design (no ledger yet).
+
+Keep this block accurate after every feature: the next session reads it first
+(see `AGENTS.md` → **How to resume**).
+
 ## Current Status
 
-Golden has **near-full parity** with Rust/Ruby insta on snapshot fundamentals and review TUI. All 6 quick wins and 3 Phase 1 features are implemented (skip, batch ops, g/G navigation, help overlay, review summary, pending reporter, diff display, source context, inline word-level highlighting). Remaining gaps in **Inline Snapshots**, **CLI**, and **Test Runner Integration**.
+Golden has **near-full parity** with Rust/Ruby insta on snapshot fundamentals
+and the review TUI. All 6 quick wins and 3 Phase 1 features are implemented
+(skip, batch ops, g/G navigation, help overlay, review summary, pending
+reporter, diff display, source context, inline word-level highlighting).
+Remaining gaps are **inline snapshots** (Phase 4.1) and the untracked **parity
+inventory**.
 
 ---
 
@@ -282,3 +322,16 @@ golden-test-review:
 | 3.1   | CLI binary | Medium | Medium | ✅ Done |
 | 4.1   | Inline snapshots | Low | Large | ❌ Pending |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
+
+## Intentional divergences
+
+- **Inline snapshots are deferred, not stubbed.** Rust uses `syn` and
+  insta-ruby uses Prism to patch source files; Crystal has no stable equivalent,
+  so the API waits for a reviewed design instead of shipping a regex hack.
+- **Charm's Go `x/exp/golden` is inspiration only.** The parity contract is
+  Rust insta, with insta-ruby as a reference; Go behavior is not tracked in the
+  ledger.
+- **The review TUI is opt-in.** `src/golden.cr` does not require `bubbles`;
+  consumers that want `Golden.review!` require `golden/review` (the CLI binary
+  does), so the core shard does not force a TUI stack on every user.
+
