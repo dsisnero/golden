@@ -99,7 +99,7 @@ redactions:
 
 `make inventory` runs the canonical checkers from the installed
 cross-language-crystal-parity skill over all three. The curated ledger currently
-reads: 41 `ported`, 31 `partial`, 93 `missing`, 389 `skipped`. Most `skipped`
+reads: 61 `ported`, 30 `partial`, 74 `missing`, 389 `skipped`. Most `skipped`
 rows are insta's content/serialization engine and cargo/nextest internals, which
 Crystal replaces with stdlib or does not expose; the `missing` rows are the
 feature backlog in `plans/parity.md` Phase 6.
@@ -111,8 +111,7 @@ parity becomes a contract, add a `ruby_port_inventory.tsv` and extend the
 ## Known gaps
 
 - Inline snapshots (`plans/parity.md` Phase 4.1) are unimplemented.
-- The ledger's 93 `missing` rows are grouped into Phase 6; settings metadata,
-  snapshot naming/suffixes, strict comparison, and redaction helpers are the
-  largest groups.
+- The remaining `missing` rows are grouped into Phase 6; snapshot naming,
+  strict comparison, and redaction helpers are the largest groups.
 - `shard.yml` still advertises `0.2.0` while `CHANGELOG.md` and the README
   describe `0.3.0`; bump both when preparing the next release.

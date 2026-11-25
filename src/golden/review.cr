@@ -296,9 +296,7 @@ module Golden
       if item = @list.selected_item
         snap = item.as(ReviewItem)
         pending_path = snap.path
-        golden_path = pending_path.rchop(".new")
-        FileUtils.mv(pending_path, golden_path)
-        Golden.write_metadata(golden_path, snap.name, nil)
+        Golden.promote_pending!(pending_path, snap.name)
         @actions << {snap.name, "accepted"}
       end
     end
@@ -306,7 +304,7 @@ module Golden
     private def reject_current
       if item = @list.selected_item
         snap = item.as(ReviewItem)
-        File.delete(snap.path)
+        Golden.discard_pending!(snap.path)
         @actions << {snap.name, "rejected"}
       end
     end
@@ -322,10 +320,8 @@ module Golden
       (@list.index...@pending.size).each do |i|
         snap_path = @pending[i]
         name = File.basename(snap_path, ".golden.new")
-        golden_path = snap_path.rchop(".new")
         if File.exists?(snap_path)
-          FileUtils.mv(snap_path, golden_path)
-          Golden.write_metadata(golden_path, name, nil)
+          Golden.promote_pending!(snap_path, name)
           @actions << {name, "accepted"}
         end
       end
@@ -336,7 +332,7 @@ module Golden
         snap_path = @pending[i]
         name = File.basename(snap_path, ".golden.new")
         if File.exists?(snap_path)
-          File.delete(snap_path)
+          Golden.discard_pending!(snap_path)
           @actions << {name, "rejected"}
         end
       end

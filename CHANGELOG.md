@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `.golden.meta` sidecars now record `source_file` (relative to the project
+  root), `expression` (captured by the assertion macros), `description`,
+  `info`, and `input_file` in addition to `name`, `created_at`, and `line`
+- `Golden.with_settings` accepts `description`, `info`, `input_file`, and
+  `omit_expression`; `Golden::Settings` exposes the matching properties
+- `Golden.glob_snapshots` records the matched input path as `input_file`
+- Pending snapshots write `.golden.new.meta`; `Golden.promote_pending!` and
+  `Golden.discard_pending!` move or delete the sidecar with the snapshot, and
+  `accept_all!` / the review TUI preserve metadata from the pending files
+- `Golden.require_equal` accepts `expression`, `source_file`, and `input_file`
+  for callers that do not use the macros
+
 ## 0.3.0 (2026-07-19)
 
 ### Added

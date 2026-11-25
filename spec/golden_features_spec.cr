@@ -1371,4 +1371,107 @@ describe Golden do
       Golden.reject_all!(temp_dir).should be_empty
     end
   end
+
+  describe "snapshot metadata capture" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+    end
+
+    it "records description, info, input_file, expression, source_file, and line" do
+      Golden.with_settings(
+        update_mode: Golden::UpdateMode::Always,
+        dir: temp_dir,
+        description: "users list",
+        info: "generated in spec",
+        input_file: "spec/fixtures/users.txt"
+      ) do
+        Golden.require_equal("metadata/full", "value",
+          metadata_line: 42,
+          expression: "users.map(&.name)",
+          source_file: File.expand_path(__FILE__))
+      end
+
+      if meta = Golden.snapshot_metadata("metadata/full", temp_dir)
+        meta["expression"].as_s.should eq("users.map(&.name)")
+        meta["description"].as_s.should eq("users list")
+        meta["info"].as_s.should eq("generated in spec")
+        meta["input_file"].as_s.should eq("spec/fixtures/users.txt")
+        meta["line"].as_i.should eq(42)
+        meta["source_file"].as_s.should end_with("spec/golden_features_spec.cr")
+        meta["source_file"].as_s.starts_with?("/").should be_false
+      else
+        fail "metadata sidecar was not written"
+      end
+    end
+
+    it "omits the expression when omit_expression is enabled" do
+      Golden.with_settings(
+        update_mode: Golden::UpdateMode::Always,
+        dir: temp_dir,
+        omit_expression: true
+      ) do
+        Golden.require_equal("metadata/omit", "value", expression: "value")
+      end
+
+      if meta = Golden.snapshot_metadata("metadata/omit", temp_dir)
+        meta.has_key?("expression").should be_false
+      else
+        fail "metadata sidecar was not written"
+      end
+    end
+
+    it "captures the expression from the assertion macro" do
+      value = "macro value"
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.assert_snapshot("metadata/macro", value)
+      end
+
+      if meta = Golden.snapshot_metadata("metadata/macro", temp_dir)
+        meta["expression"].as_s.should eq("value")
+      else
+        fail "metadata sidecar was not written"
+      end
+    end
+
+    it "carries pending metadata through accept_all!" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Unseen, dir: temp_dir) do
+        Golden.require_equal("metadata/pending", "first", metadata_line: 7, expression: "first")
+        expect_raises(Exception, /output does not match/) do
+          Golden.require_equal("metadata/pending", "second", metadata_line: 7, expression: "second")
+        end
+      end
+
+      File.exists?(File.join(temp_dir, "metadata/pending.golden.new.meta")).should be_true
+      Golden.accept_all!(temp_dir)
+
+      if meta = Golden.snapshot_metadata("metadata/pending", temp_dir)
+        meta["expression"].as_s.should eq("second")
+        meta["line"].as_i.should eq(7)
+      else
+        fail "pending metadata was not promoted"
+      end
+    end
+
+    it "records the input file for glob snapshots" do
+      input_dir = File.join(temp_dir, "inputs")
+      FileUtils.mkdir_p(input_dir)
+      File.write(File.join(input_dir, "a.txt"), "data_a")
+
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+        Golden.glob_snapshots(File.join(input_dir, "*.txt"), test_data_dir: temp_dir) { |path| File.read(path) }
+      end
+
+      if meta = Golden.snapshot_metadata("a", temp_dir)
+        meta["input_file"].as_s.should eq(File.join(input_dir, "a.txt"))
+      else
+        fail "metadata sidecar was not written"
+      end
+    end
+  end
 end

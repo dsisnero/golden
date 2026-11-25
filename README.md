@@ -203,13 +203,32 @@ Golden.cleanup!                   # actually delete
 
 ### Metadata
 
+Every accepted snapshot gets a `.golden.meta` JSON sidecar. Assertion macros
+record the source line, source file, and expression automatically; the remaining
+fields come from settings:
+
 ```crystal
-# Read creation info from .golden.meta sidecar
+Golden.with_settings(description: "users list", info: "generated from API") do
+  Golden.assert_snapshot("users", output)
+  # stores expression: "output", source_file: "spec/users_spec.cr", line: 12,
+  # description: "users list", info: "generated from API"
+end
+
+# Read creation info from the sidecar
 meta = Golden.snapshot_metadata("my_snapshot")
-meta["created_at"]  # RFC 3339 timestamp
-meta["name"]        # snapshot name
-meta["line"]        # source line number
+meta["created_at"]    # RFC 3339 timestamp
+meta["name"]          # snapshot name
+meta["line"]          # source line number
+meta["source_file"]   # source file relative to the project root
+meta["expression"]    # expression captured by the macro
+meta["description"]   # optional human description
+meta["info"]          # optional free-form info text
+meta["input_file"]    # input file, set by glob_snapshots or settings
 ```
+
+Set `omit_expression: true` to keep the captured expression out of the sidecar.
+Pending snapshots keep their metadata in `.golden.new.meta`; accepting them
+promotes the sidecar along with the snapshot.
 
 ### Config File
 

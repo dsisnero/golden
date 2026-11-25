@@ -82,8 +82,14 @@ module Golden
     property path_redactions : Array({path: String, replacement: String})
     property comparator : Comparator?
     property serializer : Symbol?
+    property description : String?
+    property info : String?
+    property input_file : String?
+    property? omit_expression : Bool
 
-    def initialize(@update_mode = UpdateMode::Auto, @dir = "testdata")
+    def initialize(@update_mode = UpdateMode::Auto, @dir = "testdata",
+                   @description : String? = nil, @info : String? = nil,
+                   @input_file : String? = nil, @omit_expression = false)
       @filters = [] of String -> String
       @redactions = [] of Redaction
       @path_redactions = [] of {path: String, replacement: String}
@@ -102,10 +108,14 @@ module Golden
     @@settings = s
   end
 
-  def self.with_settings(update_mode : UpdateMode? = nil, dir : String? = nil, serializer : Symbol? = nil, &)
+  def self.with_settings(update_mode : UpdateMode? = nil, dir : String? = nil, serializer : Symbol? = nil,
+                         description : String? = nil, info : String? = nil,
+                         input_file : String? = nil, omit_expression : Bool? = nil, &)
     old = @@settings
     begin
-      s = Settings.new(@@settings.update_mode, @@settings.dir)
+      s = Settings.new(@@settings.update_mode, @@settings.dir,
+        @@settings.description, @@settings.info, @@settings.input_file,
+        @@settings.omit_expression?)
       s.filters = @@settings.filters.dup
       s.redactions = @@settings.redactions.dup
       s.path_redactions = @@settings.path_redactions.dup
@@ -119,6 +129,18 @@ module Golden
       end
       if ser = serializer
         s.serializer = ser
+      end
+      if desc = description
+        s.description = desc
+      end
+      if inf = info
+        s.info = inf
+      end
+      if inp = input_file
+        s.input_file = inp
+      end
+      if oe = omit_expression
+        s.omit_expression = oe
       end
       @@settings = s
       yield
@@ -262,41 +284,41 @@ module Golden
 
   macro assert_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, {{ args[1] }}, metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, {{ args[1] }}, metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, {{ args[0] }}, metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, {{ args[0] }}, metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", {{ args[0] }}, metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", {{ args[0] }}, metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% end %}
   end
 
   macro assert_json_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_pretty_json), metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_pretty_json), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% end %}
   end
 
   macro assert_yaml_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_yaml), metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, Golden.apply_path_redactions({{ args[1] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Golden.apply_path_redactions({{ args[0] }}.to_yaml), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% end %}
   end
 
   macro assert_binary_snapshot(*args)
     {% if args.size == 2 %}
-      Golden.require_equal({{ args[0] }}, Base64.encode({{ args[1] }}), metadata_line: __LINE__)
+      Golden.require_equal({{ args[0] }}, Base64.encode({{ args[1] }}), metadata_line: __LINE__, expression: {{ args[1].stringify }}, source_file: __FILE__)
     {% elsif @def %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Base64.encode({{ args[0] }}), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/" + {{ @def.name.stringify }}, Base64.encode({{ args[0] }}), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% else %}
-      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Base64.encode({{ args[0] }}), metadata_line: __LINE__)
+      Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Base64.encode({{ args[0] }}), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__)
     {% end %}
   end
 
@@ -350,9 +372,7 @@ module Golden
     search_dir = dir || @@settings.dir
     pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
     pending.each do |pending_path|
-      golden_path = pending_path.rchop(".new")
-      FileUtils.mv(pending_path, golden_path)
-      write_metadata(golden_path, File.basename(golden_path, ".golden"), nil)
+      promote_pending!(pending_path)
     end
     pending.map(&.rchop(".new"))
   end
@@ -360,7 +380,7 @@ module Golden
   def self.reject_all!(dir : String? = nil) : Array(String)
     search_dir = dir || @@settings.dir
     pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
-    pending.each { |pending_path| File.delete(pending_path) }
+    pending.each { |pending_path| discard_pending!(pending_path) }
     pending
   end
 
@@ -368,7 +388,7 @@ module Golden
     Dir.glob(pattern).sort.each do |path|
       test_name = File.basename(path, File.extname(path))
       output = yield path
-      require_equal(test_name, output, test_data_dir: test_data_dir)
+      require_equal(test_name, output, test_data_dir, input_file: path)
     end
   end
 
@@ -378,7 +398,9 @@ module Golden
     end
   end
 
-  def self.require_equal(test_name : String, output : String | Bytes, test_data_dir : String? = nil, metadata_line : Int32? = nil)
+  def self.require_equal(test_name : String, output : String | Bytes, test_data_dir : String? = nil,
+                         metadata_line : Int32? = nil, expression : String? = nil,
+                         source_file : String? = nil, input_file : String? = nil)
     dir = test_data_dir || @@settings.dir
     full_name = @@group.empty? ? test_name : File.join(@@group, test_name)
     golden_path = File.join(dir, "#{full_name}.golden")
@@ -395,18 +417,22 @@ module Golden
     case mode
     in UpdateMode::Always
       write_file(golden_path, processed_output)
-      write_metadata(golden_path, full_name, metadata_line)
+      write_metadata(golden_path, full_name, metadata_line,
+        expression: expression, source_file: source_file, input_file: input_file)
     in UpdateMode::No
       compare_strict(golden_path, processed_output)
     in UpdateMode::New
-      handle_pending(golden_path, pending_path, processed_output)
+      handle_pending(golden_path, pending_path, processed_output,
+        full_name, metadata_line, expression, source_file, input_file)
     in UpdateMode::Unseen
-      handle_unseen(golden_path, pending_path, processed_output, full_name, metadata_line)
+      handle_unseen(golden_path, pending_path, processed_output,
+        full_name, metadata_line, expression, source_file, input_file)
     in UpdateMode::Auto
       if ci?
         compare_strict(golden_path, processed_output)
       else
-        handle_pending(golden_path, pending_path, processed_output)
+        handle_pending(golden_path, pending_path, processed_output,
+          full_name, metadata_line, expression, source_file, input_file)
       end
     end
   end
@@ -430,13 +456,72 @@ module Golden
     File.rename(tmp, path)
   end
 
-  def self.write_metadata(golden_path : String, name : String, line : Int32?)
-    meta_path = golden_path + ".meta"
-    File.write(meta_path, {
-      name:       name,
-      created_at: Time.utc.to_rfc3339,
-      line:       line,
-    }.to_pretty_json)
+  def self.write_metadata(golden_path : String, name : String, line : Int32?,
+                          expression : String? = nil, source_file : String? = nil,
+                          input_file : String? = nil)
+    write_metadata_file(golden_path + ".meta",
+      build_metadata(name, line, expression, source_file, input_file))
+  end
+
+  private def self.write_metadata_file(meta_path : String, fields : Hash(String, JSON::Any)) : Nil
+    File.write(meta_path, fields.to_pretty_json)
+  end
+
+  # Promotes a pending snapshot to a golden file, carrying its metadata sidecar.
+  def self.promote_pending!(pending_path : String, name : String? = nil) : String
+    golden_path = pending_path.rchop(".new")
+    pending_meta = pending_path + ".meta"
+    FileUtils.mv(pending_path, golden_path)
+    if File.exists?(pending_meta)
+      FileUtils.mv(pending_meta, golden_path + ".meta")
+    else
+      write_metadata(golden_path, name || File.basename(golden_path, ".golden"), nil)
+    end
+    golden_path
+  end
+
+  # Removes a pending snapshot and its metadata sidecar.
+  def self.discard_pending!(pending_path : String)
+    delete_file(pending_path)
+    delete_file(pending_path + ".meta")
+  end
+
+  private def self.build_metadata(name : String, line : Int32?, expression : String?,
+                                  source_file : String?, input_file : String?) : Hash(String, JSON::Any)
+    fields = {} of String => JSON::Any
+    fields["name"] = JSON::Any.new(name)
+    fields["created_at"] = JSON::Any.new(Time.utc.to_rfc3339)
+    fields["line"] = line ? JSON::Any.new(line.to_i64) : JSON::Any.new(nil)
+    unless @@settings.omit_expression?
+      if exp = expression
+        fields["expression"] = JSON::Any.new(exp)
+      end
+    end
+    if desc = @@settings.description
+      fields["description"] = JSON::Any.new(desc)
+    end
+    if inf = @@settings.info
+      fields["info"] = JSON::Any.new(inf)
+    end
+    if inp = input_file || @@settings.input_file
+      fields["input_file"] = JSON::Any.new(inp)
+    end
+    if src = relative_source(source_file)
+      fields["source_file"] = JSON::Any.new(src)
+    end
+    fields
+  end
+
+  private def self.relative_source(source_file : String?) : String?
+    return nil unless source_file
+    return source_file unless Path[source_file].absolute?
+    if root = find_project_root(Dir.current)
+      root_abs = File.expand_path(root)
+      prefix = root_abs.ends_with?(File::SEPARATOR) ? root_abs : root_abs + File::SEPARATOR
+      abs = File.expand_path(source_file)
+      return abs[prefix.size..] if abs.starts_with?(prefix)
+    end
+    source_file
   end
 
   def self.snapshot_metadata(name : String, test_data_dir : String? = nil) : Hash(String, JSON::Any)?
@@ -530,7 +615,11 @@ module Golden
     end
   end
 
-  private def self.handle_pending(golden_path : String, pending_path : String, output : String)
+  private def self.handle_pending(golden_path : String, pending_path : String, output : String,
+                                  test_name : String? = nil, metadata_line : Int32? = nil,
+                                  expression : String? = nil, source_file : String? = nil,
+                                  input_file : String? = nil)
+    pending_meta = pending_path + ".meta"
     if File.exists?(golden_path)
       golden_content = File.read(golden_path)
       golden_str = normalize(golden_content)
@@ -538,10 +627,12 @@ module Golden
 
       if compare_outputs(golden_str, out_str)
         delete_file(pending_path)
+        delete_file(pending_meta)
         return
       end
 
       write_file(pending_path, output)
+      write_pending_metadata(pending_meta, test_name, metadata_line, expression, source_file, input_file)
       if force_pass?
         return
       end
@@ -549,6 +640,7 @@ module Golden
       raise "output does not match, expected:\n\n#{golden_str}\n\ngot:\n\n#{out_str}\n\ndiff:\n\n#{diff}"
     else
       write_file(pending_path, output)
+      write_pending_metadata(pending_meta, test_name, metadata_line, expression, source_file, input_file)
       if force_pass?
         return
       end
@@ -556,10 +648,24 @@ module Golden
     end
   end
 
-  private def self.handle_unseen(golden_path : String, pending_path : String, output : String, test_name : String? = nil, metadata_line : Int32? = nil)
+  private def self.write_pending_metadata(pending_meta : String, test_name : String?,
+                                          metadata_line : Int32?, expression : String?,
+                                          source_file : String?, input_file : String?)
+    return unless test_name
+    write_metadata_file(pending_meta,
+      build_metadata(test_name, metadata_line, expression, source_file, input_file))
+  end
+
+  private def self.handle_unseen(golden_path : String, pending_path : String, output : String,
+                                 test_name : String? = nil, metadata_line : Int32? = nil,
+                                 expression : String? = nil, source_file : String? = nil,
+                                 input_file : String? = nil)
     unless File.exists?(golden_path)
       write_file(golden_path, output)
-      write_metadata(golden_path, test_name || "", metadata_line) if test_name
+      if test_name
+        write_metadata(golden_path, test_name, metadata_line,
+          expression: expression, source_file: source_file, input_file: input_file)
+      end
       return
     end
 
@@ -569,10 +675,12 @@ module Golden
 
     if compare_outputs(golden_str, out_str)
       delete_file(pending_path)
+      delete_file(pending_path + ".meta")
       return
     end
 
     write_file(pending_path, output)
+    write_pending_metadata(pending_path + ".meta", test_name, metadata_line, expression, source_file, input_file)
     diff = unified_diff("golden", "run", golden_str, out_str)
     raise "output does not match, expected:\n\n#{golden_str}\n\ngot:\n\n#{out_str}\n\ndiff:\n\n#{diff}"
   end

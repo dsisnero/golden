@@ -422,13 +422,13 @@ insta/src/settings.rs::function::_assert_send_sync	function	skipped	-	Rust trait
 insta/src/settings.rs::method::ActualSettings.allow_empty_glob	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.clone	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.comparator	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.description	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.description	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.filters	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.info	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.input_file	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.omit_expression	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.info	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
+insta/src/settings.rs::method::ActualSettings.input_file	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
+insta/src/settings.rs::method::ActualSettings.omit_expression	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.raw_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.raw_info	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.redactions	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.snapshot_path	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::ActualSettings.snapshot_suffix	method	missing	-	not implemented in the Crystal port
@@ -452,13 +452,13 @@ insta/src/settings.rs::method::Settings.clear_redactions	method	missing	-	not im
 insta/src/settings.rs::method::Settings.clone_current	method	partial	src/golden.cr::method::Golden.with_settings	scoped settings save and restore
 insta/src/settings.rs::method::Settings.comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator
 insta/src/settings.rs::method::Settings.default	method	ported	src/golden.cr::method::Settings.initialize	default settings
-insta/src/settings.rs::method::Settings.description	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.description	method	ported	src/golden.cr::class::Settings	Settings.description property
 insta/src/settings.rs::method::Settings.filters	method	ported	src/golden.cr::class::Settings	Settings.filters
 insta/src/settings.rs::method::Settings.has_info	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.info	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.input_file	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.info	method	ported	src/golden.cr::class::Settings	Settings.info stores text
+insta/src/settings.rs::method::Settings.input_file	method	ported	src/golden.cr::class::Settings	Settings.input_file property
 insta/src/settings.rs::method::Settings.new	method	ported	src/golden.cr::method::Settings.initialize	settings constructor
-insta/src/settings.rs::method::Settings.omit_expression	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.omit_expression	method	ported	src/golden.cr::class::Settings	Settings.omit_expression property
 insta/src/settings.rs::method::Settings.prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.remove_description	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.remove_info	method	missing	-	not implemented in the Crystal port
@@ -466,13 +466,13 @@ insta/src/settings.rs::method::Settings.remove_input_file	method	missing	-	not i
 insta/src/settings.rs::method::Settings.remove_snapshot_suffix	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.set_allow_empty_glob	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.set_comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator=
-insta/src/settings.rs::method::Settings.set_description	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_description	method	ported	src/golden.cr::class::Settings	Settings.description= property
 insta/src/settings.rs::method::Settings.set_filters	method	ported	src/golden.cr::class::Settings	Settings.filters=
-insta/src/settings.rs::method::Settings.set_info	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.set_input_file	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.set_omit_expression	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_info	method	ported	src/golden.cr::class::Settings	Settings.info= property
+insta/src/settings.rs::method::Settings.set_input_file	method	ported	src/golden.cr::class::Settings	Settings.input_file= property
+insta/src/settings.rs::method::Settings.set_omit_expression	method	ported	src/golden.cr::class::Settings	Settings.omit_expression= property
 insta/src/settings.rs::method::Settings.set_prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.set_raw_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_raw_info	method	ported	src/golden.cr::class::Settings	Settings.info stores text
 insta/src/settings.rs::method::Settings.set_redactions	method	ported	src/golden.cr::class::Settings	Settings.redactions=
 insta/src/settings.rs::method::Settings.set_snapshot_path	method	ported	src/golden.cr::method::Golden.dir=	Golden.dir=
 insta/src/settings.rs::method::Settings.set_snapshot_suffix	method	missing	-	not implemented in the Crystal port
@@ -502,15 +502,15 @@ insta/src/snapshot.rs::function::normalize_inline	function	missing	-	inline snap
 insta/src/snapshot.rs::function::normalized_of_literal	function	missing	-	inline snapshots (Phase 4.1)
 insta/src/snapshot.rs::function::required_hashes	function	missing	-	legacy hash-named snapshots are not supported
 insta/src/snapshot.rs::method::MetaData.as_content	method	skipped	-	content model collapsed to String or Bytes
-insta/src/snapshot.rs::method::MetaData.assertion_line	method	partial	src/golden.cr::method::Golden.write_metadata	line stored in the meta sidecar
-insta/src/snapshot.rs::method::MetaData.description	method	missing	-	description metadata is not stored
-insta/src/snapshot.rs::method::MetaData.expression	method	missing	-	expression metadata is not stored
+insta/src/snapshot.rs::method::MetaData.assertion_line	method	ported	src/golden.cr::method::Golden.write_metadata	line stored in the meta sidecar
+insta/src/snapshot.rs::method::MetaData.description	method	ported	src/golden.cr::method::Golden.write_metadata	description stored in the meta sidecar
+insta/src/snapshot.rs::method::MetaData.expression	method	ported	src/golden.cr::method::Golden.write_metadata	expression captured by the assertion macros
 insta/src/snapshot.rs::method::MetaData.from_content	method	skipped	-	content model collapsed to String or Bytes
-insta/src/snapshot.rs::method::MetaData.get_relative_source	method	skipped	-	cargo workspace path helper
-insta/src/snapshot.rs::method::MetaData.input_file	method	missing	-	input_file metadata is not stored
-insta/src/snapshot.rs::method::MetaData.private_info	method	missing	-	info metadata is not stored
-insta/src/snapshot.rs::method::MetaData.source	method	partial	src/golden.cr::method::Golden.write_metadata	line stored in the meta sidecar
-insta/src/snapshot.rs::method::MetaData.trim_for_persistence	method	missing	-	no inline metadata persistence
+insta/src/snapshot.rs::method::MetaData.get_relative_source	method	ported	src/golden.cr::method::Golden.write_metadata	source_file stored relative to the project root
+insta/src/snapshot.rs::method::MetaData.input_file	method	ported	src/golden.cr::method::Golden.write_metadata	input_file stored in the meta sidecar
+insta/src/snapshot.rs::method::MetaData.private_info	method	partial	src/golden.cr::method::Golden.write_metadata	info stored without a privacy flag
+insta/src/snapshot.rs::method::MetaData.source	method	ported	src/golden.cr::method::Golden.write_metadata	source_file stored in the meta sidecar
+insta/src/snapshot.rs::method::MetaData.trim_for_persistence	method	skipped	-	metadata lives in a sidecar, not a snapshot header
 insta/src/snapshot.rs::method::PendingInlineSnapshot.as_content	method	missing	-	not implemented in the Crystal port
 insta/src/snapshot.rs::method::PendingInlineSnapshot.from_content	method	missing	-	not implemented in the Crystal port
 insta/src/snapshot.rs::method::PendingInlineSnapshot.load_batch	method	missing	-	not implemented in the Crystal port
