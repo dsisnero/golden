@@ -29,6 +29,12 @@
 - `Golden.clear_filters`, `Golden.clear_redactions`, and the `remove_*`
   helpers for description, info, input_file, and snapshot_suffix, plus
   `Golden::Settings#has_info?`
+- path selectors now support ranges (`[0:2]`, `[-1:]`), wildcards (`.*`),
+  deep wildcards (`.**`), quoted keys, and comma-separated alternatives
+- `Golden.dynamic_redaction`, `Golden.rounded_redaction`,
+  `Golden.sorted_redaction`, and `Golden.add_dynamic_redaction` for computed
+  path redactions; `Golden.add_path_redaction` accepts a `ValueRedaction`
+- `sort_selector` setting sorts only the JSON objects matched by the selector
 
 ## 0.3.0 (2026-07-19)
 

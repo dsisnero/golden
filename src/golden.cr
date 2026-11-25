@@ -27,6 +27,45 @@ module Golden
     end
   end
 
+  # One segment of a path selector such as `.users[].id`.
+  enum SegmentKind
+    Key
+    Index
+    Wildcard
+    DeepWildcard
+    Range
+  end
+
+  struct SelectorSegment
+    getter kind : SegmentKind
+    getter key : String?
+    getter index : Int32?
+    getter from : Int32?
+    getter to : Int32?
+
+    def initialize(@kind, @key = nil, @index = nil, @from = nil, @to = nil)
+    end
+  end
+
+  # A value transform used by path redactions.
+  struct ValueRedaction
+    getter transform : Proc(JSON::Any, String, JSON::Any)
+
+    def initialize(@transform : Proc(JSON::Any, String, JSON::Any))
+    end
+  end
+
+  # A selector bound to a value transform.
+  struct PathRedaction
+    getter selector : String
+    getter segments : Array(Array(SelectorSegment))
+    getter transform : Proc(JSON::Any, String, JSON::Any)
+
+    def initialize(@selector : String, @segments : Array(Array(SelectorSegment)),
+                   @transform : Proc(JSON::Any, String, JSON::Any))
+    end
+  end
+
   module Comparator
     abstract def matches?(expected : String, actual : String) : Bool
   end
@@ -79,7 +118,7 @@ module Golden
     property dir : String
     property filters : Array(String -> String)
     property redactions : Array(Redaction)
-    property path_redactions : Array({path: String, replacement: String})
+    property path_redactions : Array(PathRedaction)
     property comparator : Comparator?
     property serializer : Symbol?
     property description : String?
@@ -88,6 +127,7 @@ module Golden
     property? omit_expression : Bool
     property? strip_ansi_escape_codes : Bool
     property? sort_maps : Bool
+    property sort_selector : String?
     property? allow_empty_glob : Bool
     property snapshot_suffix : String
     property? prepend_module_to_snapshot : Bool
@@ -98,10 +138,10 @@ module Golden
                    @input_file : String? = nil, @omit_expression = false,
                    @snapshot_suffix = "", @prepend_module_to_snapshot = false,
                    @allow_duplicates = false, @strip_ansi_escape_codes = false,
-                   @sort_maps = false, @allow_empty_glob = false)
+                   @sort_maps = false, @allow_empty_glob = false, @sort_selector : String? = nil)
       @filters = [] of String -> String
       @redactions = [] of Redaction
-      @path_redactions = [] of {path: String, replacement: String}
+      @path_redactions = [] of PathRedaction
       @comparator = nil
       @serializer = nil
     end
@@ -128,7 +168,7 @@ module Golden
       @@settings.omit_expression?, @@settings.snapshot_suffix,
       @@settings.prepend_module_to_snapshot?, @@settings.allow_duplicates?,
       @@settings.strip_ansi_escape_codes?, @@settings.sort_maps?,
-      @@settings.allow_empty_glob?)
+      @@settings.allow_empty_glob?, @@settings.sort_selector)
     s.filters = @@settings.filters.dup
     s.redactions = @@settings.redactions.dup
     s.path_redactions = @@settings.path_redactions.dup
@@ -142,13 +182,15 @@ module Golden
                          input_file : String? = nil, omit_expression : Bool? = nil,
                          snapshot_suffix : String? = nil, prepend_module_to_snapshot : Bool? = nil,
                          allow_duplicates : Bool? = nil, strip_ansi_escape_codes : Bool? = nil,
-                         sort_maps : Bool? = nil, allow_empty_glob : Bool? = nil, &)
+                         sort_maps : Bool? = nil, allow_empty_glob : Bool? = nil,
+                         sort_selector : String? = nil, &)
     old = @@settings
     begin
       s = clone_settings
       apply_value_settings(s, update_mode, dir, serializer, description, info, input_file, omit_expression)
       apply_toggle_settings(s, snapshot_suffix, prepend_module_to_snapshot, allow_duplicates,
         strip_ansi_escape_codes, sort_maps, allow_empty_glob)
+      s.sort_selector = sort_selector || s.sort_selector
       @@settings = s
       yield
     ensure
@@ -212,8 +254,32 @@ module Golden
     @@settings.redactions << Redaction.new(pattern, replacement)
   end
 
-  def self.add_path_redaction(path : String, replacement : String)
-    @@settings.path_redactions << {path: path, replacement: replacement}
+  def self.add_path_redaction(selector : String, replacement : String)
+    add_path_redaction(selector, ValueRedaction.new(->(_value : JSON::Any, _path : String) { JSON::Any.new(replacement) }))
+  end
+
+  def self.add_path_redaction(selector : String, redaction : ValueRedaction)
+    @@settings.path_redactions << PathRedaction.new(selector, parse_selectors(selector), redaction.transform)
+  end
+
+  def self.add_dynamic_redaction(selector : String, &block : JSON::Any, String -> JSON::Any)
+    add_path_redaction(selector, dynamic_redaction(&block))
+  end
+
+  # Builds a redaction whose replacement is computed from the matched value and
+  # its dotted path (for example `.user.email`).
+  def self.dynamic_redaction(&block : JSON::Any, String -> JSON::Any) : ValueRedaction
+    ValueRedaction.new(block)
+  end
+
+  # Rounds floating point numbers at the matched path to `decimals` places.
+  def self.rounded_redaction(decimals : Int32 = 2) : ValueRedaction
+    ValueRedaction.new(->(value : JSON::Any, _path : String) { round_json_number(value, decimals) })
+  end
+
+  # Sorts arrays and object keys at the matched path.
+  def self.sorted_redaction : ValueRedaction
+    ValueRedaction.new(->(value : JSON::Any, _path : String) { sort_json_collection(value) })
   end
 
   def self.clear_filters
@@ -644,8 +710,8 @@ module Golden
     return output if @@settings.path_redactions.empty?
     begin
       parsed = JSON.parse(output)
-      @@settings.path_redactions.each do |path_redaction|
-        parsed = walk_and_replace_json(parsed, parse_path(path_redaction[:path]), JSON::Any.new(path_redaction[:replacement].strip('"')))
+      @@settings.path_redactions.each do |redaction|
+        parsed = redact_json(parsed, redaction.segments, redaction.transform, [] of PathItem)
       end
       parsed.to_pretty_json
     rescue
@@ -653,43 +719,255 @@ module Golden
     end
   end
 
-  private def self.parse_path(path : String) : Array(String)
-    segments = [] of String
-    path.split(".").each do |part|
-      if bracket_idx = part.index('[')
-        segments << part[0...bracket_idx] if part[0...bracket_idx] != ""
-        inner = part[bracket_idx..]
-        inner.scan(/\[([^\]]+)\]/) do |match|
-          segments << match[1]
+  private struct PathItem
+    getter key : String?
+    getter index : Int32?
+    getter length : Int32?
+
+    def initialize(@key = nil, @index = nil, @length = nil)
+    end
+  end
+
+  private def self.redact_json(node : JSON::Any, selectors : Array(Array(SelectorSegment)),
+                               transform : Proc(JSON::Any, String, JSON::Any),
+                               path : Array(PathItem)) : JSON::Any
+    if selectors.any? { |segments| selector_matches?(segments, path) }
+      return transform.call(node, path_to_string(path))
+    end
+
+    case raw = node.raw
+    when Hash
+      updated = {} of String => JSON::Any
+      raw.each do |key, value|
+        updated[key] = redact_json(value, selectors, transform, path + [PathItem.new(key: key)])
+      end
+      JSON::Any.new(updated)
+    when Array
+      updated = raw.map_with_index do |value, index|
+        redact_json(value, selectors, transform, path + [PathItem.new(index: index, length: raw.size)])
+      end
+      JSON::Any.new(updated)
+    else
+      node
+    end
+  end
+
+  private def self.selector_matches?(segments : Array(SelectorSegment), path : Array(PathItem)) : Bool
+    if deep_idx = segments.index(&.kind.deep_wildcard?)
+      return false if path.size <= deep_idx
+      segments[0...deep_idx].each_with_index do |segment, idx|
+        return false unless segment_matches?(segment, path[idx])
+      end
+      backward = segments[(deep_idx + 1)..]
+      backward.each_with_index do |segment, idx|
+        return false unless segment_matches?(segment, path[path.size - 1 - idx])
+      end
+      true
+    else
+      return false unless segments.size == path.size
+      segments.each_with_index.all? { |segment, idx| segment_matches?(segment, path[idx]) }
+    end
+  end
+
+  private def self.segment_matches?(segment : SelectorSegment, item : PathItem) : Bool
+    case segment.kind
+    when SegmentKind::Wildcard, SegmentKind::DeepWildcard
+      true
+    when SegmentKind::Key
+      item.key == segment.key
+    when SegmentKind::Index
+      item.index == segment.index
+    when SegmentKind::Range
+      index = item.index
+      return false unless index
+      length = item.length || 0
+      from = segment.from
+      to = segment.to
+      lower = from ? (from < 0 ? {length + from, 0}.max : from) : 0
+      upper = to ? (to < 0 ? {length + to, 0}.max : to) : length
+      index >= lower && index < upper
+    else
+      false
+    end
+  end
+
+  private def self.path_to_string(path : Array(PathItem)) : String
+    path.map { |item| item.key ? ".#{item.key}" : ".#{item.index}" }.join
+  end
+
+  private def self.parse_selectors(selector : String) : Array(Array(SelectorSegment))
+    split_selectors(selector).map { |part| parse_segments(part, selector) }
+  end
+
+  private def self.split_selectors(input : String) : Array(String)
+    parts = [] of String
+    buffer = String::Builder.new
+    in_string = false
+    escaped = false
+    depth = 0
+    input.each_char do |char|
+      if in_string
+        buffer << char
+        if escaped
+          escaped = false
+        elsif char == '\\'
+          escaped = true
+        elsif char == '"'
+          in_string = false
         end
       else
-        segments << part
+        case char
+        when '"'
+          in_string = true
+          buffer << char
+        when '['
+          depth += 1
+          buffer << char
+        when ']'
+          depth -= 1
+          buffer << char
+        when ','
+          if depth.zero?
+            parts << buffer.to_s
+            buffer = String::Builder.new
+          else
+            buffer << char
+          end
+        else
+          buffer << char
+        end
+      end
+    end
+    parts << buffer.to_s
+    parts.map(&.strip).reject(&.empty?)
+  end
+
+  private def self.parse_segments(selector : String, original : String) : Array(SelectorSegment)
+    text = selector.strip.gsub("[*]", "[]")
+    return [] of SelectorSegment if text.empty? || text == "."
+    text = "." + text unless text.starts_with?('.')
+    segments = [] of SelectorSegment
+    idx = 0
+    while idx < text.size
+      case text[idx]
+      when '.'
+        idx = parse_dot_segment(text, idx + 1, segments, original)
+      when '['
+        close = closing_bracket(text, idx)
+        raise ArgumentError.new("invalid selector: #{original}") unless close
+        segments << parse_subscript(text[(idx + 1)...close].strip, original)
+        idx = close + 1
+      else
+        raise ArgumentError.new("invalid selector: #{original}")
       end
     end
     segments
   end
 
-  private def self.walk_and_replace_json(node : JSON::Any, segs : Array(String), replacement : JSON::Any) : JSON::Any
-    return replacement if segs.empty?
-    head = segs.first
-    tail = segs[1..]
-    case node.raw
-    when Hash
-      h = node.as_h
-      if h.has_key?(head)
-        h[head] = walk_and_replace_json(h[head], tail, replacement)
+  private def self.parse_dot_segment(text : String, idx : Int32,
+                                     segments : Array(SelectorSegment), original : String) : Int32
+    if idx < text.size && text[idx] == '['
+      # A dot before a subscript is decorative (`.users[]`).
+      return idx
+    end
+
+    if idx < text.size && text[idx] == '*'
+      if idx + 1 < text.size && text[idx + 1] == '*'
+        segments << SelectorSegment.new(SegmentKind::DeepWildcard)
+        return idx + 2
       end
-      JSON::Any.new(h)
-    when Array
-      a = node.as_a
-      if head == "*"
-        a = a.map { |elem| walk_and_replace_json(elem, tail, replacement) }
-      elsif idx = head.to_i?
-        a[idx] = walk_and_replace_json(a[idx], tail, replacement) if idx < a.size
+      segments << SelectorSegment.new(SegmentKind::Wildcard)
+      return idx + 1
+    end
+
+    start = idx
+    while idx < text.size && text[idx] != '.' && text[idx] != '['
+      idx += 1
+    end
+    key = text[start...idx]
+    raise ArgumentError.new("invalid selector: #{original}") if key.empty?
+    segments << SelectorSegment.new(SegmentKind::Key, key: key)
+    idx
+  end
+
+  private def self.closing_bracket(text : String, open : Int32) : Int32?
+    in_string = false
+    escaped = false
+    idx = open + 1
+    while idx < text.size
+      char = text[idx]
+      if in_string
+        if escaped
+          escaped = false
+        elsif char == '\\'
+          escaped = true
+        elsif char == '"'
+          in_string = false
+        end
+      else
+        case char
+        when '"' then in_string = true
+        when ']' then return idx
+        end
       end
-      JSON::Any.new(a)
+      idx += 1
+    end
+    nil
+  end
+
+  private def self.parse_subscript(content : String, original : String) : SelectorSegment
+    if content.empty?
+      SelectorSegment.new(SegmentKind::Range)
+    elsif content.starts_with?('"')
+      key = content[1...-1].gsub("\\\\", "\\").gsub("\\\"", "\"")
+      SelectorSegment.new(SegmentKind::Key, key: key)
+    elsif content.includes?(':')
+      parts = content.split(':', 2)
+      from = parts[0].empty? ? nil : parts[0].to_i?
+      to = parts[1].empty? ? nil : parts[1].to_i?
+      raise ArgumentError.new("invalid selector: #{original}") if from.nil? && !parts[0].empty?
+      raise ArgumentError.new("invalid selector: #{original}") if to.nil? && !parts[1].empty?
+      SelectorSegment.new(SegmentKind::Range, from: from, to: to)
     else
-      node
+      index = content.to_i?
+      raise ArgumentError.new("invalid selector: #{original}") unless index
+      SelectorSegment.new(SegmentKind::Index, index: index)
+    end
+  end
+
+  private def self.round_json_number(value : JSON::Any, decimals : Int32) : JSON::Any
+    raw = value.raw
+    if raw.is_a?(Float64)
+      scale = 10.0 ** decimals
+      JSON::Any.new((raw * scale).round / scale)
+    else
+      value
+    end
+  end
+
+  private def self.sort_json_collection(value : JSON::Any) : JSON::Any
+    case raw = value.raw
+    when Array
+      compared = raw.sort do |a, b|
+        compare_json_values(a, b)
+      end
+      JSON::Any.new(compared)
+    when Hash
+      sorted = {} of String => JSON::Any
+      raw.keys.sort!.each { |key| sorted[key] = raw[key] }
+      JSON::Any.new(sorted)
+    else
+      value
+    end
+  end
+
+  private def self.compare_json_values(a : JSON::Any, b : JSON::Any) : Int32
+    raw_a = a.raw
+    raw_b = b.raw
+    if raw_a.is_a?(Number) && raw_b.is_a?(Number)
+      (raw_a.to_f <=> raw_b.to_f) || 0
+    else
+      a.to_json <=> b.to_json
     end
   end
 
@@ -709,10 +987,19 @@ module Golden
     input.gsub(/\e\[[0-9;?]*[A-Za-z]/, "")
   end
 
-  # Serializes a value as pretty JSON, sorting map keys when `sort_maps` is set.
+  # Serializes a value as pretty JSON, sorting maps when `sort_maps` is set or
+  # the objects selected by `sort_selector`.
   def self.format_json(value) : String
     json = value.to_pretty_json
-    @@settings.sort_maps? ? sort_json_maps(json) : json
+    if selector = @@settings.sort_selector
+      sorted = redact_json(JSON.parse(json), parse_selectors(selector),
+        sorted_redaction.transform, [] of PathItem)
+      sorted.to_pretty_json
+    elsif @@settings.sort_maps?
+      sort_json_maps(json)
+    else
+      json
+    end
   end
 
   private def self.sort_json_maps(json : String) : String

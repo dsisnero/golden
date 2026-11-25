@@ -2,13 +2,12 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6.4 — redaction helpers (`dynamic_redaction`,
-  `rounded_redaction`, `sorted_redaction`) and the path-selector grammar.
+- **Current focus:** Phase 4.1 — inline snapshots (source patching design).
 - **Next up:**
-  1. 6.4 redaction helpers plus the full path-selector grammar (the current
-     `partial` rows).
-  2. 4.1 inline snapshots (source patching; needs a design).
-  3. Remaining small gaps: `sort_selector`, `invoke_external_diff_tool`.
+  1. 4.1 inline snapshots: choose a source-patching approach, then port the
+     pending registry, normalization, and accept/reject flow.
+  2. `invoke_external_diff_tool` (optional external diff integration) remains
+     unimplemented.
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -18,11 +17,12 @@
   - Snapshot naming (Phase 6.2): complete
   - Strict comparison (Phase 6.3): closed — always exact; `matches_fully` is
     not applicable without embedded metadata
+  - Redaction helpers and selectors (Phase 6.4): complete
   - Settings/pending helpers (Phase 6.5): complete
   - Output normalization (Phase 6.6): complete
   - Inline snapshots (Phase 4.1): not started
-  - Rust parity inventory: bootstrapped — 554 rows (92 `ported`, 30 `partial`,
-    21 `missing`, 411 `skipped`)
+  - Rust parity inventory: bootstrapped — 554 rows (107 `ported`, 22 `partial`,
+    15 `missing`, 410 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
   - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
@@ -36,8 +36,8 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** settings/pending helpers (parent `5e9d323`).
-- **Gates:** `make lint` pass; `make test` pass (199 examples); `make inventory`
+- **Last commit:** redaction helpers and selector grammar (parent `f44b907`).
+- **Gates:** `make lint` pass; `make test` pass (210 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -51,7 +51,7 @@ batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
 display, source context, inline word-level highlighting).
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 92 are `ported`, 30 `partial`, 21 `missing`, and 411 `skipped` (insta's
+which 107 are `ported`, 22 `partial`, 15 `missing`, and 410 `skipped` (insta's
 content/serialization engine and cargo internals). Phase 6 turns the `missing`
 and `partial` groups into features; inline snapshots (Phase 4.1) remain the
 largest single gap.
@@ -338,9 +338,12 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
       metadata inside snapshot files and compares normalized content exactly,
       so `matches_fully` / `require_full_match` add nothing. Ledger rows are
       `skipped` with that rationale.
-- [ ] **6.4 Redaction helpers and selector grammar** — `dynamic_redaction`,
-      `rounded_redaction`, `sorted_redaction`, plus the full `Selector` grammar
-      (ranges, struct/seq selectors). Closes the `partial` redaction rows.
+- [x] **6.4 Redaction helpers and selector grammar** — selectors support
+      keys, quoted keys, indices, ranges (including negative), wildcards, deep
+      wildcards, and comma-separated alternatives; `dynamic_redaction`,
+      `rounded_redaction`, `sorted_redaction`, and `add_dynamic_redaction` are
+      implemented, and `sort_selector` sorts only matched objects. Object keys
+      are not traversed as paths (values only).
 - [x] **6.5 Settings and pending lifecycle helpers** — `clear_filters`,
       `clear_redactions`, `remove_description/info/input_file/snapshot_suffix`,
       `Settings#has_info?`, and stale-pending cleanup on a passing assertion
@@ -369,7 +372,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 6.1   | Settings metadata parity | High | Medium | ✅ Done |
 | 6.2   | Snapshot naming | Medium | Small | ✅ Done |
 | 6.3   | Strict comparison | Medium | Small | ✅ Closed (no code needed) |
-| 6.4   | Redaction helpers + selector grammar | Medium | Medium | ❌ Pending |
+| 6.4   | Redaction helpers + selector grammar | Medium | Medium | ✅ Done |
 | 6.5   | Settings and pending helpers | Medium | Small | ✅ Done |
 | 6.6   | ANSI and map ordering | Low | Small | ✅ Done |
 

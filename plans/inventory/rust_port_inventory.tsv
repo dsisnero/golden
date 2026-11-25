@@ -350,34 +350,34 @@ insta/src/output.rs::method::SnapshotPrinter<'a>.set_show_info	method	skipped	-	
 insta/src/output.rs::method::SnapshotPrinter<'a>.set_snapshot_file	method	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::method::SnapshotPrinter<'a>.set_snapshot_hints	method	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::method::SnapshotPrinter<'a>.set_title	method	skipped	-	CLI returns strings and the TUI renders them
-insta/src/redaction.rs::class::ContentPath	class	skipped	-	content-model path type
-insta/src/redaction.rs::class::PathItem	class	skipped	-	content-model path type
+insta/src/redaction.rs::class::ContentPath	class	ported	src/golden.cr::method::Golden.apply_path_redactions	dynamic redactions receive a dotted path string
+insta/src/redaction.rs::class::PathItem	class	skipped	-	internal path representation
 insta/src/redaction.rs::class::Redaction	class	ported	src/golden.cr::class::Redaction	regex redaction struct
-insta/src/redaction.rs::class::Segment	class	skipped	-	content-model path type
-insta/src/redaction.rs::class::SelectParser	class	skipped	-	selector grammar not ported
-insta/src/redaction.rs::class::Selector	class	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::class::SelectorParseError	class	skipped	-	selector grammar not ported
-insta/src/redaction.rs::function::dynamic_redaction	function	missing	-	callback redactions are not implemented
-insta/src/redaction.rs::function::rounded_redaction	function	missing	-	numeric rounding redaction not implemented
-insta/src/redaction.rs::function::sort	function	missing	-	sorting redaction not implemented
-insta/src/redaction.rs::function::sorted_redaction	function	missing	-	sorting redaction not implemented
-insta/src/redaction.rs::method::ContentPath<'_>.fmt	method	skipped	-	content-model path formatting
-insta/src/redaction.rs::method::PathItem.as_str	method	skipped	-	content-model path type
-insta/src/redaction.rs::method::PathItem.as_u64	method	skipped	-	content-model path type
-insta/src/redaction.rs::method::PathItem.expand_range	method	skipped	-	content-model path type
-insta/src/redaction.rs::method::PathItem.range_check	method	skipped	-	content-model path type
+insta/src/redaction.rs::class::Segment	class	skipped	-	internal selector segment
+insta/src/redaction.rs::class::SelectParser	class	ported	src/golden.cr::method::Golden.apply_path_redactions	selector parser in add_path_redaction
+insta/src/redaction.rs::class::Selector	class	ported	src/golden.cr::method::Golden.apply_path_redactions	keys, wildcards, deep wildcards, indices, ranges
+insta/src/redaction.rs::class::SelectorParseError	class	skipped	-	malformed selectors raise ArgumentError
+insta/src/redaction.rs::function::dynamic_redaction	function	ported	src/golden.cr::method::Golden.dynamic_redaction	Golden.dynamic_redaction
+insta/src/redaction.rs::function::rounded_redaction	function	ported	src/golden.cr::method::Golden.rounded_redaction	Golden.rounded_redaction
+insta/src/redaction.rs::function::sort	function	ported	src/golden.cr::method::Golden.sorted_redaction	sort helper used by sorted_redaction
+insta/src/redaction.rs::function::sorted_redaction	function	ported	src/golden.cr::method::Golden.sorted_redaction	Golden.sorted_redaction
+insta/src/redaction.rs::method::ContentPath<'_>.fmt	method	skipped	-	path is already a dotted string
+insta/src/redaction.rs::method::PathItem.as_str	method	skipped	-	internal path representation
+insta/src/redaction.rs::method::PathItem.as_u64	method	skipped	-	internal path representation
+insta/src/redaction.rs::method::PathItem.expand_range	method	skipped	-	internal path representation
+insta/src/redaction.rs::method::PathItem.range_check	method	skipped	-	internal path representation
 insta/src/redaction.rs::method::Redaction.from	method	ported	src/golden.cr::class::Redaction	constructor
 insta/src/redaction.rs::method::Redaction.redact	method	ported	src/golden.cr::method::Redaction.apply	regex substitution
-insta/src/redaction.rs::method::Selector<'a>.is_match	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.make_static	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.parse	method	partial	src/golden.cr::method::Golden.parse_path	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.redact	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.redact_impl	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.redact_seq	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.redact_struct	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.segment_is_match	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::Selector<'a>.selector_is_match	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
-insta/src/redaction.rs::method::SelectorParseError.column	method	skipped	-	selector grammar not ported
+insta/src/redaction.rs::method::Selector<'a>.is_match	method	ported	src/golden.cr::method::Golden.apply_path_redactions	selector matching
+insta/src/redaction.rs::method::Selector<'a>.make_static	method	skipped	-	no lifetimes in Crystal
+insta/src/redaction.rs::method::Selector<'a>.parse	method	ported	src/golden.cr::method::Golden.apply_path_redactions	selector parser
+insta/src/redaction.rs::method::Selector<'a>.redact	method	ported	src/golden.cr::method::Golden.apply_path_redactions	redaction traversal
+insta/src/redaction.rs::method::Selector<'a>.redact_impl	method	partial	src/golden.cr::method::Golden.apply_path_redactions	values only; object keys are not traversed
+insta/src/redaction.rs::method::Selector<'a>.redact_seq	method	ported	src/golden.cr::method::Golden.apply_path_redactions	array traversal
+insta/src/redaction.rs::method::Selector<'a>.redact_struct	method	partial	src/golden.cr::method::Golden.apply_path_redactions	values only; object keys are not traversed
+insta/src/redaction.rs::method::Selector<'a>.segment_is_match	method	ported	src/golden.cr::method::Golden.apply_path_redactions	segment matching
+insta/src/redaction.rs::method::Selector<'a>.selector_is_match	method	ported	src/golden.cr::method::Golden.apply_path_redactions	selector matching with deep wildcards
+insta/src/redaction.rs::method::SelectorParseError.column	method	skipped	-	malformed selectors raise ArgumentError
 insta/src/runtime.rs::class::AutoName	class	ported	src/golden.cr::macro::assert_snapshot	auto naming from class and method
 insta/src/runtime.rs::class::BinarySnapshotValue	class	ported	src/golden.cr::macro::assert_binary_snapshot	base64 binary snapshots
 insta/src/runtime.rs::class::InlineValue	class	missing	-	inline snapshots (Phase 4.1)
@@ -438,7 +438,7 @@ insta/src/settings.rs::method::BindingFuture<F>.poll	method	skipped	-	async sett
 insta/src/settings.rs::method::Redactions.apply_to_content	method	ported	src/golden.cr::method::Golden.process_output	redactions run in process_output
 insta/src/settings.rs::method::Redactions.from	method	skipped	-	Rust conversion helper
 insta/src/settings.rs::method::Settings._private_inner_mut	method	skipped	-	internal mutability helper
-insta/src/settings.rs::method::Settings.add_dynamic_redaction	method	missing	-	callback redactions are not implemented
+insta/src/settings.rs::method::Settings.add_dynamic_redaction	method	ported	src/golden.cr::method::Golden.add_dynamic_redaction	Golden.add_dynamic_redaction
 insta/src/settings.rs::method::Settings.add_filter	method	ported	src/golden.cr::method::Golden.add_filter	Golden.add_filter
 insta/src/settings.rs::method::Settings.add_redaction	method	ported	src/golden.cr::method::Golden.add_redaction	Golden.add_redaction
 insta/src/settings.rs::method::Settings.add_redaction_impl	method	skipped	-	internal helper
@@ -481,7 +481,7 @@ insta/src/settings.rs::method::Settings.set_strip_ansi_escape_codes	method	porte
 insta/src/settings.rs::method::Settings.snapshot_path	method	ported	src/golden.cr::method::Golden.dir	Golden.dir
 insta/src/settings.rs::method::Settings.snapshot_suffix	method	ported	src/golden.cr::class::Settings	Settings.snapshot_suffix appended as @suffix
 insta/src/settings.rs::method::Settings.sort_maps	method	ported	src/golden.cr::class::Settings	Settings.sort_maps sorts JSON object keys
-insta/src/settings.rs::method::Settings.sort_selector	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.sort_selector	method	ported	src/golden.cr::class::Settings	Settings.sort_selector sorts selected objects only
 insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	ported	src/golden.cr::class::Settings	Settings.strip_ansi_escape_codes property
 insta/src/settings.rs::method::Settings.with	method	ported	src/golden.cr::method::Golden.with_settings	Golden.with_settings
 insta/src/settings.rs::method::SettingsBindDropGuard.drop	method	skipped	-	async settings binding is not ported

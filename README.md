@@ -328,18 +328,34 @@ end
 
 ### Path-Based Redactions
 
-Redact specific JSON paths before comparison (jq-style):
+Redact specific JSON paths before comparison (jq-style selectors):
 
 ```crystal
 Golden.add_path_redaction("password", "***")
 Golden.add_path_redaction("user.email", "[email]")
 Golden.add_path_redaction("users[*].id", "[id]")
 
+# Selector syntax
+Golden.add_path_redaction("users[0:2].id", "[id]")   # range
+Golden.add_path_redaction("users[-1:].id", "[id]")    # trailing range
+Golden.add_path_redaction("users.*.id", "[id]")       # single wildcard
+Golden.add_path_redaction("**.token", "[token]")      # deep wildcard
+Golden.add_path_redaction(%(user["full-name"]), "[name]")
+
+# Computed replacements
+Golden.add_dynamic_redaction("user.email") { |_value, path| JSON::Any.new("<#{path}>") }
+Golden.add_path_redaction("total", Golden.rounded_redaction(2))
+Golden.add_path_redaction("tags", Golden.sorted_redaction)
+
 # Applied automatically in assert_json_snapshot
 output = {"user" => {"email" => "a@b.com", "name" => "test"}}
 Golden.assert_json_snapshot("user", output)
 # Stores: {"user": {"email": "[email]", "name": "test"}}
 ```
+
+Selectors accept comma-separated alternatives and `.` for the document root.
+Dynamic redactions receive the matched value and its dotted path (for example
+`.user.email`).
 
 ## Configuration
 

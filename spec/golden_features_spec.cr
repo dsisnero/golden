@@ -549,6 +549,77 @@ describe Golden do
       saved.scan(/"id": "(.+?)"/).size.should eq(2)
       saved.scan(/"id": "\*\*\*"/).size.should eq(2)
     end
+
+    it "redacts an index range" do
+      Golden.add_path_redaction("users[0:2].id", "***")
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"users":[{"id":"1"},{"id":"2"},{"id":"3"}]}))).as_h
+      users = parsed["users"].as_a
+      users[0]["id"].as_s.should eq("***")
+      users[1]["id"].as_s.should eq("***")
+      users[2]["id"].as_s.should eq("3")
+    end
+
+    it "redacts a negative index range" do
+      Golden.add_path_redaction("items[-1:].id", "***")
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"items":[{"id":"1"},{"id":"2"}]}))).as_h
+      items = parsed["items"].as_a
+      items[0]["id"].as_s.should eq("1")
+      items[1]["id"].as_s.should eq("***")
+    end
+
+    it "redacts with a wildcard segment" do
+      Golden.add_path_redaction("users.*.id", "***")
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"users":{"a":{"id":"1"},"b":{"id":"2"}}}))).as_h
+      parsed["users"]["a"]["id"].as_s.should eq("***")
+      parsed["users"]["b"]["id"].as_s.should eq("***")
+    end
+
+    it "redacts with a deep wildcard" do
+      Golden.add_path_redaction("**.id", "***")
+      output = %({"id":"root","user":{"id":"nested","profile":{"id":"deep"}}})
+      parsed = JSON.parse(Golden.apply_path_redactions(output)).as_h
+      parsed["id"].as_s.should eq("***")
+      parsed["user"]["id"].as_s.should eq("***")
+      parsed["user"]["profile"]["id"].as_s.should eq("***")
+    end
+
+    it "redacts a quoted key" do
+      Golden.add_path_redaction(%(user["full-name"]), "***")
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"user":{"full-name":"Jane"}}))).as_h
+      parsed["user"]["full-name"].as_s.should eq("***")
+    end
+
+    it "passes the dotted path to dynamic redactions" do
+      Golden.add_dynamic_redaction("user.email") do |_value, path|
+        JSON::Any.new("<#{path}>")
+      end
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"user":{"email":"a@b.com"}}))).as_h
+      parsed["user"]["email"].as_s.should eq("<.user.email>")
+    end
+
+    it "rounds numbers at the selected path" do
+      Golden.add_path_redaction("total", Golden.rounded_redaction(2))
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"total":1.23456,"other":1.23456}))).as_h
+      parsed["total"].as_f.should eq(1.23)
+      parsed["other"].as_f.should eq(1.23456)
+    end
+
+    it "sorts arrays at the selected path" do
+      Golden.add_path_redaction("tags", Golden.sorted_redaction)
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"tags":["b","a","c"]}))).as_h
+      parsed["tags"].as_a.map(&.as_s).should eq(["a", "b", "c"])
+    end
+
+    it "replaces the whole document with the identity selector" do
+      Golden.add_path_redaction(".", Golden.dynamic_redaction { |_value, _path| JSON::Any.new("root") })
+      Golden.apply_path_redactions(%({"a":1})).should eq(%("root"))
+    end
+
+    it "rejects malformed selectors" do
+      expect_raises(ArgumentError, /invalid selector/) do
+        Golden.add_path_redaction("users[0:bad]", "***")
+      end
+    end
   end
 
   describe "assert_json_snapshot" do
@@ -1599,6 +1670,17 @@ describe Golden do
       parsed = JSON.parse(File.read(File.join(temp_dir, "json/sorted.golden"))).as_h
       parsed.keys.should eq(["a", "b"])
       parsed["a"].as_h.keys.should eq(["c", "d"])
+    end
+
+    it "sorts only the maps selected by sort_selector" do
+      value = {"a" => {"y" => 1, "x" => 2}, "b" => {"d" => 4, "c" => 3}}
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir, sort_selector: ".b") do
+        Golden.assert_json_snapshot("json/selector", value)
+      end
+
+      parsed = JSON.parse(File.read(File.join(temp_dir, "json/selector.golden"))).as_h
+      parsed["a"].as_h.keys.should eq(["y", "x"])
+      parsed["b"].as_h.keys.should eq(["c", "d"])
     end
 
     it "preserves JSON key order by default" do
