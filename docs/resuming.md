@@ -84,3 +84,9 @@ sidecars with `find .git -name '._*' -delete`.
 `vendor/` is real filesystem state for the two upstream submodules in
 `.gitmodules`. `vendor/x` (Charm's Go `x`) is declared there but is not
 checked out and is not needed for parity work.
+
+The skill's adversarial signoff (`verify_parity_adversarial.sh`) is not usable
+on this checkout yet: it runs all three manifest gates successfully, then its
+completion gate calls `chiasmus-facts` over the whole Rust tree, which has
+stalled for 45+ minutes here. Use `make inventory` plus `make test` as the
+signoff until that is resolved.
