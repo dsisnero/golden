@@ -357,6 +357,18 @@ Golden.update = true
 Golden.init
 ```
 
+### Resetting Settings
+
+```crystal
+Golden.clear_filters
+Golden.clear_redactions        # also clears path redactions
+Golden.remove_description
+Golden.remove_info
+Golden.remove_input_file
+Golden.remove_snapshot_suffix
+Golden.settings.has_info?      # => false after remove_info
+```
+
 ## How It Works
 
 1. `Golden.require_equal` looks for `#{dir}/#{name}.golden`

@@ -1622,4 +1622,67 @@ describe Golden do
       end
     end
   end
+
+  describe "settings controls" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+    end
+
+    it "clears filters and redactions" do
+      old_filters = Golden.settings.filters.dup
+      old_redactions = Golden.settings.redactions.dup
+      begin
+        Golden.add_filter(/hello/, "goodbye")
+        Golden.add_redaction(/token=\w+/, "token=X")
+        Golden.clear_filters
+        Golden.clear_redactions
+
+        Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir) do
+          Golden.require_equal("settings/cleared", "hello token=abc")
+        end
+
+        File.read(File.join(temp_dir, "settings/cleared.golden")).should eq("hello token=abc")
+      ensure
+        Golden.settings.filters = old_filters
+        Golden.settings.redactions = old_redactions
+      end
+    end
+
+    it "removes metadata settings" do
+      Golden.with_settings(
+        description: "d",
+        info: "i",
+        input_file: "f",
+        snapshot_suffix: "s"
+      ) do
+        Golden.settings.has_info?.should be_true
+
+        Golden.remove_description
+        Golden.remove_info
+        Golden.remove_input_file
+        Golden.remove_snapshot_suffix
+
+        Golden.settings.description.should be_nil
+        Golden.settings.info.should be_nil
+        Golden.settings.input_file.should be_nil
+        Golden.settings.snapshot_suffix.should eq("")
+        Golden.settings.has_info?.should be_false
+      end
+    end
+
+    it "writes unsuffixed names after remove_snapshot_suffix" do
+      Golden.with_settings(update_mode: Golden::UpdateMode::Always, dir: temp_dir, snapshot_suffix: "unit") do
+        Golden.remove_snapshot_suffix
+        Golden.require_equal("settings/removed_suffix", "value")
+      end
+
+      File.exists?(File.join(temp_dir, "settings/removed_suffix.golden")).should be_true
+    end
+  end
 end

@@ -105,6 +105,10 @@ module Golden
       @comparator = nil
       @serializer = nil
     end
+
+    def has_info? : Bool
+      !@info.nil?
+    end
   end
 
   @@settings = Settings.new
@@ -210,6 +214,31 @@ module Golden
 
   def self.add_path_redaction(path : String, replacement : String)
     @@settings.path_redactions << {path: path, replacement: replacement}
+  end
+
+  def self.clear_filters
+    @@settings.filters.clear
+  end
+
+  def self.clear_redactions
+    @@settings.redactions.clear
+    @@settings.path_redactions.clear
+  end
+
+  def self.remove_description
+    @@settings.description = nil
+  end
+
+  def self.remove_info
+    @@settings.info = nil
+  end
+
+  def self.remove_input_file
+    @@settings.input_file = nil
+  end
+
+  def self.remove_snapshot_suffix
+    @@settings.snapshot_suffix = ""
   end
 
   def self.init

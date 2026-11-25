@@ -3,11 +3,11 @@
 # baseline=mitsuhiko/insta 1.48.0 (3d62572f910cd19eba45673b37ad91293d82b689)
 insta/src/comparator.rs::class::DefaultComparator	class	ported	src/golden.cr::method::Golden.compare_outputs	exact string comparison is the default
 insta/src/comparator.rs::const::TEXT	const	skipped	-	internal comparator marker constant
-insta/src/comparator.rs::function::matches_fully	function	missing	-	require_full_match is not implemented
-insta/src/comparator.rs::interface::Comparator	interface	missing	-	not implemented in the Crystal port
+insta/src/comparator.rs::function::matches_fully	function	skipped	-	no metadata in snapshot files; content comparison is already exact
+insta/src/comparator.rs::interface::Comparator	interface	ported	src/golden.cr::interface::Comparator	custom comparators supported
 insta/src/comparator.rs::method::DefaultComparator.dyn_clone	method	skipped	-	Rust trait-object cloning
 insta/src/comparator.rs::method::DefaultComparator.matches	method	ported	src/golden.cr::method::Golden.compare_outputs	exact comparison
-insta/src/comparator.rs::method::DefaultComparator.matches_fully	method	missing	-	require_full_match is not implemented
+insta/src/comparator.rs::method::DefaultComparator.matches_fully	method	skipped	-	no metadata in snapshot files; content comparison is already exact
 insta/src/content/json.rs::class::Format	class	skipped	-	Crystal JSON stdlib replaces the content model
 insta/src/content/json.rs::class::Serializer	class	skipped	-	Crystal JSON stdlib replaces the content model
 insta/src/content/json.rs::const::BB	const	skipped	-	Crystal JSON stdlib replaces the content model
@@ -321,7 +321,7 @@ insta/src/filters.rs::class::Filters	class	ported	src/golden.cr::method::Golden.
 insta/src/filters.rs::function::strip_ansi_escape_codes	function	ported	src/golden.cr::method::Golden.strip_ansi_escape_codes	Golden.strip_ansi_escape_codes
 insta/src/filters.rs::method::Filters.add	method	ported	src/golden.cr::method::Golden.add_filter	Golden.add_filter
 insta/src/filters.rs::method::Filters.apply_to	method	ported	src/golden.cr::method::Golden.process_output	filters run in process_output
-insta/src/filters.rs::method::Filters.clear	method	missing	-	no clear_filters API
+insta/src/filters.rs::method::Filters.clear	method	ported	src/golden.cr::method::Golden.clear_filters	Golden.clear_filters
 insta/src/filters.rs::method::Filters.from	method	skipped	-	Rust conversion helper
 insta/src/filters.rs::method::Filters.from_iter	method	skipped	-	Rust conversion helper
 insta/src/glob.rs::class::GlobCollector	class	ported	src/golden.cr::method::Golden.glob_snapshots	Golden.glob_snapshots
@@ -393,8 +393,8 @@ insta/src/runtime.rs::function::path_relative_from	function	skipped	-	cargo work
 insta/src/runtime.rs::function::prevent_inline_duplicate	function	missing	-	inline snapshots (Phase 4.1)
 insta/src/runtime.rs::function::record_snapshot_duplicate	function	ported	src/golden.cr::method::Golden.require_equal	duplicate content check in require_equal
 insta/src/runtime.rs::function::with_allow_duplicates	function	ported	src/golden.cr::method::Golden.allow_duplicates	Golden.allow_duplicates block
-insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_passing	method	missing	-	pending cleanup on pass is not implemented
-insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_previous_pending_binary_snapshots	method	missing	-	binary pending cleanup is not implemented
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_passing	method	ported	src/golden.cr::method::Golden.handle_pending	stale pending files are removed when content matches
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_previous_pending_binary_snapshots	method	skipped	-	binary snapshots are base64 text with no .new.* variants
 insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.finalize	method	partial	src/golden.cr::method::Golden.require_equal	single-pass assertion runtime
 insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.localize_path	method	skipped	-	cargo workspace path helper
 insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.new_snapshot	method	partial	src/golden.cr::method::Golden.handle_unseen	first-run staging
@@ -420,21 +420,21 @@ insta/src/settings.rs::class::SettingsBindDropGuard	class	skipped	-	async settin
 insta/src/settings.rs::function::_assert	function	skipped	-	Rust trait assertion helper
 insta/src/settings.rs::function::_assert_send_sync	function	skipped	-	Rust trait assertion helper
 insta/src/settings.rs::method::ActualSettings.allow_empty_glob	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
-insta/src/settings.rs::method::ActualSettings.clone	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.comparator	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.clone	method	skipped	-	collapsed into Golden::Settings
+insta/src/settings.rs::method::ActualSettings.comparator	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.description	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
-insta/src/settings.rs::method::ActualSettings.filters	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.filters	method	skipped	-	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.info	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.input_file	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.omit_expression	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.prepend_module_to_snapshot	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.raw_info	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
-insta/src/settings.rs::method::ActualSettings.redactions	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::ActualSettings.snapshot_path	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.redactions	method	skipped	-	collapsed into Golden::Settings
+insta/src/settings.rs::method::ActualSettings.snapshot_path	method	skipped	-	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.snapshot_suffix	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.sort_maps	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
 insta/src/settings.rs::method::ActualSettings.strip_ansi_escape_codes	method	ported	src/golden.cr::class::Settings	collapsed into Golden::Settings
-insta/src/settings.rs::method::BindingFuture<F>.poll	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::BindingFuture<F>.poll	method	skipped	-	async settings binding is not ported
 insta/src/settings.rs::method::Redactions.apply_to_content	method	ported	src/golden.cr::method::Golden.process_output	redactions run in process_output
 insta/src/settings.rs::method::Redactions.from	method	skipped	-	Rust conversion helper
 insta/src/settings.rs::method::Settings._private_inner_mut	method	skipped	-	internal mutability helper
@@ -447,23 +447,23 @@ insta/src/settings.rs::method::Settings.apply_redactions	method	ported	src/golde
 insta/src/settings.rs::method::Settings.bind	method	partial	src/golden.cr::method::Golden.with_settings	no thread-local binding; scoped settings only
 insta/src/settings.rs::method::Settings.bind_async	method	skipped	-	async settings binding is not ported
 insta/src/settings.rs::method::Settings.bind_to_scope	method	skipped	-	async settings binding is not ported
-insta/src/settings.rs::method::Settings.clear_filters	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.clear_redactions	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.clear_filters	method	ported	src/golden.cr::method::Golden.clear_filters	Golden.clear_filters
+insta/src/settings.rs::method::Settings.clear_redactions	method	ported	src/golden.cr::method::Golden.clear_redactions	Golden.clear_redactions
 insta/src/settings.rs::method::Settings.clone_current	method	partial	src/golden.cr::method::Golden.with_settings	scoped settings save and restore
 insta/src/settings.rs::method::Settings.comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator
 insta/src/settings.rs::method::Settings.default	method	ported	src/golden.cr::method::Settings.initialize	default settings
 insta/src/settings.rs::method::Settings.description	method	ported	src/golden.cr::class::Settings	Settings.description property
 insta/src/settings.rs::method::Settings.filters	method	ported	src/golden.cr::class::Settings	Settings.filters
-insta/src/settings.rs::method::Settings.has_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.has_info	method	ported	src/golden.cr::method::Settings.has_info?	Settings.has_info?
 insta/src/settings.rs::method::Settings.info	method	ported	src/golden.cr::class::Settings	Settings.info stores text
 insta/src/settings.rs::method::Settings.input_file	method	ported	src/golden.cr::class::Settings	Settings.input_file property
 insta/src/settings.rs::method::Settings.new	method	ported	src/golden.cr::method::Settings.initialize	settings constructor
 insta/src/settings.rs::method::Settings.omit_expression	method	ported	src/golden.cr::class::Settings	Settings.omit_expression property
 insta/src/settings.rs::method::Settings.prepend_module_to_snapshot	method	ported	src/golden.cr::class::Settings	Settings.prepend_module_to_snapshot defaults false here
-insta/src/settings.rs::method::Settings.remove_description	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.remove_info	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.remove_input_file	method	missing	-	not implemented in the Crystal port
-insta/src/settings.rs::method::Settings.remove_snapshot_suffix	method	missing	-	no remove_snapshot_suffix helper
+insta/src/settings.rs::method::Settings.remove_description	method	ported	src/golden.cr::method::Golden.remove_description	Golden.remove_description
+insta/src/settings.rs::method::Settings.remove_info	method	ported	src/golden.cr::method::Golden.remove_info	Golden.remove_info
+insta/src/settings.rs::method::Settings.remove_input_file	method	ported	src/golden.cr::method::Golden.remove_input_file	Golden.remove_input_file
+insta/src/settings.rs::method::Settings.remove_snapshot_suffix	method	ported	src/golden.cr::method::Golden.remove_snapshot_suffix	Golden.remove_snapshot_suffix
 insta/src/settings.rs::method::Settings.set_allow_empty_glob	method	ported	src/golden.cr::class::Settings	Settings.allow_empty_glob= property
 insta/src/settings.rs::method::Settings.set_comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator=
 insta/src/settings.rs::method::Settings.set_description	method	ported	src/golden.cr::class::Settings	Settings.description= property
@@ -484,7 +484,7 @@ insta/src/settings.rs::method::Settings.sort_maps	method	ported	src/golden.cr::c
 insta/src/settings.rs::method::Settings.sort_selector	method	missing	-	not implemented in the Crystal port
 insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	ported	src/golden.cr::class::Settings	Settings.strip_ansi_escape_codes property
 insta/src/settings.rs::method::Settings.with	method	ported	src/golden.cr::method::Golden.with_settings	Golden.with_settings
-insta/src/settings.rs::method::SettingsBindDropGuard.drop	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::SettingsBindDropGuard.drop	method	skipped	-	async settings binding is not ported
 insta/src/snapshot.rs::class::MetaData	class	ported	src/golden.cr::method::Golden.write_metadata	name, created_at and line sidecar
 insta/src/snapshot.rs::class::PendingInlineSnapshot	class	missing	-	inline snapshots (Phase 4.1)
 insta/src/snapshot.rs::class::Snapshot	class	partial	src/golden.cr::method::Golden.require_equal	file-based; no Snapshot object
@@ -500,7 +500,7 @@ insta/src/snapshot.rs::function::min_indentation	function	missing	-	inline snaps
 insta/src/snapshot.rs::function::names_of_path	function	ported	src/golden.cr::method::Golden.require_equal	snapshot name resolution
 insta/src/snapshot.rs::function::normalize_inline	function	missing	-	inline snapshots (Phase 4.1)
 insta/src/snapshot.rs::function::normalized_of_literal	function	missing	-	inline snapshots (Phase 4.1)
-insta/src/snapshot.rs::function::required_hashes	function	missing	-	legacy hash-named snapshots are not supported
+insta/src/snapshot.rs::function::required_hashes	function	skipped	-	legacy hash-named snapshots are intentionally unsupported
 insta/src/snapshot.rs::method::MetaData.as_content	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::MetaData.assertion_line	method	ported	src/golden.cr::method::Golden.write_metadata	line stored in the meta sidecar
 insta/src/snapshot.rs::method::MetaData.description	method	ported	src/golden.cr::method::Golden.write_metadata	description stored in the meta sidecar
@@ -522,7 +522,7 @@ insta/src/snapshot.rs::method::Snapshot.as_text	method	skipped	-	content model c
 insta/src/snapshot.rs::method::Snapshot.build_binary_path	method	partial	src/golden.cr::macro::assert_binary_snapshot	binary snapshots stored base64 in .golden
 insta/src/snapshot.rs::method::Snapshot.contents	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::Snapshot.from_components	method	partial	src/golden.cr::method::Golden.write_file	atomic file writes
-insta/src/snapshot.rs::method::Snapshot.from_content	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::Snapshot.from_content	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::Snapshot.from_file	method	ported	src/golden.cr::method::Golden.show_snapshot	Golden.show_snapshot
 insta/src/snapshot.rs::method::Snapshot.metadata	method	ported	src/golden.cr::method::Golden.snapshot_metadata	meta sidecar reads
 insta/src/snapshot.rs::method::Snapshot.module_name	method	partial	src/golden.cr::method::Golden.group=	group prefix is user-set
@@ -535,16 +535,16 @@ insta/src/snapshot.rs::method::SnapshotContents.as_text	method	skipped	-	content
 insta/src/snapshot.rs::method::SnapshotContents.eq	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::SnapshotContents.from	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::SnapshotContents.is_binary	method	skipped	-	content model collapsed to String or Bytes
-insta/src/snapshot.rs::method::TextSnapshotContents.as_str_legacy	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.fmt	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.from_inline_literal	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.matches_fully	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.matches_latest	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.matches_legacy	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.needs_escaped_format	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.new	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.normalize	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::TextSnapshotContents.to_inline	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.as_str_legacy	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.fmt	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.from_inline_literal	method	skipped	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::method::TextSnapshotContents.matches_fully	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.matches_latest	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.matches_legacy	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.needs_escaped_format	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.new	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.normalize	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.to_inline	method	skipped	-	inline snapshots (Phase 4.1)
 insta/src/utils.rs::class::FakeStyledObject	class	skipped	-	Rust test helper
 insta/src/utils.rs::const::PREFIX	const	skipped	-	inline snapshot markers (Phase 4.1)
 insta/src/utils.rs::const::SUFFIX	const	skipped	-	inline snapshot markers (Phase 4.1)
@@ -554,4 +554,4 @@ insta/src/utils.rs::function::is_ci	function	ported	src/golden.cr::method::Golde
 insta/src/utils.rs::function::path_to_storage	function	skipped	-	cargo workspace path helper
 insta/src/utils.rs::function::style	function	skipped	-	terminal styling handled by bubbles and similar
 insta/src/utils.rs::function::term_width	function	skipped	-	terminal width handled by bubbles
-insta/src/utils.rs::method::FakeStyledObject<D>.fmt	method	missing	-	not implemented in the Crystal port
+insta/src/utils.rs::method::FakeStyledObject<D>.fmt	method	skipped	-	Rust test helper

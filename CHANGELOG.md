@@ -26,6 +26,9 @@
 - `sort_maps` setting sorts JSON object keys in `assert_json_snapshot` output
 - `allow_empty_glob` setting lets `glob_snapshots` accept a pattern with no
   matches; without it an empty match now raises
+- `Golden.clear_filters`, `Golden.clear_redactions`, and the `remove_*`
+  helpers for description, info, input_file, and snapshot_suffix, plus
+  `Golden::Settings#has_info?`
 
 ## 0.3.0 (2026-07-19)
 
