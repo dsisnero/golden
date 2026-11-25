@@ -27,6 +27,21 @@ module Golden
     end
   end
 
+  # A pending inline snapshot recorded when the value differs from the literal
+  # in the source.
+  struct InlineSnapshotPending
+    getter file : String
+    getter line : Int32
+    getter name : String?
+    getter old_content : String
+    getter new_content : String
+    getter created_at : String
+
+    def initialize(@file : String, @line : Int32, @name : String?,
+                   @old_content : String, @new_content : String, @created_at : String)
+    end
+  end
+
   # One segment of a path selector such as `.users[].id`.
   enum SegmentKind
     Key
@@ -360,9 +375,11 @@ module Golden
   end
 
   @@accessed_snapshots = Set(String).new
+  @@inline_seen = Set(String).new
 
   def self.reset_tracking!
     @@accessed_snapshots = Set(String).new
+    @@inline_seen = Set(String).new
   end
 
   def self.unreferenced_snapshots(dir : String? = nil) : Array(String)
@@ -462,6 +479,12 @@ module Golden
     {% else %}
       Golden.require_equal({{ @type.name.id.stringify }} + "/snapshot_at_{{ __LINE__ }}", Base64.encode({{ args[0] }}), metadata_line: __LINE__, expression: {{ args[0].stringify }}, source_file: __FILE__, module_name: {{ @type.name.id.stringify }})
     {% end %}
+  end
+
+  # Compares a value with a literal stored in the source. On mismatch a pending
+  # record is stored in `.golden-inline.json` (under `Golden.dir`).
+  macro assert_inline_snapshot(value, expected, name = nil)
+    Golden.assert_inline({{ value }}, {{ expected }}, {{ name }}, file: __FILE__, line: __LINE__)
   end
 
   def self.find_spec_dir(start_dir : String = Dir.current) : String?
@@ -582,6 +605,113 @@ module Golden
         handle_pending(golden_path, pending_path, processed_output,
           full_name, metadata_line, expression, source_file, input_file)
       end
+    end
+  end
+
+  # Asserts an inline snapshot stored in the source. `file` and `line` are
+  # supplied by the `assert_inline_snapshot` macro.
+  def self.assert_inline(output : String, expected : String, name : String? = nil,
+                         *, file : String, line : Int32)
+    guard_inline_duplicate!(file, line)
+    observed = normalize_inline(output)
+    wanted = normalize_inline(expected)
+
+    if compare_outputs(wanted, observed)
+      clear_inline_pending(file, line)
+      return
+    end
+
+    record_inline_pending(file, line, name, wanted, observed)
+    return if force_pass?
+
+    diff = unified_diff("inline", "observed", wanted, observed)
+    raise "inline snapshot mismatch at #{file}:#{line}\n\n#{diff}\n\n" \
+          "Recorded a pending inline snapshot in #{inline_pending_path}."
+  end
+
+  # Strips the common indentation and surrounding blank lines of inline
+  # snapshot text.
+  def self.normalize_inline(input : String) : String
+    lines = input.split('\n', remove_empty: false)
+    while !lines.empty? && lines.first.strip.empty?
+      lines.shift
+    end
+    while !lines.empty? && lines.last.strip.empty?
+      lines.pop
+    end
+    return "" if lines.empty?
+
+    indents = lines.reject(&.strip.empty?).map { |line| line.size - line.lstrip.size }
+    common = indents.min? || 0
+    lines.map { |line| common.zero? ? line : (line.size >= common ? line[common..] : line.strip) }.join("\n")
+  end
+
+  # Path of the pending inline registry, stored under the snapshot directory.
+  def self.inline_pending_path(dir : String? = nil) : String
+    File.join(dir || @@settings.dir, ".golden-inline.json")
+  end
+
+  def self.pending_inline_snapshots(dir : String? = nil) : Array(InlineSnapshotPending)
+    load_inline_registry(dir).values.compact_map do |entry|
+      file = entry["file"]?.try(&.as_s?)
+      line = entry["line"]?.try(&.as_i?)
+      next unless file && line
+      InlineSnapshotPending.new(
+        file,
+        line,
+        entry["name"]?.try(&.as_s?),
+        entry["old"]?.try(&.as_s?) || "",
+        entry["new"]?.try(&.as_s?) || "",
+        entry["created_at"]?.try(&.as_s?) || ""
+      )
+    end
+  end
+
+  def self.reject_inline_snapshots!(dir : String? = nil)
+    path = inline_pending_path(dir)
+    delete_file(path) if File.exists?(path)
+  end
+
+  private def self.load_inline_registry(dir : String? = nil) : Hash(String, JSON::Any)
+    path = inline_pending_path(dir)
+    return {} of String => JSON::Any unless File.exists?(path)
+    JSON.parse(File.read(path)).as_h
+  rescue
+    {} of String => JSON::Any
+  end
+
+  private def self.record_inline_pending(file : String, line : Int32, name : String?,
+                                         old_content : String, new_content : String)
+    registry = load_inline_registry
+    entry = {} of String => JSON::Any
+    entry["file"] = JSON::Any.new(file)
+    entry["line"] = JSON::Any.new(line.to_i64)
+    entry["name"] = name ? JSON::Any.new(name) : JSON::Any.new(nil)
+    entry["old"] = JSON::Any.new(old_content)
+    entry["new"] = JSON::Any.new(new_content)
+    entry["created_at"] = JSON::Any.new(Time.utc.to_rfc3339)
+    registry["#{file}:#{line}"] = JSON::Any.new(entry)
+    write_file(inline_pending_path, registry.to_pretty_json)
+  end
+
+  private def self.clear_inline_pending(file : String, line : Int32)
+    registry = load_inline_registry
+    key = "#{file}:#{line}"
+    return unless registry.has_key?(key)
+    registry.delete(key)
+    if registry.empty?
+      delete_file(inline_pending_path)
+    else
+      write_file(inline_pending_path, registry.to_pretty_json)
+    end
+  end
+
+  private def self.guard_inline_duplicate!(file : String, line : Int32)
+    return if @@settings.allow_duplicates?
+    key = "#{file}:#{line}"
+    unless @@inline_seen.add?(key)
+      raise "inline snapshot assertion at #{file}:#{line} ran more than once; " \
+            "wrap the assertion in Golden.allow_duplicates"
     end
   end
 

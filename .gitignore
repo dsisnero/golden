@@ -20,3 +20,6 @@ temp/
 ._*
 
 /node_modules
+
+# Inline snapshot pending registry (transient)
+.golden-inline.json

@@ -1797,4 +1797,95 @@ describe Golden do
       File.exists?(File.join(temp_dir, "settings/removed_suffix.golden")).should be_true
     end
   end
+
+  describe "inline snapshots" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+      Golden.reset_tracking!
+    end
+
+    after_each do
+      FileUtils.rm_rf(temp_dir)
+      Golden.reset_tracking!
+    end
+
+    it "passes when the value matches the inline literal" do
+      Golden.with_settings(dir: temp_dir) do
+        Golden.assert_inline("hello", "hello", file: "spec/example_spec.cr", line: 3)
+      end
+      Golden.pending_inline_snapshots(temp_dir).should be_empty
+    end
+
+    it "normalizes common indentation and blank lines" do
+      Golden.normalize_inline("\n    a\n      b\n\n").should eq("a\n  b")
+    end
+
+    it "records a pending inline snapshot on mismatch" do
+      error = expect_raises(Exception, /inline snapshot mismatch/) do
+        Golden.with_settings(dir: temp_dir) do
+          Golden.assert_inline("actual", "expected", "greeting", file: "spec/example_spec.cr", line: 7)
+        end
+      end
+      if message = error.message
+        message.should contain("Recorded a pending inline snapshot")
+      end
+
+      pending = Golden.pending_inline_snapshots(temp_dir)
+      pending.size.should eq(1)
+      pending.first.file.should eq("spec/example_spec.cr")
+      pending.first.line.should eq(7)
+      pending.first.name.should eq("greeting")
+      pending.first.old_content.should eq("expected")
+      pending.first.new_content.should eq("actual")
+    end
+
+    it "clears a stale pending record when the value matches again" do
+      Golden.with_settings(dir: temp_dir) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("actual", "expected", file: "spec/example_spec.cr", line: 9)
+        end
+        # Simulate a later run: tracking resets between processes.
+        Golden.reset_tracking!
+        Golden.assert_inline("expected", "expected", file: "spec/example_spec.cr", line: 9)
+      end
+      Golden.pending_inline_snapshots(temp_dir).should be_empty
+    end
+
+    it "raises when the same file and line is asserted twice" do
+      Golden.with_settings(dir: temp_dir) do
+        Golden.assert_inline("same", "same", file: "spec/loop_spec.cr", line: 11)
+        expect_raises(Exception, /ran more than once/) do
+          Golden.assert_inline("same", "same", file: "spec/loop_spec.cr", line: 11)
+        end
+      end
+    end
+
+    it "allows repeated assertions inside allow_duplicates" do
+      Golden.with_settings(dir: temp_dir) do
+        Golden.allow_duplicates do
+          Golden.assert_inline("same", "same", file: "spec/loop_spec.cr", line: 13)
+          Golden.assert_inline("same", "same", file: "spec/loop_spec.cr", line: 13)
+        end
+      end
+    end
+
+    it "supports the assertion macro" do
+      Golden.with_settings(dir: temp_dir) do
+        Golden.assert_inline_snapshot("hello", "hello")
+      end
+    end
+
+    it "drops pending records on reject" do
+      Golden.with_settings(dir: temp_dir) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("actual", "expected", file: "spec/example_spec.cr", line: 15)
+        end
+        Golden.reject_inline_snapshots!
+      end
+      Golden.pending_inline_snapshots(temp_dir).should be_empty
+      File.exists?(File.join(temp_dir, ".golden-inline.json")).should be_false
+    end
+  end
 end

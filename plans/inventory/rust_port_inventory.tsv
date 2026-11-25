@@ -380,7 +380,7 @@ insta/src/redaction.rs::method::Selector<'a>.selector_is_match	method	ported	src
 insta/src/redaction.rs::method::SelectorParseError.column	method	skipped	-	malformed selectors raise ArgumentError
 insta/src/runtime.rs::class::AutoName	class	ported	src/golden.cr::macro::assert_snapshot	auto naming from class and method
 insta/src/runtime.rs::class::BinarySnapshotValue	class	ported	src/golden.cr::macro::assert_binary_snapshot	base64 binary snapshots
-insta/src/runtime.rs::class::InlineValue	class	missing	-	inline snapshots (Phase 4.1)
+insta/src/runtime.rs::class::InlineValue	class	partial	src/golden.cr::method::Golden.assert_inline	String inline values only
 insta/src/runtime.rs::class::SnapshotAssertionContext	class	partial	src/golden.cr::method::Golden.require_equal	single-pass assertion runtime
 insta/src/runtime.rs::class::SnapshotValue	class	partial	src/golden.cr::method::Golden.require_equal	values are String or Bytes
 insta/src/runtime.rs::function::add_suffix_to_snapshot_name	function	ported	src/golden.cr::method::Golden.require_equal	name composition in require_equal
@@ -390,7 +390,7 @@ insta/src/runtime.rs::function::detect_snapshot_name	function	ported	src/golden.
 insta/src/runtime.rs::function::get_snapshot_filename	function	ported	src/golden.cr::method::Golden.require_equal	name resolution in require_equal
 insta/src/runtime.rs::function::is_doctest	function	skipped	-	Rust doctests
 insta/src/runtime.rs::function::path_relative_from	function	skipped	-	cargo workspace path helper
-insta/src/runtime.rs::function::prevent_inline_duplicate	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/runtime.rs::function::prevent_inline_duplicate	function	ported	src/golden.cr::method::Golden.assert_inline	duplicate file:line guard
 insta/src/runtime.rs::function::record_snapshot_duplicate	function	ported	src/golden.cr::method::Golden.require_equal	duplicate content check in require_equal
 insta/src/runtime.rs::function::with_allow_duplicates	function	ported	src/golden.cr::method::Golden.allow_duplicates	Golden.allow_duplicates block
 insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_passing	method	ported	src/golden.cr::method::Golden.handle_pending	stale pending files are removed when content matches
@@ -486,7 +486,7 @@ insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	ported	sr
 insta/src/settings.rs::method::Settings.with	method	ported	src/golden.cr::method::Golden.with_settings	Golden.with_settings
 insta/src/settings.rs::method::SettingsBindDropGuard.drop	method	skipped	-	async settings binding is not ported
 insta/src/snapshot.rs::class::MetaData	class	ported	src/golden.cr::method::Golden.write_metadata	name, created_at and line sidecar
-insta/src/snapshot.rs::class::PendingInlineSnapshot	class	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::class::PendingInlineSnapshot	class	partial	src/golden.cr::class::InlineSnapshotPending	registry record; source patching pending
 insta/src/snapshot.rs::class::Snapshot	class	partial	src/golden.cr::method::Golden.require_equal	file-based; no Snapshot object
 insta/src/snapshot.rs::class::SnapshotContents	class	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::class::SnapshotKind	class	skipped	-	content model collapsed to String or Bytes
@@ -494,12 +494,12 @@ insta/src/snapshot.rs::class::TextSnapshotContents	class	skipped	-	content model
 insta/src/snapshot.rs::class::TextSnapshotKind	class	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::class::TmpSnapshotKind	class	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::function::build_binary_path	function	partial	src/golden.cr::macro::assert_binary_snapshot	binary snapshots stored base64 in .golden
-insta/src/snapshot.rs::function::leading_space	function	missing	-	inline snapshots (Phase 4.1)
-insta/src/snapshot.rs::function::legacy_inline_normalize	function	missing	-	inline snapshots (Phase 4.1)
-insta/src/snapshot.rs::function::min_indentation	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::function::leading_space	function	ported	src/golden.cr::method::Golden.normalize_inline	folded into normalize_inline
+insta/src/snapshot.rs::function::legacy_inline_normalize	function	skipped	-	legacy inline literals are not supported
+insta/src/snapshot.rs::function::min_indentation	function	ported	src/golden.cr::method::Golden.normalize_inline	common indentation stripping
 insta/src/snapshot.rs::function::names_of_path	function	ported	src/golden.cr::method::Golden.require_equal	snapshot name resolution
-insta/src/snapshot.rs::function::normalize_inline	function	missing	-	inline snapshots (Phase 4.1)
-insta/src/snapshot.rs::function::normalized_of_literal	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::function::normalize_inline	function	ported	src/golden.cr::method::Golden.normalize_inline	Golden.normalize_inline
+insta/src/snapshot.rs::function::normalized_of_literal	function	skipped	-	macros pass decoded literals; legacy unescaping not needed
 insta/src/snapshot.rs::function::required_hashes	function	skipped	-	legacy hash-named snapshots are intentionally unsupported
 insta/src/snapshot.rs::method::MetaData.as_content	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::MetaData.assertion_line	method	ported	src/golden.cr::method::Golden.write_metadata	line stored in the meta sidecar
@@ -511,12 +511,12 @@ insta/src/snapshot.rs::method::MetaData.input_file	method	ported	src/golden.cr::
 insta/src/snapshot.rs::method::MetaData.private_info	method	partial	src/golden.cr::method::Golden.write_metadata	info stored without a privacy flag
 insta/src/snapshot.rs::method::MetaData.source	method	ported	src/golden.cr::method::Golden.write_metadata	source_file stored in the meta sidecar
 insta/src/snapshot.rs::method::MetaData.trim_for_persistence	method	skipped	-	metadata lives in a sidecar, not a snapshot header
-insta/src/snapshot.rs::method::PendingInlineSnapshot.as_content	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::PendingInlineSnapshot.from_content	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::PendingInlineSnapshot.load_batch	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::PendingInlineSnapshot.new	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::PendingInlineSnapshot.save	method	missing	-	not implemented in the Crystal port
-insta/src/snapshot.rs::method::PendingInlineSnapshot.save_batch	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::PendingInlineSnapshot.as_content	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::PendingInlineSnapshot.from_content	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::PendingInlineSnapshot.load_batch	method	ported	src/golden.cr::method::Golden.pending_inline_snapshots	registry load
+insta/src/snapshot.rs::method::PendingInlineSnapshot.new	method	ported	src/golden.cr::class::InlineSnapshotPending	registry struct
+insta/src/snapshot.rs::method::PendingInlineSnapshot.save	method	ported	src/golden.cr::method::Golden.assert_inline	registry upsert
+insta/src/snapshot.rs::method::PendingInlineSnapshot.save_batch	method	skipped	-	registry writes per assertion; no batch API needed
 insta/src/snapshot.rs::method::Snapshot.as_content	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::Snapshot.as_text	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::Snapshot.build_binary_path	method	partial	src/golden.cr::macro::assert_binary_snapshot	binary snapshots stored base64 in .golden
