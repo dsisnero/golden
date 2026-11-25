@@ -486,7 +486,7 @@ insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	ported	sr
 insta/src/settings.rs::method::Settings.with	method	ported	src/golden.cr::method::Golden.with_settings	Golden.with_settings
 insta/src/settings.rs::method::SettingsBindDropGuard.drop	method	skipped	-	async settings binding is not ported
 insta/src/snapshot.rs::class::MetaData	class	ported	src/golden.cr::method::Golden.write_metadata	name, created_at and line sidecar
-insta/src/snapshot.rs::class::PendingInlineSnapshot	class	partial	src/golden.cr::class::InlineSnapshotPending	registry record; source patching pending
+insta/src/snapshot.rs::class::PendingInlineSnapshot	class	ported	src/golden.cr::class::InlineSnapshotPending	registry plus line-based source patcher
 insta/src/snapshot.rs::class::Snapshot	class	partial	src/golden.cr::method::Golden.require_equal	file-based; no Snapshot object
 insta/src/snapshot.rs::class::SnapshotContents	class	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::class::SnapshotKind	class	skipped	-	content model collapsed to String or Bytes

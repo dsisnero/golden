@@ -39,11 +39,14 @@
   `INSTA_DIFF_TOOL` env vars: mismatches can be rendered by an external diff
   tool (`delta`, `difftastic`); the `similar`-backed unified diff stays the
   default and the fallback
-- inline snapshots (stage 4.1b): `Golden.assert_inline_snapshot(value, expected)`
-  compares normalized text, records mismatches in `.golden-inline.json`, and
-  guards against duplicate `file:line` assertions; `pending_inline_snapshots`
-  and `reject_inline_snapshots!` manage the registry. Source patching and the
-  accept CLI arrive with 4.1c/4.1d
+- inline snapshots (stages 4.1b/4.1c): `Golden.assert_inline_snapshot(value,
+  expected)` compares normalized text, records mismatches in
+  `.golden-inline.json`, and guards duplicate `file:line` assertions;
+  `Golden.accept_inline!` patches single-line literals atomically (with
+  `dry_run:`), `Golden.reject_inline_snapshots!` clears the registry, and
+  `GOLDEN_UPDATE=1` / `Golden.update = true` patches automatically. Ambiguous,
+  multi-line, or out-of-project edits fail safely. CLI commands arrive with
+  4.1d
 
 ## 0.3.0 (2026-07-19)
 

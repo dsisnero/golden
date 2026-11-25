@@ -126,6 +126,8 @@ runs before redactions and filters; `sort_maps` affects
 `glob_snapshots` pattern that matches nothing raises unless
 `allow_empty_glob` is set.
 
+### Custom Comparators
+
 ```crystal
 # Fuzzy comparison with numeric tolerance
 Golden.settings.comparator = Golden::FuzzyComparator.new(0.001)
@@ -270,6 +272,30 @@ meta["input_file"]    # input file, set by glob_snapshots or settings
 Set `omit_expression: true` to keep the captured expression out of the sidecar.
 Pending snapshots keep their metadata in `.golden.new.meta`; accepting them
 promotes the sidecar along with the snapshot.
+
+### Inline Snapshots
+
+Store the expected value next to the assertion instead of in a `.golden` file:
+
+```crystal
+Golden.assert_inline_snapshot(output, %("expected"))
+```
+
+A mismatch records a pending entry in `<Golden.dir>/.golden-inline.json`
+(default `testdata/`) and fails the spec. Accept with the library API — CLI
+commands arrive in the next release:
+
+```crystal
+Golden.pending_inline_snapshots       # records with file, line, old, and new
+Golden.accept_inline!(dry_run: true)  # preview
+Golden.accept_inline!                 # patch safely patchable entries
+Golden.reject_inline_snapshots!       # drop all pendings
+```
+
+Running with `GOLDEN_UPDATE=1` (or `Golden.update = true`) patches inline
+literals automatically. The patcher only rewrites a single-line `"..."` or
+`%(...)` literal and refuses ambiguous matches, multi-line values, or files
+outside the project root, leaving the pending entry in place.
 
 ### Config File
 

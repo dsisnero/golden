@@ -27,6 +27,17 @@ module Golden
     end
   end
 
+  # Outcome of attempting to patch one pending inline snapshot into its source.
+  struct InlinePatchResult
+    getter file : String
+    getter line : Int32
+    getter? patched : Bool
+    getter error : String?
+
+    def initialize(@file : String, @line : Int32, @patched : Bool, @error : String? = nil)
+    end
+  end
+
   # A pending inline snapshot recorded when the value differs from the literal
   # in the source.
   struct InlineSnapshotPending
@@ -41,6 +52,23 @@ module Golden
                    @old_content : String, @new_content : String, @created_at : String)
     end
   end
+
+  # Escape sequences understood when decoding inline string literals.
+  INLINE_ESCAPES = {
+    'n'  => '\n',
+    't'  => '\t',
+    'r'  => '\r',
+    '0'  => '\0',
+    'e'  => '\e',
+    's'  => ' ',
+    'a'  => '\a',
+    'b'  => '\b',
+    'f'  => '\f',
+    'v'  => '\v',
+    '\\' => '\\',
+    '"'  => '"',
+    '\'' => '\'',
+  }
 
   # One segment of a path selector such as `.users[].id`.
   enum SegmentKind
@@ -611,7 +639,7 @@ module Golden
   # Asserts an inline snapshot stored in the source. `file` and `line` are
   # supplied by the `assert_inline_snapshot` macro.
   def self.assert_inline(output : String, expected : String, name : String? = nil,
-                         *, file : String, line : Int32)
+                         *, file : String, line : Int32, root : String? = nil)
     guard_inline_duplicate!(file, line)
     observed = normalize_inline(output)
     wanted = normalize_inline(expected)
@@ -622,6 +650,19 @@ module Golden
     end
 
     record_inline_pending(file, line, name, wanted, observed)
+
+    if @@settings.update_mode.always?
+      pending = InlineSnapshotPending.new(file, line, name, wanted, observed, Time.utc.to_rfc3339)
+      result = patch_inline_pending(pending, root)
+      if result.patched?
+        clear_inline_pending(file, line)
+        return
+      end
+      diff = unified_diff("inline", "observed", wanted, observed)
+      raise "inline snapshot mismatch at #{file}:#{line}; automatic patch failed: " \
+            "#{result.error}\n\n#{diff}"
+    end
+
     return if force_pass?
 
     diff = unified_diff("inline", "observed", wanted, observed)
@@ -670,6 +711,230 @@ module Golden
   def self.reject_inline_snapshots!(dir : String? = nil)
     path = inline_pending_path(dir)
     delete_file(path) if File.exists?(path)
+  end
+
+  # Applies every pending inline snapshot that can be patched safely. Failed
+  # entries stay in the registry.
+  def self.accept_inline!(dir : String? = nil, root : String? = nil,
+                          dry_run : Bool = false) : Array(InlinePatchResult)
+    registry = load_inline_registry(dir)
+    results = [] of InlinePatchResult
+    registry.keys.each do |key|
+      entry = registry[key]?
+      next unless entry
+      pending = inline_pending_from_entry(entry)
+      next unless pending
+      result = patch_inline_pending(pending, root, write: !dry_run)
+      results << result
+      registry.delete(key) if result.patched? && !dry_run
+    end
+    write_inline_registry(registry, dir) unless dry_run
+    results
+  end
+
+  private struct LiteralToken
+    getter start : Int32
+    getter finish : Int32
+    getter value : String
+
+    def initialize(@start : Int32, @finish : Int32, @value : String)
+    end
+  end
+
+  private def self.patch_inline_pending(pending : InlineSnapshotPending, root : String? = nil,
+                                        write : Bool = true) : InlinePatchResult
+    root_dir = File.expand_path(root || find_project_root(Dir.current) || Dir.current)
+    path = Path[pending.file].absolute? ? File.expand_path(pending.file) : File.expand_path(pending.file, root_dir)
+    if error = inline_path_error(path, root_dir)
+      return InlinePatchResult.new(pending.file, pending.line, false, error)
+    end
+    if pending.new_content.includes?('\n')
+      return InlinePatchResult.new(pending.file, pending.line, false,
+        "multi-line inline values cannot be patched")
+    end
+
+    apply_inline_patch(path, pending, write)
+  rescue ex
+    InlinePatchResult.new(pending.file, pending.line, false, ex.message || ex.class.name)
+  end
+
+  private def self.inline_path_error(path : String, root_dir : String) : String?
+    prefix = root_dir.ends_with?(File::SEPARATOR) ? root_dir : root_dir + File::SEPARATOR
+    unless path == root_dir || path.starts_with?(prefix)
+      return "file is outside the project root"
+    end
+    return "file does not exist" unless File.exists?(path)
+    nil
+  end
+
+  private def self.apply_inline_patch(path : String, pending : InlineSnapshotPending,
+                                      write : Bool) : InlinePatchResult
+    lines = File.read_lines(path, chomp: false)
+    index = pending.line - 1
+    unless 0 <= index < lines.size
+      return InlinePatchResult.new(pending.file, pending.line, false, "line is outside the file")
+    end
+
+    original = lines[index]
+    eol = original.ends_with?("\r\n") ? "\r\n" : (original.ends_with?('\n') ? "\n" : "")
+    body = eol.empty? ? original : original[0...-eol.size]
+    matches = scan_literals(body).select { |token| token.value == pending.old_content }
+    if matches.size != 1
+      return InlinePatchResult.new(pending.file, pending.line, false,
+        "expected exactly one literal matching the old value, found #{matches.size}")
+    end
+
+    token = matches.first
+    patched = body[0...token.start] + encode_literal(pending.new_content) + body[token.finish..]
+    lines[index] = patched + eol
+    write_source_file(path, lines.join) if write
+    InlinePatchResult.new(pending.file, pending.line, true)
+  rescue ex
+    InlinePatchResult.new(pending.file, pending.line, false, ex.message || ex.class.name)
+  end
+
+  private def self.inline_pending_from_entry(entry : JSON::Any) : InlineSnapshotPending?
+    file = entry["file"]?.try(&.as_s?)
+    line = entry["line"]?.try(&.as_i?)
+    return nil unless file && line
+    InlineSnapshotPending.new(
+      file,
+      line,
+      entry["name"]?.try(&.as_s?),
+      entry["old"]?.try(&.as_s?) || "",
+      entry["new"]?.try(&.as_s?) || "",
+      entry["created_at"]?.try(&.as_s?) || ""
+    )
+  end
+
+  private def self.write_inline_registry(registry : Hash(String, JSON::Any), dir : String? = nil)
+    if registry.empty?
+      reject_inline_snapshots!(dir)
+    else
+      write_file(inline_pending_path(dir), registry.to_pretty_json)
+    end
+  end
+
+  private def self.write_source_file(path : String, content : String)
+    tmp = File.join(File.dirname(path), ".golden_patch_#{Process.pid}_#{Random.rand(1_000_000)}")
+    File.write(tmp, content)
+    File.rename(tmp, path)
+  end
+
+  private def self.encode_literal(value : String) : String
+    escaped = value.gsub("\\", "\\\\")
+      .gsub("\"", "\\\"")
+      .gsub("\n", "\\n")
+      .gsub("\t", "\\t")
+      .gsub("\r", "\\r")
+      .gsub("\e", "\\e")
+    "\"#{escaped}\""
+  end
+
+  private def self.scan_literals(line : String) : Array(LiteralToken)
+    tokens = [] of LiteralToken
+    idx = 0
+    while idx < line.size
+      token = case line[idx]
+              when '"' then read_quoted_literal(line, idx)
+              when '%' then read_percent_token(line, idx)
+              end
+      if token
+        tokens << token
+        idx = token.finish
+      else
+        idx += 1
+      end
+    end
+    tokens
+  end
+
+  private def self.read_quoted_literal(line : String, start : Int32) : LiteralToken?
+    idx = start + 1
+    raw = String::Builder.new
+    while idx < line.size
+      current = line[idx]
+      if current == '\\' && idx + 1 < line.size
+        raw << current << line[idx + 1]
+        idx += 2
+      elsif current == '"'
+        return LiteralToken.new(start, idx + 1, decode_literal(raw.to_s))
+      else
+        raw << current
+        idx += 1
+      end
+    end
+    nil
+  end
+
+  private def self.read_percent_token(line : String, start : Int32) : LiteralToken?
+    if start + 1 < line.size && line[start + 1] == '('
+      content, finish, closed = read_percent_literal(line, start + 2, true)
+      return LiteralToken.new(start, finish, decode_literal(content)) if closed
+    elsif start + 2 < line.size && line[start + 1] == 'q' && line[start + 2] == '('
+      content, finish, closed = read_percent_literal(line, start + 3, false)
+      return LiteralToken.new(start, finish, content) if closed
+    end
+    nil
+  end
+
+  private def self.read_percent_literal(text : String, idx : Int32,
+                                        escape : Bool) : Tuple(String, Int32, Bool)
+    depth = 1
+    io = String::Builder.new
+    while idx < text.size
+      char = text[idx]
+      if escape && char == '\\' && idx + 1 < text.size
+        io << char << text[idx + 1]
+        idx += 2
+        next
+      end
+      case char
+      when '('
+        depth += 1
+        io << char
+      when ')'
+        depth -= 1
+        return {io.to_s, idx + 1, true} if depth.zero?
+        io << char
+      else
+        io << char
+      end
+      idx += 1
+    end
+    {io.to_s, idx, false}
+  end
+
+  private def self.decode_literal(raw : String) : String
+    io = String::Builder.new
+    idx = 0
+    while idx < raw.size
+      char = raw[idx]
+      if char != '\\'
+        io << char
+        idx += 1
+        next
+      end
+      idx += 1
+      break if idx >= raw.size
+      escape = raw[idx]
+      idx += 1
+      if decoded = INLINE_ESCAPES[escape]?
+        io << decoded
+      elsif escape == 'x' || escape == 'u'
+        digits = escape == 'x' ? 2 : 4
+        code = raw[idx, digits]?.try(&.to_i?(16))
+        if code && 0 <= code <= 0x10FFFF
+          idx += digits
+          io << code.chr
+        else
+          io << escape
+        end
+      else
+        io << '\\' << escape
+      end
+    end
+    io.to_s
   end
 
   private def self.load_inline_registry(dir : String? = nil) : Hash(String, JSON::Any)

@@ -1888,4 +1888,134 @@ describe Golden do
       File.exists?(File.join(temp_dir, ".golden-inline.json")).should be_false
     end
   end
+
+  describe "inline snapshot patcher" do
+    root = File.join(Dir.tempdir, Random::Secure.hex(8))
+    source = File.join(root, "spec/example_spec.cr")
+
+    before_each do
+      FileUtils.rm_rf(root)
+      FileUtils.mkdir_p(File.dirname(source))
+      Golden.reset_tracking!
+    end
+
+    after_each do
+      FileUtils.rm_rf(root)
+      Golden.reset_tracking!
+    end
+
+    it "patches a double-quoted literal through accept_inline!" do
+      File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        results = Golden.accept_inline!(root, root: root)
+        results.size.should eq(1)
+        results.first.patched?.should be_true
+      end
+
+      File.read(source).should contain(%("new"))
+      Golden.pending_inline_snapshots(root).should be_empty
+    end
+
+    it "patches a percent literal" do
+      File.write(source, "Golden.assert_inline_snapshot(value, %(old))\n")
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        Golden.accept_inline!(root, root: root).first.patched?.should be_true
+      end
+
+      File.read(source).should contain(%("new"))
+    end
+
+    it "preserves CRLF line endings" do
+      File.write(source, "Golden.assert_inline_snapshot(value, \"old\")\r\n")
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        Golden.accept_inline!(root, root: root).first.patched?.should be_true
+      end
+
+      File.read(source).should eq("Golden.assert_inline_snapshot(value, \"new\")\r\n")
+    end
+
+    it "keeps the registry when no literal matches the old value" do
+      File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "different", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        results = Golden.accept_inline!(root, root: root)
+        results.first.patched?.should be_false
+        if error = results.first.error
+          error.should contain("expected exactly one")
+        end
+      end
+
+      File.read(source).should contain(%("old"))
+      Golden.pending_inline_snapshots(root).size.should eq(1)
+    end
+
+    it "refuses multi-line values" do
+      File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("a\nb", "old", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        results = Golden.accept_inline!(root, root: root)
+        results.first.patched?.should be_false
+        if error = results.first.error
+          error.should contain("multi-line")
+        end
+      end
+    end
+
+    it "refuses files outside the project root" do
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "old", file: "../outside_spec.cr", line: 1, root: root)
+        end
+        results = Golden.accept_inline!(root, root: root)
+        results.first.patched?.should be_false
+        if error = results.first.error
+          error.should contain("outside the project root")
+        end
+      end
+    end
+
+    it "reports patches without writing on dry_run" do
+      File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        results = Golden.accept_inline!(root, root: root, dry_run: true)
+        results.first.patched?.should be_true
+      end
+
+      File.read(source).should contain(%("old"))
+      Golden.pending_inline_snapshots(root).size.should eq(1)
+    end
+
+    it "patches automatically in update mode" do
+      File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+
+      Golden.with_settings(dir: root, update_mode: Golden::UpdateMode::Always) do
+        Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: root)
+      end
+
+      File.read(source).should contain(%("new"))
+      Golden.pending_inline_snapshots(root).should be_empty
+    end
+  end
 end

@@ -2,13 +2,12 @@
 
 ## Where we are
 
-- **Current focus:** Phase 4.1c — line-based source patcher plus
-  `GOLDEN_UPDATE` auto-accept and `accept_inline!` / `reject_inline!`.
-  Design: [plans/inline-snapshots.md](inline-snapshots.md).
+- **Current focus:** Phase 4.1d — CLI commands for inline pendings
+  (`inline-pending`, `inline-accept`, `inline-reject`).
 - **Next up:**
-  1. 4.1c source patcher, `GOLDEN_UPDATE` auto-accept, accept/reject API.
-  2. 4.1d CLI: `inline-pending`, `inline-accept`, `inline-reject`.
-  3. 4.1e review TUI integration.
+  1. 4.1d CLI: `inline-pending` (with `--json`), `inline-accept` (`--dry-run`),
+     `inline-reject`.
+  2. 4.1e review TUI integration for inline pendings.
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -21,9 +20,9 @@
   - Redaction helpers and selectors (Phase 6.4): complete
   - Settings/pending helpers (Phase 6.5): complete
   - Output normalization (Phase 6.6): complete
-  - Inline snapshots (Phase 4.1): 4.1b done — assertions compare, record a
-    `.golden-inline.json` pending, and guard duplicates; patcher/CLI pending
-  - Rust parity inventory: bootstrapped — 554 rows (115 `ported`, 24 `partial`,
+  - Inline snapshots (Phase 4.1): 4.1b/4.1c done — assertions record pendings
+    and patch source on accept or in update mode; CLI/TUI pending
+  - Rust parity inventory: bootstrapped — 554 rows (116 `ported`, 23 `partial`,
     0 `missing`, 415 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
@@ -38,8 +37,8 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** inline snapshot registry and runtime (parent `945094d`).
-- **Gates:** `make lint` pass; `make test` pass (221 examples); `make inventory`
+- **Last commit:** inline snapshot patcher and accept flow (parent `4dec49b`).
+- **Gates:** `make lint` pass; `make test` pass (229 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -53,7 +52,7 @@ batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
 display, source context, inline word-level highlighting).
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 115 are `ported`, 24 `partial`, 0 `missing`, and 415 `skipped` (insta's
+which 116 are `ported`, 23 `partial`, 0 `missing`, and 415 `skipped` (insta's
 content/serialization engine and cargo internals). Phase 6 turns the `missing`
 and `partial` groups into features; inline snapshots (Phase 4.1) remain the
 largest single gap.
@@ -282,7 +281,7 @@ patcher, CLI commands, and ledger mapping are specified in the design doc.
       `normalize_inline`, `.golden-inline.json` upsert, mismatch diff, duplicate
       `file:line` guard, `pending_inline_snapshots`, and
       `reject_inline_snapshots!`.
-- [ ] **4.1c Source patcher** — single-literal replacement with ambiguity and
+- [x] **4.1c Source patcher** — single-literal replacement with ambiguity and
       multi-line refusal, atomic writes, `GOLDEN_UPDATE` auto-accept, and
       `accept_inline!` / `reject_inline!`.
 - [ ] **4.1d CLI** — `golden inline-pending`, `inline-accept`, `inline-reject`.
@@ -363,7 +362,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 1.7   | Help keybinding | Low | Small | ✅ Done |
 | 2.1   | Pending reporter | High | Small | ✅ Done |
 | 3.1   | CLI binary | Medium | Medium | ✅ Done |
-| 4.1   | Inline snapshots | Low | Large | 🚧 4.1b done; patcher/CLI pending |
+| 4.1   | Inline snapshots | Low | Large | 🚧 4.1c done; CLI/TUI pending |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
 | 6.1   | Settings metadata parity | High | Medium | ✅ Done |
 | 6.2   | Snapshot naming | Medium | Small | ✅ Done |

@@ -1,8 +1,8 @@
 # Inline Snapshots Design (Phase 4.1)
 
-Status: design complete; 4.1b (registry and runtime) implemented. Source
-patching, CLI, and review integration are still pending, so inline ledger rows
-stay `partial` until the sub-items below land.
+Status: design complete; 4.1b (registry/runtime) and 4.1c (patcher/accept)
+implemented. CLI and review integration are still pending, so inline ledger
+rows stay `partial` until 4.1d/4.1e land.
 
 ## Goal
 
@@ -29,9 +29,9 @@ the next accept updates the source.
 4. On mismatch:
    - Upsert `{file, line, name, old, new, created_at}` in
      `<Golden.dir>/.golden-inline.json`, one entry per `file:line`.
-   - If `GOLDEN_UPDATE=1` or `GOLDEN_FORCE_PASS=1`, patch the source immediately
-     and pass (4.1c; until then only `GOLDEN_FORCE_PASS=1` suppresses the
-     failure and the source is left unchanged).
+   - If `GOLDEN_UPDATE=1` (or `Golden.update = true`), patch the source
+     immediately and pass. `GOLDEN_FORCE_PASS=1` suppresses the failure but
+     leaves the source unchanged.
    - Otherwise raise with the diff and a hint to run `golden inline-accept`.
 5. Duplicate guard: recording the same `file:line` twice in one run raises
    unless `Golden.allow_duplicates` is active. This mirrors
@@ -69,7 +69,7 @@ is line-based and conservative:
 | --- | --- |
 | 4.1a | this design (done) |
 | 4.1b | done: pending registry, runtime compare/record, duplicate guard |
-| 4.1c | source patcher, `GOLDEN_UPDATE` auto-accept, accept/reject API |
+| 4.1c | done: source patcher, `GOLDEN_UPDATE` auto-accept, accept/reject API |
 | 4.1d | CLI commands |
 | 4.1e | review TUI integration |
 
@@ -78,7 +78,8 @@ is line-based and conservative:
 - Patcher: replaces a single literal in a temp file, refuses ambiguous matches,
   refuses multi-line values, and leaves the file untouched on failure.
 - Runtime (4.1b): mismatch records a pending entry and the duplicate
-  `file:line` guard raises. (4.1c) `GOLDEN_UPDATE=1` patches and passes.
+  `file:line` guard raises. (4.1c) `GOLDEN_UPDATE=1` patches and passes;
+  ambiguous, multi-line, or out-of-root patches fail and keep the entry.
 - Registry: upsert replaces an older entry for the same `file:line`;
   accept/reject clears entries.
 - Optional end-to-end: generate a temporary spec file and run `crystal spec` on
