@@ -1,0 +1,11 @@
+{
+  "base": "/Volumes/extreme_ssd/repos/github.com/dsisnero/golden/vendor/insta",
+  "parser_requested": "tree-sitter",
+  "backend": "chiasmus-tree-sitter",
+  "binary": "/Users/dominic/.cache/chiasmus/toolchains/darwin-aarch64/v0.3.4/chiasmus-discover --language rust --dir /Volumes/extreme_ssd/repos/github.com/dsisnero/golden/vendor/insta --parser tree-sitter",
+  "include_paths": [
+    "insta/src",
+    "insta/tests"
+  ],
+  "exclude_patterns": []
+}

@@ -2,47 +2,57 @@
 
 ## Where we are
 
-- **Current focus:** repository scaffolding is complete (entrypoint, docs,
-  gates, lint baseline). Next work is bootstrapping the parity inventory, then
-  Phase 4.1 inline snapshots.
+- **Current focus:** Phase 6.1 — upstream settings metadata parity
+  (`expression`, `input_file`, `description`, `info`, `omit_expression`,
+  `prepend_module_to_snapshot`). The Rust ledger is the scope source now.
 - **Next up:**
-  1. Bootstrap `plans/inventory/rust_port_inventory.tsv` from `vendor/insta`
-     with the cross-language-crystal-parity skill (`tree-sitter`), and
-     `ruby_port_inventory.tsv` from `vendor/insta-ruby` if Ruby stays in scope;
-     make `make inventory` green.
-  2. Design and implement Phase 4.1 inline snapshots (source patching).
-  3. Reconcile the statuses in this plan against the generated ledger and drop
-     anything the ledger shows as already covered.
+  1. 6.1 settings metadata parity (closes the largest `missing` group).
+  2. 6.2 snapshot naming: `snapshot_suffix` and duplicate handling.
+  3. 6.3 strict comparison: `DefaultComparator.matches_fully` /
+     `require_full_match`.
+  4. 6.4 redaction helpers plus the full path-selector grammar (the current
+     `partial` rows).
+  5. 4.1 inline snapshots (source patching; needs a design).
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
   - CLI binary (Phase 3): complete
   - Test runner integration (Phase 5.1): complete
   - Inline snapshots (Phase 4.1): not started
-  - Parity inventory (`plans/inventory/`): not bootstrapped
+  - Rust parity inventory: bootstrapped — 554 rows (41 `ported`, 31 `partial`,
+    93 `missing`, 389 `skipped`)
+  - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
   - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
     `v0.3.0` (`500434b`). `vendor/x` (Charm Go) is declared but not checked out
     and is not a parity target.
+  - Ledger scope is `insta/src,insta/tests` with `tree-sitter` discovery. Keep
+    that scope/parser or every id churns.
+  - 389 rows are `skipped` because they are insta's content/serialization
+    engine (vendored YAML parser, content scanner/emitter) or cargo/nextest
+    workspace internals; Crystal replaces those with stdlib or does not expose
+    them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-  - Inline snapshots need a source patcher; Crystal has no `syn`/Prism
-    equivalent, so this stays a design task until the approach is chosen.
-- **Last commit:** scaffolding commit (parent `616e03b`).
-- **Gates:** `make lint` pass (Ameba, 0 failures); `make test` pass
-  (178 examples, 0 failures); `make inventory` red by design (no ledger yet).
+- **Last commit:** Rust ledger bootstrap (parent `15e8e55`).
+- **Gates:** `make lint` pass; `make test` pass (178 examples); `make inventory`
+  pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
 (see `AGENTS.md` → **How to resume**).
 
 ## Current Status
 
-Golden has **near-full parity** with Rust/Ruby insta on snapshot fundamentals
-and the review TUI. All 6 quick wins and 3 Phase 1 features are implemented
-(skip, batch ops, g/G navigation, help overlay, review summary, pending
-reporter, diff display, source context, inline word-level highlighting).
-Remaining gaps are **inline snapshots** (Phase 4.1) and the untracked **parity
-inventory**.
+Golden has **feature parity** with Rust/Ruby insta on snapshot fundamentals and
+the review TUI. All 6 quick wins and 3 Phase 1 features are implemented (skip,
+batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
+display, source context, inline word-level highlighting).
+
+The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
+which 41 are `ported`, 31 `partial`, 93 `missing`, and 389 `skipped` (insta's
+content/serialization engine and cargo internals). Phase 6 turns the `missing`
+and `partial` groups into features; inline snapshots (Phase 4.1) remain the
+largest single gap.
 
 ---
 
@@ -307,6 +317,32 @@ golden-test-review:
 
 ---
 
+## Phase 6: Upstream settings and snapshot parity (from the Rust ledger)
+
+Scope comes from `plans/inventory/rust_port_inventory.tsv`; each item closes a
+group of `missing`/`partial` rows and must update those rows in the same commit.
+
+- [ ] **6.1 Settings metadata parity** — store and expose `expression`,
+      `input_file`, `description`, `info`, `raw_info`, `omit_expression`, and
+      `prepend_module_to_snapshot` (`settings.rs`, `snapshot.rs` metadata
+      rows). Largest `missing` group.
+- [ ] **6.2 Snapshot naming** — `snapshot_suffix`, `allow_duplicates` /
+      `with_allow_duplicates`, and `record_snapshot_duplicate`
+      (`settings.rs`, `runtime.rs`, `utils.rs`).
+- [ ] **6.3 Strict comparison** — `DefaultComparator.matches_fully`,
+      `require_full_match`, and trailing-newline behavior
+      (`comparator.rs`, `output.rs`, `runtime.rs`).
+- [ ] **6.4 Redaction helpers and selector grammar** — `dynamic_redaction`,
+      `rounded_redaction`, `sorted_redaction`, plus the full `Selector` grammar
+      (ranges, struct/seq selectors). Closes the `partial` redaction rows.
+- [ ] **6.5 Pending lifecycle** — `clear_filters` / `clear_redactions`, the
+      `remove_*` settings helpers, `cleanup_passing`, and
+      `cleanup_previous_pending_binary_snapshots`.
+- [ ] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes`, `sort_maps`,
+      and `sort_selector`.
+
+---
+
 ## Summary
 
 | Phase | Feature | Priority | Effort | Status |
@@ -322,6 +358,12 @@ golden-test-review:
 | 3.1   | CLI binary | Medium | Medium | ✅ Done |
 | 4.1   | Inline snapshots | Low | Large | ❌ Pending |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
+| 6.1   | Settings metadata parity | High | Medium | ❌ Pending |
+| 6.2   | Snapshot naming | Medium | Small | ❌ Pending |
+| 6.3   | Strict comparison | Medium | Small | ❌ Pending |
+| 6.4   | Redaction helpers + selector grammar | Medium | Medium | ❌ Pending |
+| 6.5   | Pending lifecycle | Medium | Small | ❌ Pending |
+| 6.6   | ANSI and map ordering | Low | Small | ❌ Pending |
 
 ## Intentional divergences
 

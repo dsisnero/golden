@@ -22,10 +22,10 @@ back to a known-good state.
     plans/inventory/rust_port_inventory.tsv | sort | uniq -c
   ```
 
-  The ledger does not exist yet: bootstrapping it with the
-  cross-language-crystal-parity skill is the first **Next up** item in
-  `plans/parity.md`. Until then `make inventory` fails on purpose and every
-  other gate is expected to be green.
+  The ledger baseline is `mitsuhiko/insta 1.48.0` scoped to `insta/src` and
+  `insta/tests`. Current shape: 41 ported, 31 partial, 93 missing, 389 skipped.
+  `skipped` rows are insta's content/serialization engine and cargo internals
+  that Crystal replaces with stdlib or does not expose.
 
 ## 2. Confirm the working tree
 

@@ -1,0 +1,557 @@
+# source_id	kind	status	crystal_refs	notes
+# kinds=class,const,enum,func,function,interface,method,struct,trait,type
+# baseline=mitsuhiko/insta 1.48.0 (3d62572f910cd19eba45673b37ad91293d82b689)
+insta/src/comparator.rs::class::DefaultComparator	class	ported	src/golden.cr::method::Golden.compare_outputs	exact string comparison is the default
+insta/src/comparator.rs::const::TEXT	const	skipped	-	internal comparator marker constant
+insta/src/comparator.rs::function::matches_fully	function	missing	-	require_full_match is not implemented
+insta/src/comparator.rs::interface::Comparator	interface	missing	-	not implemented in the Crystal port
+insta/src/comparator.rs::method::DefaultComparator.dyn_clone	method	skipped	-	Rust trait-object cloning
+insta/src/comparator.rs::method::DefaultComparator.matches	method	ported	src/golden.cr::method::Golden.compare_outputs	exact comparison
+insta/src/comparator.rs::method::DefaultComparator.matches_fully	method	missing	-	require_full_match is not implemented
+insta/src/content/json.rs::class::Format	class	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::class::Serializer	class	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::BB	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::BS	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::COMPACT_MAX_CHARS	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::FF	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::NN	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::QU	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::RR	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::TT	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::const::U	const	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::function::to_string	function	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::function::to_string_compact	function	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::function::to_string_pretty	function	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.end_container	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.into_result	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.new	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.serialize	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.serialize_array	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.serialize_object	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.start_container	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.write_char	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.write_colon	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.write_comma	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.write_escaped_str	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.write_float	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.write_indentation	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/json.rs::method::Serializer.write_str	method	skipped	-	Crystal JSON stdlib replaces the content model
+insta/src/content/mod.rs::class::Content	class	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::class::Error	class	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_bool	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_bytes	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_f64	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_i128	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_i64	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_slice	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_str	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_u128	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.as_u64	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.from	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.is_nil	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.resolve_inner	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.resolve_inner_mut	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Content.walk	method	skipped	-	insta content model is not ported
+insta/src/content/mod.rs::method::Error.fmt	method	skipped	-	insta content model is not ported
+insta/src/content/serialization.rs::class::ContentSerializer	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::Key	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::SerializeMap	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::SerializeSeq	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::SerializeStruct	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::SerializeStructVariant	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::SerializeTuple	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::SerializeTupleStruct	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::class::SerializeTupleVariant	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::function::f64_total_cmp	function	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::Content.as_key	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::Content.serialize	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::Content.sort_maps	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.new	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_bool	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_bytes	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_char	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_f32	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_f64	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_i128	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_i16	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_i32	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_i64	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_i8	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_map	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_newtype_struct	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_newtype_variant	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_none	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_seq	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_some	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_str	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_struct	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_struct_variant	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_tuple	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_tuple_struct	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_tuple_variant	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_u128	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_u16	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_u32	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_u64	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_u8	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_unit	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_unit_struct	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::ContentSerializer<E>.serialize_unit_variant	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::Key<'_>.cmp	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::Key<'_>.discriminant	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::Key<'_>.partial_cmp	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeMap<E>.end	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeMap<E>.serialize_entry	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeMap<E>.serialize_key	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeMap<E>.serialize_value	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeSeq<E>.end	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeSeq<E>.serialize_element	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeStruct<E>.end	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeStruct<E>.serialize_field	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeStructVariant<E>.end	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeStructVariant<E>.serialize_field	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeTuple<E>.end	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeTuple<E>.serialize_element	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeTupleStruct<E>.end	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeTupleStruct<E>.serialize_field	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeTupleVariant<E>.end	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/serialization.rs::method::SerializeTupleVariant<E>.serialize_field	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/content/yaml/mod.rs::function::from_yaml_blob	function	skipped	-	Crystal YAML stdlib replaces the content model
+insta/src/content/yaml/mod.rs::function::parse_str	function	skipped	-	Crystal YAML stdlib replaces the content model
+insta/src/content/yaml/mod.rs::function::to_string	function	skipped	-	Crystal YAML stdlib replaces the content model
+insta/src/content/yaml/mod.rs::function::to_yaml_value	function	skipped	-	Crystal YAML stdlib replaces the content model
+insta/src/content/yaml/mod.rs::function::translate_fields	function	skipped	-	Crystal YAML stdlib replaces the content model
+insta/src/content/yaml/mod.rs::function::translate_seq	function	skipped	-	Crystal YAML stdlib replaces the content model
+insta/src/content/yaml/vendored/emitter.rs::class::ChompingIndicator	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::class::EmitError	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::class::YamlEmitter	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::function::escape_str	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::function::literal_block_style	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::function::need_quotes	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::function::need_quotes_spaces	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::EmitError.cause	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::EmitError.fmt	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::EmitError.from	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.dump	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.emit_array	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.emit_hash	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.emit_literal_block	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.emit_node	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.emit_val	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.new	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.use_literal_blocks	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/emitter.rs::method::YamlEmitter<'a>.write_indent	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/mod.rs::function::try_fail	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::class::Event	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::class::Parser	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::class::State	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::interface::EventReceiver	interface	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::interface::MarkedEventReceiver	interface	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Event.empty_scalar	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Event.empty_scalar_with_anchor	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>._explicit_document_start	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.block_mapping_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.block_mapping_value	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.block_sequence_entry	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.document_content	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.document_end	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.document_start	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.fetch_token	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.flow_mapping_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.flow_mapping_value	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.flow_sequence_entry	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.flow_sequence_entry_mapping_end	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.flow_sequence_entry_mapping_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.flow_sequence_entry_mapping_value	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.indentless_sequence_entry	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.load	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.load_document	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.load_mapping	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.load_node	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.load_sequence	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.new	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.next	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.parse	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.parse_node	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.parser_process_directives	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.peek_token	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.pop_state	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.push_state	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.register_anchor	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.scan_next_token	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.skip	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.state_machine	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::Parser<T>.stream_start	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/parser.rs::method::R.on_event	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::Marker	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::ScanError	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::Scanner	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::SimpleKey	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::TEncoding	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::TScalarStyle	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::Token	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::class::TokenType	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::as_hex	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_alpha	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_blank	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_blankz	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_break	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_breakz	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_digit	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_flow	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_hex	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::function::is_z	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Marker.new	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::ScanError.cause	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::ScanError.description	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::ScanError.fmt	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::ScanError.new	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.allow_simple_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.block_scalar_breaks	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.ch	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.ch_is	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.decrease_flow_level	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.disallow_simple_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.eof	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_anchor	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_block_entry	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_block_scalar	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_directive	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_document_indicator	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_flow_collection_end	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_flow_collection_start	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_flow_entry	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_flow_scalar	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_more_tokens	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_next_token	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_plain_scalar	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_stream_end	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_stream_start	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_tag	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.fetch_value	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.get_error	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.increase_flow_level	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.insert_token	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.lookahead	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.mark	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.new	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.next	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.next_token	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.read_break	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.remove_simple_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.roll_indent	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.save_simple_key	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_anchor	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_block_scalar	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_directive	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_directive_name	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_flow_scalar	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_plain_scalar	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_tag	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_tag_directive_value	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_tag_handle	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_tag_uri	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_uri_escapes	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_version_directive_number	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.scan_version_directive_value	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.skip	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.skip_line	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.skip_to_next_token	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.stale_simple_keys	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.stream_ended	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.stream_started	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::Scanner<T>.unroll_indent	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/scanner.rs::method::SimpleKey.new	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::class::Yaml	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::class::YamlIter	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::class::YamlLoader	class	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::function::parse_f64	function	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.as_f64	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.from_str	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.index	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.into_f64	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.into_iter	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.is_array	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.is_badvalue	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::Yaml.is_null	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::YamlIter.next	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::YamlLoader.insert_new_node	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::YamlLoader.load_from_str	method	skipped	-	vendored YAML reader is not ported
+insta/src/content/yaml/vendored/yaml.rs::method::YamlLoader.on_event	method	skipped	-	vendored YAML reader is not ported
+insta/src/env.rs::class::Error	class	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::class::OutputBehavior	class	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::class::SnapshotUpdate	class	ported	src/golden.cr::enum::UpdateMode	Golden::UpdateMode
+insta/src/env.rs::class::SnapshotUpdateBehavior	class	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::class::TestRunner	class	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::class::ToolConfig	class	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::class::UnreferencedSnapshots	class	partial	src/golden.cr::method::Golden.unreferenced_snapshots	orphan tracking and cleanup
+insta/src/env.rs::class::Workspace	class	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::get_cargo_workspace	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::get_cargo_workspace_from_metadata	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::get_pending_dir	function	partial	src/golden.cr::method::Golden.pending_snapshots	pending path discovery
+insta/src/env.rs::function::get_tool_config	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::memoize_snapshot_file	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::memoize_warning	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::pending_snapshot_path	function	partial	src/golden.cr::method::Golden.pending_snapshots	pending path discovery
+insta/src/env.rs::function::resolve	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::snapshot_update_behavior	function	ported	src/golden.cr::method::Golden.effective_update_mode	effective update mode
+insta/src/env.rs::function::strip_prefix_with_fallback	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::Error.fmt	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::Error.source	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::TestRunner.from_str	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::TestRunner.resolve_fallback	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.auto_accept_unseen	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.auto_review	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.disable_nextest_doctest	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.force_pass	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.from_workspace	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.glob_fail_fast	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.output_behavior	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.require_full_match	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.review_include_hidden	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.review_include_ignored	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.review_warn_undiscovered	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.snapshot_update	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.test_runner	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.test_runner_fallback	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::ToolConfig.test_unreferenced	method	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::method::UnreferencedSnapshots.from_str	method	skipped	-	Rust config parsing
+insta/src/filters.rs::class::Filters	class	ported	src/golden.cr::method::Golden.add_filter	filters live on Golden::Settings
+insta/src/filters.rs::function::strip_ansi_escape_codes	function	missing	-	no ANSI stripping
+insta/src/filters.rs::method::Filters.add	method	ported	src/golden.cr::method::Golden.add_filter	Golden.add_filter
+insta/src/filters.rs::method::Filters.apply_to	method	ported	src/golden.cr::method::Golden.process_output	filters run in process_output
+insta/src/filters.rs::method::Filters.clear	method	missing	-	no clear_filters API
+insta/src/filters.rs::method::Filters.from	method	skipped	-	Rust conversion helper
+insta/src/filters.rs::method::Filters.from_iter	method	skipped	-	Rust conversion helper
+insta/src/glob.rs::class::GlobCollector	class	ported	src/golden.cr::method::Golden.glob_snapshots	Golden.glob_snapshots
+insta/src/glob.rs::function::find_common_prefix	function	skipped	-	internal path helper
+insta/src/glob.rs::function::glob_exec	function	ported	src/golden.cr::method::Golden.glob_snapshots	Golden.glob_snapshots
+insta/src/output.rs::class::SnapshotPrinter	class	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::function::detect_newlines	function	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::function::encode_file_link_escape	function	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::function::invoke_external_diff_tool	function	missing	-	no external diff tool integration
+insta/src/output.rs::function::newlines_matter	function	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::function::print_info	function	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::function::print_line	function	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::function::print_snapshot_summary	function	partial	src/golden.cr::method::Golden.report_pending!	pending report helper
+insta/src/output.rs::function::render_invisible	function	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::function::trailing_newline	function	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.new	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.print	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.print_changeset	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.print_info	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.print_snapshot	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.print_snapshot_diff	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.print_snapshot_summary	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.set_line	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.set_show_diff	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.set_show_info	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.set_snapshot_file	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.set_snapshot_hints	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/output.rs::method::SnapshotPrinter<'a>.set_title	method	skipped	-	CLI returns strings and the TUI renders them
+insta/src/redaction.rs::class::ContentPath	class	skipped	-	content-model path type
+insta/src/redaction.rs::class::PathItem	class	skipped	-	content-model path type
+insta/src/redaction.rs::class::Redaction	class	ported	src/golden.cr::class::Redaction	regex redaction struct
+insta/src/redaction.rs::class::Segment	class	skipped	-	content-model path type
+insta/src/redaction.rs::class::SelectParser	class	skipped	-	selector grammar not ported
+insta/src/redaction.rs::class::Selector	class	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::class::SelectorParseError	class	skipped	-	selector grammar not ported
+insta/src/redaction.rs::function::dynamic_redaction	function	missing	-	callback redactions are not implemented
+insta/src/redaction.rs::function::rounded_redaction	function	missing	-	numeric rounding redaction not implemented
+insta/src/redaction.rs::function::sort	function	missing	-	sorting redaction not implemented
+insta/src/redaction.rs::function::sorted_redaction	function	missing	-	sorting redaction not implemented
+insta/src/redaction.rs::method::ContentPath<'_>.fmt	method	skipped	-	content-model path formatting
+insta/src/redaction.rs::method::PathItem.as_str	method	skipped	-	content-model path type
+insta/src/redaction.rs::method::PathItem.as_u64	method	skipped	-	content-model path type
+insta/src/redaction.rs::method::PathItem.expand_range	method	skipped	-	content-model path type
+insta/src/redaction.rs::method::PathItem.range_check	method	skipped	-	content-model path type
+insta/src/redaction.rs::method::Redaction.from	method	ported	src/golden.cr::class::Redaction	constructor
+insta/src/redaction.rs::method::Redaction.redact	method	ported	src/golden.cr::method::Redaction.apply	regex substitution
+insta/src/redaction.rs::method::Selector<'a>.is_match	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.make_static	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.parse	method	partial	src/golden.cr::method::Golden.parse_path	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.redact	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.redact_impl	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.redact_seq	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.redact_struct	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.segment_is_match	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::Selector<'a>.selector_is_match	method	partial	src/golden.cr::method::Golden.apply_path_redactions	dotted paths and [*] only
+insta/src/redaction.rs::method::SelectorParseError.column	method	skipped	-	selector grammar not ported
+insta/src/runtime.rs::class::AutoName	class	ported	src/golden.cr::macro::assert_snapshot	auto naming from class and method
+insta/src/runtime.rs::class::BinarySnapshotValue	class	ported	src/golden.cr::macro::assert_binary_snapshot	base64 binary snapshots
+insta/src/runtime.rs::class::InlineValue	class	missing	-	inline snapshots (Phase 4.1)
+insta/src/runtime.rs::class::SnapshotAssertionContext	class	partial	src/golden.cr::method::Golden.require_equal	single-pass assertion runtime
+insta/src/runtime.rs::class::SnapshotValue	class	partial	src/golden.cr::method::Golden.require_equal	values are String or Bytes
+insta/src/runtime.rs::function::add_suffix_to_snapshot_name	function	missing	-	snapshot_suffix is not implemented
+insta/src/runtime.rs::function::allow_duplicates	function	missing	-	duplicate snapshot allowance not implemented
+insta/src/runtime.rs::function::assert_snapshot	function	ported	src/golden.cr::macro::assert_snapshot	Golden.assert_snapshot
+insta/src/runtime.rs::function::detect_snapshot_name	function	ported	src/golden.cr::macro::assert_snapshot	auto naming from class and method
+insta/src/runtime.rs::function::get_snapshot_filename	function	ported	src/golden.cr::method::Golden.require_equal	name resolution in require_equal
+insta/src/runtime.rs::function::is_doctest	function	skipped	-	Rust doctests
+insta/src/runtime.rs::function::path_relative_from	function	skipped	-	cargo workspace path helper
+insta/src/runtime.rs::function::prevent_inline_duplicate	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/runtime.rs::function::record_snapshot_duplicate	function	missing	-	duplicate snapshot tracking not implemented
+insta/src/runtime.rs::function::with_allow_duplicates	function	missing	-	duplicate snapshot allowance not implemented
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_passing	method	missing	-	pending cleanup on pass is not implemented
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.cleanup_previous_pending_binary_snapshots	method	missing	-	binary pending cleanup is not implemented
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.finalize	method	partial	src/golden.cr::method::Golden.require_equal	single-pass assertion runtime
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.localize_path	method	skipped	-	cargo workspace path helper
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.new_snapshot	method	partial	src/golden.cr::method::Golden.handle_unseen	first-run staging
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.prepare	method	partial	src/golden.cr::method::Golden.require_equal	single-pass assertion runtime
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.print_snapshot_info	method	partial	src/golden.cr::method::Golden.unified_diff	diff printed on mismatch
+insta/src/runtime.rs::method::SnapshotAssertionContext<'a>.update_snapshot	method	partial	src/golden.cr::method::Golden.handle_pending	pending staging
+insta/src/runtime.rs::method::SnapshotValue<'a>.from	method	partial	src/golden.cr::method::Golden.require_equal	values are String or Bytes
+insta/src/serialization.rs::class::Pretty	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::class::SerializationFormat	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::class::SnapshotLocation	class	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::function::serialize_content	function	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::function::serialize_value	function	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::function::serialize_value_redacted	function	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::method::Pretty.visit_array_mut	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::method::Pretty.visit_item_mut	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::method::Pretty.visit_table_mut	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/serialization.rs::method::Pretty.visit_value_mut	method	skipped	-	Crystal stdlib JSON and YAML replace the content serializer
+insta/src/settings.rs::class::ActualSettings	class	skipped	-	collapsed into Golden::Settings
+insta/src/settings.rs::class::BindingFuture	class	skipped	-	async settings binding is not ported
+insta/src/settings.rs::class::Redactions	class	skipped	-	redactions are an array on Golden::Settings
+insta/src/settings.rs::class::Settings	class	ported	src/golden.cr::class::Settings	Golden::Settings
+insta/src/settings.rs::class::SettingsBindDropGuard	class	skipped	-	async settings binding is not ported
+insta/src/settings.rs::function::_assert	function	skipped	-	Rust trait assertion helper
+insta/src/settings.rs::function::_assert_send_sync	function	skipped	-	Rust trait assertion helper
+insta/src/settings.rs::method::ActualSettings.allow_empty_glob	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.clone	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.comparator	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.description	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.filters	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.input_file	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.omit_expression	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.raw_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.redactions	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.snapshot_path	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.sort_maps	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::ActualSettings.strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::BindingFuture<F>.poll	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Redactions.apply_to_content	method	ported	src/golden.cr::method::Golden.process_output	redactions run in process_output
+insta/src/settings.rs::method::Redactions.from	method	skipped	-	Rust conversion helper
+insta/src/settings.rs::method::Settings._private_inner_mut	method	skipped	-	internal mutability helper
+insta/src/settings.rs::method::Settings.add_dynamic_redaction	method	missing	-	callback redactions are not implemented
+insta/src/settings.rs::method::Settings.add_filter	method	ported	src/golden.cr::method::Golden.add_filter	Golden.add_filter
+insta/src/settings.rs::method::Settings.add_redaction	method	ported	src/golden.cr::method::Golden.add_redaction	Golden.add_redaction
+insta/src/settings.rs::method::Settings.add_redaction_impl	method	skipped	-	internal helper
+insta/src/settings.rs::method::Settings.allow_empty_glob	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.apply_redactions	method	ported	src/golden.cr::method::Golden.process_output	redactions run in process_output
+insta/src/settings.rs::method::Settings.bind	method	partial	src/golden.cr::method::Golden.with_settings	no thread-local binding; scoped settings only
+insta/src/settings.rs::method::Settings.bind_async	method	skipped	-	async settings binding is not ported
+insta/src/settings.rs::method::Settings.bind_to_scope	method	skipped	-	async settings binding is not ported
+insta/src/settings.rs::method::Settings.clear_filters	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.clear_redactions	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.clone_current	method	partial	src/golden.cr::method::Golden.with_settings	scoped settings save and restore
+insta/src/settings.rs::method::Settings.comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator
+insta/src/settings.rs::method::Settings.default	method	ported	src/golden.cr::method::Settings.initialize	default settings
+insta/src/settings.rs::method::Settings.description	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.filters	method	ported	src/golden.cr::class::Settings	Settings.filters
+insta/src/settings.rs::method::Settings.has_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.input_file	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.new	method	ported	src/golden.cr::method::Settings.initialize	settings constructor
+insta/src/settings.rs::method::Settings.omit_expression	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.remove_description	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.remove_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.remove_input_file	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.remove_snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_allow_empty_glob	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_comparator	method	ported	src/golden.cr::class::Settings	Settings.comparator=
+insta/src/settings.rs::method::Settings.set_description	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_filters	method	ported	src/golden.cr::class::Settings	Settings.filters=
+insta/src/settings.rs::method::Settings.set_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_input_file	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_omit_expression	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_prepend_module_to_snapshot	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_raw_info	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_redactions	method	ported	src/golden.cr::class::Settings	Settings.redactions=
+insta/src/settings.rs::method::Settings.set_snapshot_path	method	ported	src/golden.cr::method::Golden.dir=	Golden.dir=
+insta/src/settings.rs::method::Settings.set_snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_sort_maps	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.set_strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.snapshot_path	method	ported	src/golden.cr::method::Golden.dir	Golden.dir
+insta/src/settings.rs::method::Settings.snapshot_suffix	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.sort_maps	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.sort_selector	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.strip_ansi_escape_codes	method	missing	-	not implemented in the Crystal port
+insta/src/settings.rs::method::Settings.with	method	ported	src/golden.cr::method::Golden.with_settings	Golden.with_settings
+insta/src/settings.rs::method::SettingsBindDropGuard.drop	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::class::MetaData	class	ported	src/golden.cr::method::Golden.write_metadata	name, created_at and line sidecar
+insta/src/snapshot.rs::class::PendingInlineSnapshot	class	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::class::Snapshot	class	partial	src/golden.cr::method::Golden.require_equal	file-based; no Snapshot object
+insta/src/snapshot.rs::class::SnapshotContents	class	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::class::SnapshotKind	class	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::class::TextSnapshotContents	class	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::class::TextSnapshotKind	class	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::class::TmpSnapshotKind	class	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::function::build_binary_path	function	partial	src/golden.cr::macro::assert_binary_snapshot	binary snapshots stored base64 in .golden
+insta/src/snapshot.rs::function::leading_space	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::function::legacy_inline_normalize	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::function::min_indentation	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::function::names_of_path	function	ported	src/golden.cr::method::Golden.require_equal	snapshot name resolution
+insta/src/snapshot.rs::function::normalize_inline	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::function::normalized_of_literal	function	missing	-	inline snapshots (Phase 4.1)
+insta/src/snapshot.rs::function::required_hashes	function	missing	-	legacy hash-named snapshots are not supported
+insta/src/snapshot.rs::method::MetaData.as_content	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::MetaData.assertion_line	method	partial	src/golden.cr::method::Golden.write_metadata	line stored in the meta sidecar
+insta/src/snapshot.rs::method::MetaData.description	method	missing	-	description metadata is not stored
+insta/src/snapshot.rs::method::MetaData.expression	method	missing	-	expression metadata is not stored
+insta/src/snapshot.rs::method::MetaData.from_content	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::MetaData.get_relative_source	method	skipped	-	cargo workspace path helper
+insta/src/snapshot.rs::method::MetaData.input_file	method	missing	-	input_file metadata is not stored
+insta/src/snapshot.rs::method::MetaData.private_info	method	missing	-	info metadata is not stored
+insta/src/snapshot.rs::method::MetaData.source	method	partial	src/golden.cr::method::Golden.write_metadata	line stored in the meta sidecar
+insta/src/snapshot.rs::method::MetaData.trim_for_persistence	method	missing	-	no inline metadata persistence
+insta/src/snapshot.rs::method::PendingInlineSnapshot.as_content	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::PendingInlineSnapshot.from_content	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::PendingInlineSnapshot.load_batch	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::PendingInlineSnapshot.new	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::PendingInlineSnapshot.save	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::PendingInlineSnapshot.save_batch	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::Snapshot.as_content	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::Snapshot.as_text	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::Snapshot.build_binary_path	method	partial	src/golden.cr::macro::assert_binary_snapshot	binary snapshots stored base64 in .golden
+insta/src/snapshot.rs::method::Snapshot.contents	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::Snapshot.from_components	method	partial	src/golden.cr::method::Golden.write_file	atomic file writes
+insta/src/snapshot.rs::method::Snapshot.from_content	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::Snapshot.from_file	method	ported	src/golden.cr::method::Golden.show_snapshot	Golden.show_snapshot
+insta/src/snapshot.rs::method::Snapshot.metadata	method	ported	src/golden.cr::method::Golden.snapshot_metadata	meta sidecar reads
+insta/src/snapshot.rs::method::Snapshot.module_name	method	partial	src/golden.cr::method::Golden.group=	group prefix is user-set
+insta/src/snapshot.rs::method::Snapshot.save	method	ported	src/golden.cr::method::Golden.write_file	atomic file writes
+insta/src/snapshot.rs::method::Snapshot.save_new	method	ported	src/golden.cr::method::Golden.handle_pending	pending staging
+insta/src/snapshot.rs::method::Snapshot.save_with_metadata	method	ported	src/golden.cr::method::Golden.write_metadata	meta sidecar writes
+insta/src/snapshot.rs::method::Snapshot.serialize_snapshot	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::Snapshot.snapshot_name	method	ported	src/golden.cr::method::Golden.require_equal	name resolution in require_equal
+insta/src/snapshot.rs::method::SnapshotContents.as_text	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::SnapshotContents.eq	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::SnapshotContents.from	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::SnapshotContents.is_binary	method	skipped	-	content model collapsed to String or Bytes
+insta/src/snapshot.rs::method::TextSnapshotContents.as_str_legacy	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.fmt	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.from_inline_literal	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.matches_fully	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.matches_latest	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.matches_legacy	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.needs_escaped_format	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.new	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.normalize	method	missing	-	not implemented in the Crystal port
+insta/src/snapshot.rs::method::TextSnapshotContents.to_inline	method	missing	-	not implemented in the Crystal port
+insta/src/utils.rs::class::FakeStyledObject	class	skipped	-	Rust test helper
+insta/src/utils.rs::const::PREFIX	const	skipped	-	inline snapshot markers (Phase 4.1)
+insta/src/utils.rs::const::SUFFIX	const	skipped	-	inline snapshot markers (Phase 4.1)
+insta/src/utils.rs::function::format_rust_expression	function	skipped	-	Rust source formatting
+insta/src/utils.rs::function::get_cargo	function	skipped	-	cargo toolchain discovery
+insta/src/utils.rs::function::is_ci	function	ported	src/golden.cr::method::Golden.ci?	CI environment detection
+insta/src/utils.rs::function::path_to_storage	function	skipped	-	cargo workspace path helper
+insta/src/utils.rs::function::style	function	skipped	-	terminal styling handled by bubbles and similar
+insta/src/utils.rs::function::term_width	function	skipped	-	terminal width handled by bubbles
+insta/src/utils.rs::method::FakeStyledObject<D>.fmt	method	missing	-	not implemented in the Crystal port

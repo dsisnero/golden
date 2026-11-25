@@ -88,14 +88,31 @@ redactions:
 
 ## Parity inventory
 
-`plans/inventory/` is empty as of this setup. `make inventory` invokes the
-canonical `check_port_inventory.sh` from the installed
-cross-language-crystal-parity skill for every ledger that exists and fails with
-instructions when none does. Bootstrapping the Rust (and optionally Ruby)
-ledger is tracked as the first next-up item in `plans/parity.md`.
+`plans/inventory/` tracks the Rust upstream (`vendor/insta`) at
+`1.48.0` (`3d62572`), scoped to `insta/src` and `insta/tests`:
+
+| File | Kind | Maintained by |
+| --- | --- | --- |
+| `rust_port_inventory.tsv` | curated ledger | hand-edited, status + `crystal_refs` |
+| `rust_source_parity.tsv` | generated source manifest | `make inventory-refresh` |
+| `rust_test_parity.tsv` | generated test manifest | `make inventory-refresh` |
+
+`make inventory` runs the canonical checkers from the installed
+cross-language-crystal-parity skill over all three. The curated ledger currently
+reads: 41 `ported`, 31 `partial`, 93 `missing`, 389 `skipped`. Most `skipped`
+rows are insta's content/serialization engine and cargo/nextest internals, which
+Crystal replaces with stdlib or does not expose; the `missing` rows are the
+feature backlog in `plans/parity.md` Phase 6.
+
+`vendor/insta-ruby` stays a behavior reference only (no Ruby ledger). If Ruby
+parity becomes a contract, add a `ruby_port_inventory.tsv` and extend the
+`inventory` target with the same scope/parser policy.
 
 ## Known gaps
 
 - Inline snapshots (`plans/parity.md` Phase 4.1) are unimplemented.
+- The ledger's 93 `missing` rows are grouped into Phase 6; settings metadata,
+  snapshot naming/suffixes, strict comparison, and redaction helpers are the
+  largest groups.
 - `shard.yml` still advertises `0.2.0` while `CHANGELOG.md` and the README
   describe `0.3.0`; bump both when preparing the next release.

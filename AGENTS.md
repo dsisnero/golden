@@ -25,6 +25,7 @@ make lint           # ameba src spec examples
 make test           # crystal spec
 make test-examples  # crystal spec examples
 make inventory      # parity ledger drift check against the pinned vendor trees
+make inventory-refresh  # regenerate source/test manifests (never the ledger)
 make test-review    # crystal spec && golden review
 make clean          # remove temp/, .crystal-cache/, bin/golden, AppleDouble files
 ```
@@ -55,8 +56,10 @@ Run its current `scripts/` directly; `make inventory` invokes
 `check_port_inventory.sh` from that directory and never a copied parity
 implementation. Updating the installed skill does not update this repository.
 
-The curated ledgers will use `tree-sitter` discovery vocabulary (`rust` for
-`vendor/insta`, `ruby` for `vendor/insta-ruby`). Keep that mode for the regular
+The curated ledger uses `tree-sitter` discovery vocabulary over
+`vendor/insta` with the scope `insta/src,insta/tests` (recorded in
+`plans/inventory/*.metadata.json`). `vendor/insta-ruby` is a behavior reference
+only; no Ruby ledger is tracked. Keep that scope and parser for the regular
 gate. Before relying on discovery, run:
 
 ```bash
@@ -66,13 +69,21 @@ make inventory
 ```
 
 Check `PARITY_DISCOVERY_BACKEND` in the gate output and `backend` in each
-manifest's `.metadata.json`. A requested parser mode does not prove tree-sitter
-ran.
+generated manifest's `.metadata.json`. A requested parser mode does not prove
+tree-sitter ran.
 
-Status: `plans/inventory/` is **not bootstrapped yet**, so `make inventory`
-exits non-zero with instructions. Bootstrapping the ledgers with the
-cross-language parity skill is the first **Next up** item in
-`plans/parity.md`; until then the inventory gate is a known-red baseline.
+Ledger files:
+
+| Path | Role |
+| --- | --- |
+| `plans/inventory/rust_port_inventory.tsv` | curated ledger (status + `crystal_refs`) |
+| `plans/inventory/rust_source_parity.tsv` | generated source manifest (reference) |
+| `plans/inventory/rust_test_parity.tsv` | generated test manifest (reference) |
+
+Refresh the generated pair only with `make inventory-refresh`; it never
+overwrites the curated ledger. To re-base after an upstream bump, follow the
+vendor-refresh flow in the skill and replace the ledger wholesale rather than
+appending rows.
 
 ## Issue tracking
 
@@ -124,7 +135,7 @@ must be committed as **one** atomic commit before starting the next feature:
 2. upstream tests (or equivalent characterization specs) exist and pass;
 3. gates pass: `make lint`, `make test`, and `make inventory`;
 4. parity inventory rows for the feature are updated
-   (`plans/inventory/<language>_port_inventory.tsv`) and `make inventory`
+   (`plans/inventory/rust_port_inventory.tsv`) and `make inventory`
    passes — it checks every row against the pinned tree *and* that each
    `crystal_refs` file still exists, which is the half that rots when this
    repository's own files move;
