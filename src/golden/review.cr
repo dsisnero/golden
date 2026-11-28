@@ -76,12 +76,12 @@ module Golden
     getter source_context : String
     getter inline_diff : String
 
-    def initialize(@name : String, @path : String)
+    def initialize(@name : String, @path : String, golden_path : String? = nil)
       @new_content = File.read(@path)
-      golden_path = @path.rchop(".new")
-      @has_existing = File.exists?(golden_path)
+      baseline_path = golden_path || @path.rchop(".new")
+      @has_existing = File.exists?(baseline_path)
       if @has_existing
-        old = File.read(golden_path)
+        old = File.read(baseline_path)
         @old_content = old
         a = Golden.normalize(old)
         b = Golden.normalize(@new_content)
@@ -93,7 +93,7 @@ module Golden
         @diff = "(new snapshot)"
         @inline_diff = ""
       end
-      meta_path = golden_path + ".meta"
+      meta_path = baseline_path + ".meta"
       @metadata_line = nil
       @metadata_source_file = nil
       @source_context = ""
@@ -205,7 +205,8 @@ module Golden
 
       @items = Array(Bubbles::List::Item).new(@pending.size + inline.size)
       @pending.each do |path|
-        @items << ReviewItem.new(File.basename(path, ".golden.new"), path)
+        golden_path = Golden.golden_path_for_pending(path, @dir)
+        @items << ReviewItem.new(File.basename(path, ".golden.new"), path, golden_path)
       end
       inline.each do |pending|
         @items << InlineReviewItem.new(pending)
@@ -432,7 +433,7 @@ module Golden
     private def accept_file_item(item : ReviewItem) : Bool
       return false if decided?(item)
       return false unless File.exists?(item.path)
-      Golden.promote_pending!(item.path, item.name)
+      Golden.promote_pending!(item.path, item.name, dir: @dir)
       record(item, "accepted")
       true
     end
@@ -496,7 +497,7 @@ module Golden
 
   def self.review!(dir : String? = nil, root : String? = nil)
     search_dir = dir || @@settings.dir
-    pending = Dir.exists?(search_dir) ? Dir.glob(File.join(search_dir, "**/*.golden.new")).sort : [] of String
+    pending = pending_snapshots(search_dir)
     inline = pending_inline_snapshots(search_dir).sort_by { |entry| {entry.file, entry.line} }
     return [] of Tuple(String, String) if pending.empty? && inline.empty?
 

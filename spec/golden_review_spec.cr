@@ -614,6 +614,51 @@ describe "Golden::ReviewModel with inline pendings" do
   end
 end
 
+describe "Golden::ReviewItem with an external pending directory" do
+  it "diffs the pending snapshot against its baseline" do
+    dir = temp_dir
+    pending_dir = temp_dir
+    ENV["GOLDEN_PENDING_DIR"] = pending_dir
+    begin
+      File.write(File.join(dir, "direct.golden"), "old line\n")
+      FileUtils.mkdir_p(pending_dir)
+      pending_path = File.join(pending_dir, "direct.golden.new")
+      File.write(pending_path, "new line\n")
+
+      golden_path = Golden.golden_path_for_pending(pending_path, dir)
+      item = Golden::ReviewItem.new("direct", pending_path, golden_path)
+      item.has_existing?.should be_true
+      item.old_content.should eq("old line\n")
+      item.diff.should contain("-old line")
+      item.diff.should contain("+new line")
+    ensure
+      ENV.delete("GOLDEN_PENDING_DIR")
+    end
+  end
+
+  it "accepts a pending snapshot into the snapshot directory" do
+    dir = temp_dir
+    pending_dir = temp_dir
+    ENV["GOLDEN_PENDING_DIR"] = pending_dir
+    begin
+      File.write(File.join(dir, "snap.golden"), "old")
+      FileUtils.mkdir_p(pending_dir)
+      pending_path = File.join(pending_dir, "snap.golden.new")
+      File.write(pending_path, "new")
+
+      model = Golden::ReviewModel.new([pending_path], dir)
+      model.update(Tea.key('y'))
+
+      model.actions.should eq([{"snap", "accepted"}])
+      File.read(File.join(dir, "snap.golden")).should eq("new")
+      File.exists?(pending_path).should be_false
+      File.exists?(File.join(pending_dir, "snap.golden")).should be_false
+    ensure
+      ENV.delete("GOLDEN_PENDING_DIR")
+    end
+  end
+end
+
 describe "Golden.review!" do
   it "returns empty when directory does not exist" do
     Golden.review!("/nonexistent/path/xyz").should be_empty

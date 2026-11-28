@@ -52,6 +52,12 @@ defaults to `testdata`. Three sibling artifacts exist:
 
 5. on mismatch raises with a unified diff unless `GOLDEN_FORCE_PASS=1`.
 
+When `GOLDEN_PENDING_DIR` (or `INSTA_PENDING_DIR`) is set, step 3 writes the
+pending candidate under that directory instead, at the snapshot's path
+relative to `Golden.dir`; `promote_pending!` maps it back through
+`golden_path_for_pending` before moving it, and `discard_pending!` deletes the
+pending file and its sidecar where they are.
+
 Writes are atomic: content goes to a temporary file in the target directory and
 is then renamed over the destination, so an interrupted run cannot leave a
 partially written baseline.

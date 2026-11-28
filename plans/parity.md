@@ -2,11 +2,13 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6.7 — binary snapshot extension parity
-  (`build_binary_path`).
+- **Current focus:** Phase 6.8 — unreferenced snapshot tracking and
+  `golden clean` parity (`env.rs::UnreferencedSnapshots`).
 - **Next up:**
-  1. 6.7 Binary snapshot extension parity.
-  2. 6.8 Unreferenced snapshot tracking and `golden clean` parity.
+  1. 6.8 Unreferenced snapshot tracking and `golden clean` parity.
+  2. Remaining `partial` rows in `plans/inventory/rust_port_inventory.tsv`
+     (redaction key traversal, runtime assertion-context classes, settings
+     binding, binary snapshot objects).
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -19,11 +21,14 @@
   - Redaction helpers and selectors (Phase 6.4): complete
   - Settings/pending helpers (Phase 6.5): complete
   - Output normalization (Phase 6.6): complete
+  - Pending directory (Phase 6.7): complete — `GOLDEN_PENDING_DIR`
+    (`INSTA_PENDING_DIR` fallback) mirrors pending snapshots outside the
+    snapshot tree; binary sidecar storage is closed as a divergence
   - Inline snapshots (Phase 4.1): complete — 4.1a–4.1e done; assertions record
     pendings, the CLI and review TUI patch source on accept, and reject/skip
     drop or keep registry entries without touching source
-  - Rust parity inventory: bootstrapped — 554 rows (116 `ported`, 23 `partial`,
-    0 `missing`, 415 `skipped`)
+  - Rust parity inventory: bootstrapped — 554 rows (118 `ported`, 19 `partial`,
+    0 `missing`, 417 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
   - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
@@ -31,14 +36,16 @@
     and is not a parity target.
   - Ledger scope is `insta/src,insta/tests` with `tree-sitter` discovery. Keep
     that scope/parser or every id churns.
-  - 389 rows are `skipped` because they are insta's content/serialization
-    engine (vendored YAML parser, content scanner/emitter) or cargo/nextest
-    workspace internals; Crystal replaces those with stdlib or does not expose
+  - 417 rows are `skipped` because they are insta's content/serialization
+    engine (vendored YAML parser, content scanner/emitter), cargo/nextest
+    workspace internals, or deliberate divergences (strict match, binary
+    sidecar data files); Crystal replaces those with stdlib or does not expose
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** inline snapshot review TUI integration (4.1e).
-- **Gates:** `make lint` pass; `make test` pass (247 examples); `make inventory`
+- **Last commit:** pending snapshot directory (6.7) on top of inline snapshot
+  review TUI integration (4.1e).
+- **Gates:** `make lint` pass; `make test` pass (257 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -52,10 +59,10 @@ batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
 display, source context, inline word-level highlighting).
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 116 are `ported`, 23 `partial`, 0 `missing`, and 415 `skipped` (insta's
-content/serialization engine and cargo internals). All planned phases are now
-implemented; remaining work closes the 23 `partial` rows (binary snapshot
-extensions, unreferenced-snapshot tracking) one feature at a time.
+which 118 are `ported`, 19 `partial`, 0 `missing`, and 417 `skipped` (insta's
+content/serialization engine, cargo internals, and documented divergences).
+All planned phases are now implemented; remaining work closes the 19 `partial`
+rows one feature at a time.
 
 ---
 
@@ -350,6 +357,16 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - [x] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes` removes CSI
       sequences before redactions; `sort_maps` sorts JSON object keys in
       `assert_json_snapshot`; `allow_empty_glob` controls empty glob matches.
+- [x] **6.7 Pending snapshot directory** — `Golden.pending_dir` reads
+      `GOLDEN_PENDING_DIR` with an `INSTA_PENDING_DIR` fallback;
+      `Golden.pending_snapshot_path` mirrors a snapshot's path (relative to
+      the snapshot dir) under that directory and refuses paths that would
+      escape it; `Golden.golden_path_for_pending` maps a pending file back.
+      Mismatches, `pending_snapshots`, `status`, `accept_all!`,
+      `reject_all!`, `review!`, and pending promotion all route through these
+      helpers. Binary sidecar data files (`Snapshot.build_binary_path`) are
+      closed as a divergence: `.golden` stays content-only and binary
+      payloads stay base64 (`env.rs`, `snapshot.rs`).
 
 ---
 
@@ -374,6 +391,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 6.4   | Redaction helpers + selector grammar | Medium | Medium | ✅ Done |
 | 6.5   | Settings and pending helpers | Medium | Small | ✅ Done |
 | 6.6   | ANSI and map ordering | Low | Small | ✅ Done |
+| 6.7   | Pending snapshot directory | Medium | Small | ✅ Done |
 
 ## Intentional divergences
 
@@ -397,6 +415,16 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - **Glob snapshots keep basename names.** Upstream derives a suffix from the
   matched file's common-prefix-relative path; here the per-file snapshot name
   is supplied by the caller and `input_file` records the source path.
+- **Binary snapshots stay base64 inside `.golden`.** Upstream stores binary
+  payloads in a sibling data file (`foo.snap.png`) described by metadata in
+  the snapshot file; Golden's `.golden` files are pure content with sidecar
+  metadata, so `Snapshot.build_binary_path` has nothing to name. Converting
+  would require a snapshot container format, so those ledger rows are
+  `skipped` rather than `missing`.
+- **Pending snapshots can live outside the snapshot tree.** `GOLDEN_PENDING_DIR`
+  (with upstream's `INSTA_PENDING_DIR` as a fallback name) mirrors the path
+  relative to the snapshot dir instead of cargo-insta's workspace-relative
+  mapping, because Golden has no cargo workspace concept.
 - **`sort_maps` applies to JSON only.** Upstream sorts the content model before
   emitting JSON or YAML; here `assert_json_snapshot` sorts parsed object keys
   and YAML snapshots keep their emitted order.

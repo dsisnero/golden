@@ -209,6 +209,12 @@ Golden.accept_all!
 Golden.reject_all!
 ```
 
+Set `GOLDEN_PENDING_DIR` (or upstream's `INSTA_PENDING_DIR`) to write pending
+snapshots outside the snapshot tree, mirroring each snapshot's relative path
+under that directory. Accepting or rejecting moves/deletes them back through
+the same mapping, and `pending_snapshots`, `status`, and `golden review` all
+discover them there.
+
 ### Interactive Review
 
 ```crystal

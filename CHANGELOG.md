@@ -54,6 +54,12 @@
   reported and keep the entry for a later retry
 - `Golden.accept_inline_entry` / `Golden.reject_inline_entry` patch or drop a
   single pending inline snapshot instead of the whole registry
+- `GOLDEN_PENDING_DIR` (with upstream's `INSTA_PENDING_DIR` as a fallback)
+  stores pending snapshots outside the snapshot tree, mirroring each
+  snapshot's path relative to it; `Golden.pending_dir`,
+  `Golden.pending_snapshot_path`, and `Golden.golden_path_for_pending` expose
+  the mapping, which `pending_snapshots`, `status`, `accept_all!`,
+  `reject_all!`, and the review TUI all use
 
 ## 0.3.0 (2026-07-19)
 

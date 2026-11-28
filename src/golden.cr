@@ -420,7 +420,7 @@ module Golden
     search_dir = dir || @@settings.dir
     all_golden = Dir.glob(File.join(search_dir, "**/*.golden")).sort
     snapshots = all_golden.count { |path| !path.ends_with?(".golden.new") && !path.ends_with?(".golden.meta") }
-    pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).size
+    pending = pending_snapshots(search_dir).size
     meta_count = Dir.glob(File.join(search_dir, "**/*.golden.meta")).size
     orphans = unreferenced_snapshots(search_dir).size
     {"snapshots" => snapshots, "pending" => pending, "metadata" => meta_count, "orphans" => orphans}
@@ -543,9 +543,61 @@ module Golden
     nil
   end
 
+  # External directory for pending snapshots, from `GOLDEN_PENDING_DIR` (or
+  # upstream's `INSTA_PENDING_DIR`). An empty value behaves as unset.
+  def self.pending_dir : String?
+    raw = ENV["GOLDEN_PENDING_DIR"]? || ENV["INSTA_PENDING_DIR"]?
+    return nil if raw.nil?
+    dir = raw.strip
+    dir.empty? ? nil : dir
+  end
+
+  # Path that receives a pending snapshot for `golden_path`. With an external
+  # pending directory configured, the path mirrors the snapshot's path relative
+  # to `dir` under that directory (upstream `pending_snapshot_path`).
+  def self.pending_snapshot_path(golden_path : String, dir : String? = nil) : String
+    external = pending_dir
+    return golden_path + ".new" unless external
+
+    base = dir || @@settings.dir
+    relative = relative_to_dir(golden_path, base)
+    if relative.split(File::SEPARATOR).includes?("..")
+      raise "GOLDEN_PENDING_DIR is set but snapshot path #{golden_path} " \
+            "would escape the pending directory (relative path contains \"..\")"
+    end
+    File.join(external, relative + ".new")
+  end
+
+  # Inverse of `pending_snapshot_path`: the `.golden` path a pending snapshot
+  # would be promoted to.
+  def self.golden_path_for_pending(pending_path : String, dir : String? = nil) : String
+    external = pending_dir
+    return pending_path.rchop(".new") unless external
+
+    base = dir || @@settings.dir
+    prefix = external.ends_with?(File::SEPARATOR) ? external : external + File::SEPARATOR
+    unless pending_path.starts_with?(prefix)
+      raise "pending snapshot #{pending_path} is outside GOLDEN_PENDING_DIR #{external}"
+    end
+    File.join(base, pending_path[prefix.size..].rchop(".new"))
+  end
+
+  private def self.relative_to_dir(path : String, base : String) : String
+    prefix = base.ends_with?(File::SEPARATOR) ? base : base + File::SEPARATOR
+    return path[prefix.size..] if path.starts_with?(prefix)
+    normalized_base = File.expand_path(base)
+    normalized_path = File.expand_path(path)
+    normalized_prefix = normalized_base.ends_with?(File::SEPARATOR) ? normalized_base : normalized_base + File::SEPARATOR
+    if normalized_path.starts_with?(normalized_prefix)
+      return normalized_path[normalized_prefix.size..]
+    end
+    path
+  end
+
   def self.pending_snapshots(dir : String? = nil) : Array(String)
     search_dir = dir || @@settings.dir
-    Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
+    root = pending_dir || search_dir
+    Dir.glob(File.join(root, "**/*.golden.new")).sort
   end
 
   def self.report_pending!(dir : String? = nil) : String
@@ -563,16 +615,16 @@ module Golden
 
   def self.accept_all!(dir : String? = nil) : Array(String)
     search_dir = dir || @@settings.dir
-    pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
+    pending = pending_snapshots(search_dir)
     pending.each do |pending_path|
-      promote_pending!(pending_path)
+      promote_pending!(pending_path, dir: search_dir)
     end
-    pending.map(&.rchop(".new"))
+    pending.map { |pending_path| golden_path_for_pending(pending_path, search_dir) }
   end
 
   def self.reject_all!(dir : String? = nil) : Array(String)
     search_dir = dir || @@settings.dir
-    pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
+    pending = pending_snapshots(search_dir)
     pending.each { |pending_path| discard_pending!(pending_path) }
     pending
   end
@@ -602,7 +654,7 @@ module Golden
     dir = test_data_dir || @@settings.dir
     full_name = compose_snapshot_name(test_name, module_name)
     golden_path = File.join(dir, "#{full_name}.golden")
-    pending_path = golden_path + ".new"
+    pending_path = pending_snapshot_path(golden_path, dir)
     output_str = output.is_a?(Bytes) ? String.new(output) : output
     processed_output = process_output(output_str)
     if (ser_name = @@settings.serializer) && (ser = @@serializers[ser_name]?)
@@ -1037,8 +1089,9 @@ module Golden
   end
 
   # Promotes a pending snapshot to a golden file, carrying its metadata sidecar.
-  def self.promote_pending!(pending_path : String, name : String? = nil) : String
-    golden_path = pending_path.rchop(".new")
+  def self.promote_pending!(pending_path : String, name : String? = nil,
+                            dir : String? = nil) : String
+    golden_path = golden_path_for_pending(pending_path, dir)
     pending_meta = pending_path + ".meta"
     FileUtils.mv(pending_path, golden_path)
     if File.exists?(pending_meta)

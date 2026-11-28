@@ -289,11 +289,11 @@ insta/src/env.rs::class::UnreferencedSnapshots	class	partial	src/golden.cr::meth
 insta/src/env.rs::class::Workspace	class	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::get_cargo_workspace	function	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::get_cargo_workspace_from_metadata	function	skipped	-	cargo, nextest and workspace internals
-insta/src/env.rs::function::get_pending_dir	function	partial	src/golden.cr::method::Golden.pending_snapshots	pending path discovery
+insta/src/env.rs::function::get_pending_dir	function	ported	src/golden.cr::method::Golden.pending_dir	GOLDEN_PENDING_DIR with INSTA_PENDING_DIR fallback
 insta/src/env.rs::function::get_tool_config	function	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::memoize_snapshot_file	function	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::memoize_warning	function	skipped	-	cargo, nextest and workspace internals
-insta/src/env.rs::function::pending_snapshot_path	function	partial	src/golden.cr::method::Golden.pending_snapshots	pending path discovery
+insta/src/env.rs::function::pending_snapshot_path	function	ported	src/golden.cr::method::Golden.pending_snapshot_path	snapshot-relative mirror under the pending dir; refuses escaping paths
 insta/src/env.rs::function::resolve	function	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::snapshot_update_behavior	function	ported	src/golden.cr::method::Golden.effective_update_mode	effective update mode
 insta/src/env.rs::function::strip_prefix_with_fallback	function	skipped	-	cargo, nextest and workspace internals
@@ -493,7 +493,7 @@ insta/src/snapshot.rs::class::SnapshotKind	class	skipped	-	content model collaps
 insta/src/snapshot.rs::class::TextSnapshotContents	class	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::class::TextSnapshotKind	class	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::class::TmpSnapshotKind	class	skipped	-	content model collapsed to String or Bytes
-insta/src/snapshot.rs::function::build_binary_path	function	partial	src/golden.cr::macro::assert_binary_snapshot	binary snapshots stored base64 in .golden
+insta/src/snapshot.rs::function::build_binary_path	function	skipped	-	content-only .golden files; binary payloads stay base64 with no sidecar data file
 insta/src/snapshot.rs::function::leading_space	function	ported	src/golden.cr::method::Golden.normalize_inline	folded into normalize_inline
 insta/src/snapshot.rs::function::legacy_inline_normalize	function	skipped	-	legacy inline literals are not supported
 insta/src/snapshot.rs::function::min_indentation	function	ported	src/golden.cr::method::Golden.normalize_inline	common indentation stripping
@@ -519,7 +519,7 @@ insta/src/snapshot.rs::method::PendingInlineSnapshot.save	method	ported	src/gold
 insta/src/snapshot.rs::method::PendingInlineSnapshot.save_batch	method	skipped	-	registry writes per assertion; no batch API needed
 insta/src/snapshot.rs::method::Snapshot.as_content	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::Snapshot.as_text	method	skipped	-	content model collapsed to String or Bytes
-insta/src/snapshot.rs::method::Snapshot.build_binary_path	method	partial	src/golden.cr::macro::assert_binary_snapshot	binary snapshots stored base64 in .golden
+insta/src/snapshot.rs::method::Snapshot.build_binary_path	method	skipped	-	content-only .golden files; binary payloads stay base64 with no sidecar data file
 insta/src/snapshot.rs::method::Snapshot.contents	method	skipped	-	content model collapsed to String or Bytes
 insta/src/snapshot.rs::method::Snapshot.from_components	method	partial	src/golden.cr::method::Golden.write_file	atomic file writes
 insta/src/snapshot.rs::method::Snapshot.from_content	method	skipped	-	content model collapsed to String or Bytes

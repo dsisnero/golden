@@ -1241,6 +1241,93 @@ describe Golden do
     end
   end
 
+  describe "pending directory" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+    pending_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+      FileUtils.mkdir_p(pending_dir)
+      ENV["GOLDEN_PENDING_DIR"] = pending_dir
+    end
+
+    after_each do
+      ENV.delete("GOLDEN_PENDING_DIR")
+      ENV.delete("INSTA_PENDING_DIR")
+      FileUtils.rm_rf(temp_dir)
+      FileUtils.rm_rf(pending_dir)
+      Golden.reset_tracking!
+    end
+
+    it "reads GOLDEN_PENDING_DIR and falls back to INSTA_PENDING_DIR" do
+      Golden.pending_dir.should eq(pending_dir)
+      ENV.delete("GOLDEN_PENDING_DIR")
+      ENV["INSTA_PENDING_DIR"] = pending_dir
+      Golden.pending_dir.should eq(pending_dir)
+      ENV["INSTA_PENDING_DIR"] = "  "
+      Golden.pending_dir.should be_nil
+    end
+
+    it "mirrors the snapshot path under the pending directory" do
+      golden_path = File.join(temp_dir, "Nested", "snap.golden")
+      Golden.pending_snapshot_path(golden_path, temp_dir)
+        .should eq(File.join(pending_dir, "Nested", "snap.golden.new"))
+    end
+
+    it "maps a pending path back to its golden path" do
+      pending_path = File.join(pending_dir, "Nested", "snap.golden.new")
+      Golden.golden_path_for_pending(pending_path, temp_dir)
+        .should eq(File.join(temp_dir, "Nested", "snap.golden"))
+    end
+
+    it "refuses paths that would escape the pending directory" do
+      golden_path = File.join(temp_dir, "..", "escape.golden")
+      expect_raises(Exception, /escape the pending directory/) do
+        Golden.pending_snapshot_path(golden_path, temp_dir)
+      end
+    end
+
+    it "writes pending snapshots to the pending directory on mismatch" do
+      golden_path = File.join(temp_dir, "direct.golden")
+      File.write(golden_path, "old")
+
+      expect_raises(Exception, /output does not match/) do
+        Golden.with_settings(dir: temp_dir, update_mode: Golden::UpdateMode::New) do
+          Golden.require_equal("direct", "new")
+        end
+      end
+
+      pending_path = File.join(pending_dir, "direct.golden.new")
+      File.exists?(pending_path).should be_true
+      File.exists?(File.join(temp_dir, "direct.golden.new")).should be_false
+      Golden.pending_snapshots(temp_dir).should eq([pending_path])
+    end
+
+    it "promotes pending snapshots back to the snapshot directory" do
+      File.write(File.join(temp_dir, "direct.golden"), "old")
+      pending_path = File.join(pending_dir, "direct.golden.new")
+      File.write(pending_path, "new")
+
+      Golden.accept_all!(temp_dir).should eq([File.join(temp_dir, "direct.golden")])
+      File.read(File.join(temp_dir, "direct.golden")).should eq("new")
+      File.exists?(pending_path).should be_false
+      File.exists?(File.join(pending_dir, "direct.golden")).should be_false
+    end
+
+    it "rejects pending snapshots in the pending directory" do
+      pending_path = File.join(pending_dir, "direct.golden.new")
+      File.write(pending_path, "new")
+
+      Golden.reject_all!(temp_dir).should eq([pending_path])
+      File.exists?(pending_path).should be_false
+    end
+
+    it "counts pending snapshots in status" do
+      File.write(File.join(pending_dir, "direct.golden.new"), "new")
+      Golden.status(temp_dir)["pending"].should eq(1)
+    end
+  end
+
   describe "unreferenced_snapshots" do
     temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
 
