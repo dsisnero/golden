@@ -2,10 +2,11 @@
 
 ## Where we are
 
-- **Current focus:** Phase 4.1e — review TUI integration for inline pendings
-  (show records, patch on accept).
+- **Current focus:** Phase 6.7 — binary snapshot extension parity
+  (`build_binary_path`).
 - **Next up:**
-  1. 4.1e review TUI: surface inline pendings and patch on accept.
+  1. 6.7 Binary snapshot extension parity.
+  2. 6.8 Unreferenced snapshot tracking and `golden clean` parity.
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -18,8 +19,9 @@
   - Redaction helpers and selectors (Phase 6.4): complete
   - Settings/pending helpers (Phase 6.5): complete
   - Output normalization (Phase 6.6): complete
-  - Inline snapshots (Phase 4.1): 4.1b/4.1c/4.1d done — assertions record pendings
-    and patch source on accept, in update mode, or through the CLI; TUI pending
+  - Inline snapshots (Phase 4.1): complete — 4.1a–4.1e done; assertions record
+    pendings, the CLI and review TUI patch source on accept, and reject/skip
+    drop or keep registry entries without touching source
   - Rust parity inventory: bootstrapped — 554 rows (116 `ported`, 23 `partial`,
     0 `missing`, 415 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
@@ -35,8 +37,8 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** inline snapshot CLI commands (parent `cc80836`).
-- **Gates:** `make lint` pass; `make test` pass (234 examples); `make inventory`
+- **Last commit:** inline snapshot review TUI integration (4.1e).
+- **Gates:** `make lint` pass; `make test` pass (247 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -51,9 +53,9 @@ display, source context, inline word-level highlighting).
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
 which 116 are `ported`, 23 `partial`, 0 `missing`, and 415 `skipped` (insta's
-content/serialization engine and cargo internals). Phase 6 turns the `missing`
-and `partial` groups into features; inline snapshots (Phase 4.1) remain the
-largest single gap.
+content/serialization engine and cargo internals). All planned phases are now
+implemented; remaining work closes the 23 `partial` rows (binary snapshot
+extensions, unreferenced-snapshot tracking) one feature at a time.
 
 ---
 
@@ -283,8 +285,12 @@ patcher, CLI commands, and ledger mapping are specified in the design doc.
       multi-line refusal, atomic writes, `GOLDEN_UPDATE` auto-accept, and
       `accept_inline!` / `reject_inline!`.
 - [x] **4.1d CLI** — `golden inline-pending` (`--json`), `inline-accept` (`--dry-run`), `inline-reject`.
-- [ ] **4.1e Review TUI** — show inline pendings in `golden review` and patch on
-      accept.
+- [x] **4.1e Review TUI** — `golden review` lists file and inline pendings in
+      one list; accepting an inline entry patches the expected literal in its
+      source and drops the registry entry, rejecting drops it without touching
+      source, and skips keep it. Patch failures are reported in the action list
+      and keep the entry for a retry. `review!` accepts `root:` (CLI `--root`),
+      matching `inline-accept`.
 
 Acceptance for each sub-item: specs from the design doc pass, ledger rows for
 the covered upstream declarations move off `missing`, and the plan block stays
@@ -360,7 +366,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 1.7   | Help keybinding | Low | Small | ✅ Done |
 | 2.1   | Pending reporter | High | Small | ✅ Done |
 | 3.1   | CLI binary | Medium | Medium | ✅ Done |
-| 4.1   | Inline snapshots | Low | Large | 🚧 4.1d done; TUI pending |
+| 4.1   | Inline snapshots | Low | Large | ✅ Done |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
 | 6.1   | Settings metadata parity | High | Medium | ✅ Done |
 | 6.2   | Snapshot naming | Medium | Small | ✅ Done |
@@ -371,9 +377,12 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 
 ## Intentional divergences
 
-- **Inline snapshots are deferred, not stubbed.** Rust uses `syn` and
-  insta-ruby uses Prism to patch source files; Crystal has no stable equivalent,
-  so the API waits for a reviewed design instead of shipping a regex hack.
+- **Inline snapshots patch source line-by-line, not via a parser.** Rust uses
+  `syn` and insta-ruby uses Prism; Crystal has no stable equivalent, so the
+  patcher scans the recorded line for a single matching string literal and
+  refuses ambiguous or multi-line edits. Pending inline records live in one
+  `<dir>/.golden-inline.json` registry instead of per-file `.pending-snap`
+  files, and the review TUI reads that registry directly.
 - **Charm's Go `x/exp/golden` is inspiration only.** The parity contract is
   Rust insta, with insta-ruby as a reference; Go behavior is not tracked in the
   ledger.

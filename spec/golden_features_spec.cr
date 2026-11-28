@@ -1920,6 +1920,46 @@ describe Golden do
       Golden.pending_inline_snapshots(root).should be_empty
     end
 
+    it "accepts a single inline entry and leaves other entries pending" do
+      other = File.join(root, "spec/other_spec.cr")
+      FileUtils.mkdir_p(File.dirname(other))
+      File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+      File.write(other, %(Golden.assert_inline_snapshot(value, "keep")\n))
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("changed", "keep", file: "spec/other_spec.cr", line: 1, root: root)
+        end
+
+        entry = Golden.pending_inline_snapshots(root).find! { |item| item.file == "spec/example_spec.cr" }
+        Golden.accept_inline_entry(entry, root, root: root).patched?.should be_true
+      end
+
+      File.read(source).should contain(%("new"))
+      File.read(other).should contain(%("keep"))
+      remaining = Golden.pending_inline_snapshots(root)
+      remaining.size.should eq(1)
+      remaining.first.file.should eq("spec/other_spec.cr")
+    end
+
+    it "rejects a single inline entry without touching the source" do
+      File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+
+      Golden.with_settings(dir: root) do
+        expect_raises(Exception, /inline snapshot mismatch/) do
+          Golden.assert_inline("new", "old", file: "spec/example_spec.cr", line: 1, root: root)
+        end
+        entry = Golden.pending_inline_snapshots(root).first
+        Golden.reject_inline_entry(entry, root)
+      end
+
+      File.read(source).should contain(%("old"))
+      Golden.pending_inline_snapshots(root).should be_empty
+    end
+
     it "patches a percent literal" do
       File.write(source, "Golden.assert_inline_snapshot(value, %(old))\n")
 

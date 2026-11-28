@@ -10,8 +10,8 @@ src/golden.cr         core: settings, update modes, filters/redactions,
                       comparators, serializers, config, pending lifecycle,
                       macros (assert_*), diff helpers
 src/golden/cli.cr     Golden::CLI.dispatch — command parsing and text output
-src/golden/review.cr  ReviewItem + ReviewModel (Bubble Tea TUI) and
-                      Golden.review!
+src/golden/review.cr  ReviewItem + InlineReviewItem + ReviewModel (Bubble Tea
+                      TUI) and Golden.review!
 src/golden_cli.cr     binary entry point (shard.yml target: golden)
 examples/             runnable example specs
 spec/                 characterization specs mirroring upstream behavior
@@ -60,11 +60,15 @@ partially written baseline.
 
 `ReviewItem` precomputes everything a review needs: new content, old content
 when a baseline exists, a unified diff (via the `similar` shard), an inline
-word-level diff, and metadata-derived source context. `ReviewModel` is a
+word-level diff, and metadata-derived source context. `InlineReviewItem` does
+the same for records in the inline-pending registry; accepting one patches its
+source literal through `Golden.accept_inline_entry`. `ReviewModel` is a
 Bubble Tea model that presents the list, a diff viewport, a source-context
-overlay, and a help overlay. `Golden.review!` builds the model, runs the
-program, applies accept/reject/skip decisions, and returns
-`Array(Tuple(String, String))` of `{name, action}`.
+overlay, and a help overlay. `Golden.review!` builds the model (file pendings
+and inline pendings in one list), runs the program, applies
+accept/reject/skip decisions, and returns `Array(Tuple(String, String))` of
+`{name, action}`. A decision is recorded once per item, so a failed inline
+patch reports `failed: ...` without retrying or repeating in the same session.
 
 `bubbles` is a development dependency that the TUI requires; the core library
 and the non-TUI CLI commands work without it.
@@ -85,9 +89,9 @@ redactions, and review-state transitions. See [testing.md](testing.md).
 
 ## Divergences from upstream
 
-- Inline snapshots (Phase 4 in `plans/parity.md`) are not implemented. Rust uses
-  the `syn` parser and insta-ruby uses Prism; Crystal has no equivalent source
-  patcher. The line-based approach and its guardrails are specified in
+- Inline snapshots use a line-based patcher instead of a parser. Rust uses the
+  `syn` parser and insta-ruby uses Prism; Crystal has no equivalent source
+  patcher, so the guardrails are specified in
   [inline-snapshots.md](../plans/inline-snapshots.md).
 - The Rust CLI subcommands (`cargo insta ...`) map to the `golden` binary;
   `test-review` is the equivalent of `cargo insta test --review`.

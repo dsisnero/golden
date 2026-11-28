@@ -31,18 +31,19 @@ module Golden
       when "inline-pending", "inline-accept", "inline-reject"
         run_inline_command(command, snapshot_dir, root_dir, json_output, dry_run)
       else
-        run_snapshot_command(command, remaining, snapshot_dir, json_output, dry_run, spec_cmd)
+        run_snapshot_command(command, remaining, snapshot_dir, root_dir, json_output, dry_run, spec_cmd)
       end
     rescue e : OptionParser::InvalidOption
       "Error: #{e.message}"
     end
 
     private def self.run_snapshot_command(command : String, remaining : Array(String),
-                                          snapshot_dir : String?, json_output : Bool,
+                                          snapshot_dir : String?, root_dir : String?,
+                                          json_output : Bool,
                                           dry_run : Bool, spec_cmd : String) : String
       case command
       when "review"
-        format_review(Golden.review!(snapshot_dir))
+        format_review(Golden.review!(snapshot_dir, root: root_dir))
       when "accept"
         format_strings(Golden.accept_all!(snapshot_dir))
       when "reject"

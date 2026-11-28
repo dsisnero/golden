@@ -1,57 +1,11 @@
 require "bubbles"
 
 module Golden
-  class ReviewItem
-    include Bubbles::List::DefaultItem
+  # Shared diff rendering for review items.
+  module DiffRendering
+    extend self
 
-    getter name : String
-    getter path : String
-    getter new_content : String
-    getter old_content : String?
-    getter? has_existing : Bool
-    getter diff : String
-    getter metadata_line : Int32?
-    getter metadata_source_file : String?
-    getter source_context : String
-    getter inline_diff : String
-
-    def initialize(@name : String, @path : String)
-      @new_content = File.read(@path)
-      golden_path = @path.rchop(".new")
-      @has_existing = File.exists?(golden_path)
-      if @has_existing
-        old = File.read(golden_path)
-        @old_content = old
-        a = Golden.normalize(old)
-        b = Golden.normalize(@new_content)
-        diff_obj = Similar::TextDiff.from_lines(a, b)
-        @diff = diff_obj.unified_diff.header("golden", "run").to_s
-        @inline_diff = build_inline_diff(diff_obj)
-      else
-        @old_content = nil
-        @diff = "(new snapshot)"
-        @inline_diff = ""
-      end
-      meta_path = golden_path + ".meta"
-      @metadata_line = nil
-      @metadata_source_file = nil
-      @source_context = ""
-      read_metadata(meta_path)
-    end
-
-    def title : String
-      @name
-    end
-
-    def description : String
-      @has_existing ? "changed" : "new"
-    end
-
-    def filter_value : String
-      @name
-    end
-
-    private def build_inline_diff(diff : Similar::TextDiff(String)) : String
+    def build_inline_diff(diff : Similar::TextDiff(String)) : String
       has_changes = diff.ops.any? { |op| op.tag != Similar::DiffTag::Equal }
       return "" unless has_changes
 
@@ -78,15 +32,89 @@ module Golden
       end
     end
 
-    private def append_change_line(sb : IO, change : Similar::Change(String))
+    private def append_change_line(io : IO, change : Similar::Change(String))
       case change.tag
       when Similar::ChangeTag::Equal
-        sb << change.value
+        io << change.value
       when Similar::ChangeTag::Insert
-        sb << "\e[32m" << change.value << "\e[0m"
+        io << "\e[32m" << change.value << "\e[0m"
       when Similar::ChangeTag::Delete
-        sb << "\e[31m" << change.value << "\e[0m"
+        io << "\e[31m" << change.value << "\e[0m"
       end
+    end
+  end
+
+  # Shared source-context rendering for review items.
+  module SourceContext
+    extend self
+
+    def read(file : String, line : Int32) : String
+      return "" unless File.exists?(file)
+      lines = File.read_lines(file)
+      return "" if lines.empty?
+      start = {line - 4, 0}.max
+      end_idx = {start + 3, lines.size}.min
+      lines[start...end_idx].each_with_index.map do |text, index|
+        number = start + index + 1
+        prefix = number == line ? "=>" : "  "
+        "#{prefix} #{number}: #{text}"
+      end.join("\n")
+    end
+  end
+
+  class ReviewItem
+    include Bubbles::List::DefaultItem
+
+    getter name : String
+    getter path : String
+    getter new_content : String
+    getter old_content : String?
+    getter? has_existing : Bool
+    getter diff : String
+    getter metadata_line : Int32?
+    getter metadata_source_file : String?
+    getter source_context : String
+    getter inline_diff : String
+
+    def initialize(@name : String, @path : String)
+      @new_content = File.read(@path)
+      golden_path = @path.rchop(".new")
+      @has_existing = File.exists?(golden_path)
+      if @has_existing
+        old = File.read(golden_path)
+        @old_content = old
+        a = Golden.normalize(old)
+        b = Golden.normalize(@new_content)
+        diff_obj = Similar::TextDiff.from_lines(a, b)
+        @diff = diff_obj.unified_diff.header("golden", "run").to_s
+        @inline_diff = DiffRendering.build_inline_diff(diff_obj)
+      else
+        @old_content = nil
+        @diff = "(new snapshot)"
+        @inline_diff = ""
+      end
+      meta_path = golden_path + ".meta"
+      @metadata_line = nil
+      @metadata_source_file = nil
+      @source_context = ""
+      read_metadata(meta_path)
+    end
+
+    def title : String
+      @name
+    end
+
+    def description : String
+      @has_existing ? "changed" : "new"
+    end
+
+    def filter_value : String
+      @name
+    end
+
+    # Stable key used to remember that this item already has a decision.
+    def review_key : String
+      @path
     end
 
     private def read_metadata(meta_path : String)
@@ -97,25 +125,62 @@ module Golden
         @metadata_source_file = data["source_file"]?.try(&.to_s)
         if sf = @metadata_source_file
           if ml = @metadata_line
-            read_source_context(sf, ml)
+            @source_context = SourceContext.read(sf, ml)
           end
         end
       rescue
       end
     end
+  end
 
-    private def read_source_context(file : String, line : Int32)
-      return unless File.exists?(file)
-      lines = File.read_lines(file)
-      return if lines.empty?
-      start = {line - 4, 0}.max
-      end_idx = {start + 3, lines.size}.min
-      context = lines[start...end_idx]
-      @source_context = context.each_with_index.map do |line_text, index|
-        line_num = start + index + 1
-        prefix = line_num == line ? "=>" : "  "
-        "#{prefix} #{line_num}: #{line_text}"
-      end.join("\n")
+  # A pending inline snapshot shown alongside file pendings in the review TUI.
+  # Accepting one patches the expected literal in the source file.
+  class InlineReviewItem
+    include Bubbles::List::DefaultItem
+
+    getter pending : InlineSnapshotPending
+    getter name : String
+    getter file : String
+    getter line : Int32
+    getter old_content : String
+    getter new_content : String
+    getter? has_existing : Bool
+    getter diff : String
+    getter inline_diff : String
+    getter source_context : String
+
+    def initialize(@pending : InlineSnapshotPending)
+      @name = @pending.name || "#{@pending.file}:#{@pending.line}"
+      @file = @pending.file
+      @line = @pending.line
+      @old_content = @pending.old_content
+      @new_content = @pending.new_content
+      @has_existing = !@old_content.empty?
+      if @has_existing
+        diff_obj = Similar::TextDiff.from_lines(@old_content, @new_content)
+        @diff = diff_obj.unified_diff.header(@file, "observed").to_s
+        @inline_diff = DiffRendering.build_inline_diff(diff_obj)
+      else
+        @diff = "(new inline snapshot)"
+        @inline_diff = ""
+      end
+      @source_context = SourceContext.read(@file, @line)
+    end
+
+    def title : String
+      @name
+    end
+
+    def description : String
+      @has_existing ? "inline changed" : "inline new"
+    end
+
+    def filter_value : String
+      @name
+    end
+
+    def review_key : String
+      "#{@file}:#{@line}"
     end
   end
 
@@ -124,23 +189,30 @@ module Golden
 
     getter actions : Array(Tuple(String, String))
     getter list : Bubbles::List::Model
+    getter items : Array(Bubbles::List::Item)
     getter? show_help : Bool = false
     getter? show_diff : Bool = false
     getter? show_info : Bool = false
 
-    def initialize(@pending : Array(String), @dir : String = Golden.dir)
+    def initialize(@pending : Array(String), @dir : String = Golden.dir,
+                   inline : Array(InlineSnapshotPending) = [] of InlineSnapshotPending,
+                   @root : String? = nil)
       @actions = [] of Tuple(String, String)
+      @decided = Set(String).new
       @viewport = Bubbles::Viewport::Model.new
       @viewport.set_width(80)
       @viewport.set_height(20)
 
-      items = Array(Bubbles::List::Item).new(@pending.size) do |i|
-        name = File.basename(@pending[i], ".golden.new")
-        ReviewItem.new(name, @pending[i])
+      @items = Array(Bubbles::List::Item).new(@pending.size + inline.size)
+      @pending.each do |path|
+        @items << ReviewItem.new(File.basename(path, ".golden.new"), path)
+      end
+      inline.each do |pending|
+        @items << InlineReviewItem.new(pending)
       end
 
       delegate = Bubbles::List.new_default_delegate
-      @list = Bubbles::List::Model.new(items, delegate, 80, 20)
+      @list = Bubbles::List::Model.new(@items, delegate, 80, 20)
       @list.show_help = false
       @list.show_filter = false
       @list.show_status_bar = false
@@ -161,8 +233,12 @@ module Golden
       @actions.count { |(_, action)| action == "skipped" }
     end
 
+    def failed : Int32
+      @actions.count { |(_, action)| action.starts_with?("failed") }
+    end
+
     def total : Int32
-      @pending.size
+      @items.size
     end
 
     def init : Tea::Cmd?
@@ -211,13 +287,11 @@ module Golden
 
     private def toggle_action(key : String) : {Tea::Model, Tea::Cmd?}?
       case key
-      when "?"
-        @show_help = !@show_help
+      when "?" then @show_help = !@show_help
       when "d"
         @show_diff = !@show_diff
         update_viewport_for_current if @show_diff
-      when "i"
-        @show_info = !@show_info
+      when "i" then @show_info = !@show_info
       else
         return
       end
@@ -248,6 +322,7 @@ module Golden
           io << "  G   Go to bottom\n"
           io << "  ?   Toggle this help\n"
           io << "  q   Quit\n"
+          io << "\nInline snapshots patch their source file on accept."
           io << "\nPress ? to close help."
         end
         return Tea::View.new(content)
@@ -262,21 +337,32 @@ module Golden
     end
 
     private def info_content : String
-      if item = @list.selected_item
-        snap = item.as(ReviewItem)
+      case item = @list.selected_item
+      when ReviewItem
         String.build do |io|
           io << "Snapshot Info\n\n"
-          io << "  Name: #{snap.name}\n"
-          io << "  File: #{snap.path}\n"
-          if line = snap.metadata_line
+          io << "  Name: #{item.name}\n"
+          io << "  File: #{item.path}\n"
+          if line = item.metadata_line
             io << "  Line: #{line}\n"
           end
-          if sf = snap.metadata_source_file
+          if sf = item.metadata_source_file
             io << "  Source: #{sf}\n"
           end
-          unless snap.source_context.empty?
-            io << "\nSource Context:\n#{snap.source_context}\n"
+          unless item.source_context.empty?
+            io << "\nSource Context:\n#{item.source_context}\n"
           end
+          io << "\nPress i to close."
+        end
+      when InlineReviewItem
+        String.build do |io|
+          io << "Inline Snapshot Info\n\n"
+          io << "  Name: #{item.name}\n"
+          io << "  Source: #{item.file}:#{item.line}\n"
+          unless item.source_context.empty?
+            io << "\nSource Context:\n#{item.source_context}\n"
+          end
+          io << "\nAccepting patches the expected literal in this file."
           io << "\nPress i to close."
         end
       else
@@ -285,77 +371,136 @@ module Golden
     end
 
     private def update_viewport_for_current
-      if item = @list.selected_item
-        snap = item.as(ReviewItem)
-        content = snap.inline_diff.empty? ? snap.diff : snap.inline_diff
+      case item = @list.selected_item
+      when ReviewItem, InlineReviewItem
+        content = item.inline_diff.empty? ? item.diff : item.inline_diff
         @viewport.set_content(content)
       end
     end
 
     private def accept_current
       if item = @list.selected_item
-        snap = item.as(ReviewItem)
-        pending_path = snap.path
-        Golden.promote_pending!(pending_path, snap.name)
-        @actions << {snap.name, "accepted"}
+        accept_item(item)
       end
     end
 
     private def reject_current
       if item = @list.selected_item
-        snap = item.as(ReviewItem)
-        Golden.discard_pending!(snap.path)
-        @actions << {snap.name, "rejected"}
+        reject_item(item)
       end
     end
 
     private def skip_current
       if item = @list.selected_item
-        snap = item.as(ReviewItem)
-        @actions << {snap.name, "skipped"}
+        skip_item(item)
       end
     end
 
     private def accept_all_remaining
-      (@list.index...@pending.size).each do |i|
-        snap_path = @pending[i]
-        name = File.basename(snap_path, ".golden.new")
-        if File.exists?(snap_path)
-          Golden.promote_pending!(snap_path, name)
-          @actions << {name, "accepted"}
-        end
+      each_remaining do |item|
+        accept_item(item)
       end
     end
 
     private def reject_all_remaining
-      (@list.index...@pending.size).each do |i|
-        snap_path = @pending[i]
-        name = File.basename(snap_path, ".golden.new")
-        if File.exists?(snap_path)
-          Golden.discard_pending!(snap_path)
-          @actions << {name, "rejected"}
-        end
+      each_remaining do |item|
+        reject_item(item)
       end
     end
 
     private def skip_all_remaining
-      (@list.index...@pending.size).each do |i|
-        snap_path = @pending[i]
-        name = File.basename(snap_path, ".golden.new")
-        @actions << {name, "skipped"}
+      each_remaining do |item|
+        skip_item(item)
       end
+    end
+
+    private def each_remaining(&)
+      @items.each_with_index do |item, index|
+        next if index < @list.index
+        yield item
+      end
+    end
+
+    private def accept_item(item : Bubbles::List::Item) : Bool
+      case item
+      when ReviewItem       then accept_file_item(item)
+      when InlineReviewItem then accept_inline_item(item)
+      else                       false
+      end
+    end
+
+    private def accept_file_item(item : ReviewItem) : Bool
+      return false if decided?(item)
+      return false unless File.exists?(item.path)
+      Golden.promote_pending!(item.path, item.name)
+      record(item, "accepted")
+      true
+    end
+
+    private def accept_inline_item(item : InlineReviewItem) : Bool
+      return false if decided?(item)
+      result = Golden.accept_inline_entry(item.pending, @dir, root: @root)
+      if result.patched?
+        record(item, "accepted")
+        true
+      else
+        @actions << {item.name, "failed: #{result.error}"}
+        @decided << item.review_key
+        false
+      end
+    end
+
+    private def reject_item(item : Bubbles::List::Item) : Bool
+      case item
+      when ReviewItem       then reject_file_item(item)
+      when InlineReviewItem then reject_inline_item(item)
+      else                       false
+      end
+    end
+
+    private def reject_file_item(item : ReviewItem) : Bool
+      return false if decided?(item)
+      return false unless File.exists?(item.path)
+      Golden.discard_pending!(item.path)
+      record(item, "rejected")
+      true
+    end
+
+    private def reject_inline_item(item : InlineReviewItem) : Bool
+      return false if decided?(item)
+      Golden.reject_inline_entry(item.pending, @dir)
+      record(item, "rejected")
+      true
+    end
+
+    private def skip_item(item : Bubbles::List::Item) : Bool
+      case item
+      when ReviewItem, InlineReviewItem
+        return false if decided?(item)
+        record(item, "skipped")
+        true
+      else
+        false
+      end
+    end
+
+    private def record(item : ReviewItem | InlineReviewItem, action : String)
+      @actions << {item.name, action}
+      @decided << item.review_key
+    end
+
+    private def decided?(item : ReviewItem | InlineReviewItem) : Bool
+      @decided.includes?(item.review_key)
     end
   end
 
-  def self.review!(dir : String? = nil)
+  def self.review!(dir : String? = nil, root : String? = nil)
     search_dir = dir || @@settings.dir
-    unless Dir.exists?(search_dir)
-      return [] of Tuple(String, String)
-    end
-    pending = Dir.glob(File.join(search_dir, "**/*.golden.new")).sort
-    return [] of Tuple(String, String) if pending.empty?
+    pending = Dir.exists?(search_dir) ? Dir.glob(File.join(search_dir, "**/*.golden.new")).sort : [] of String
+    inline = pending_inline_snapshots(search_dir).sort_by { |entry| {entry.file, entry.line} }
+    return [] of Tuple(String, String) if pending.empty? && inline.empty?
 
-    model = ReviewModel.new(pending, search_dir)
+    model = ReviewModel.new(pending, search_dir, inline, root: root)
     program = Tea.new_program(model, Tea.with_alt_screen)
     final_model, _ = program.run
     if final_model

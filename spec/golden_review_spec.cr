@@ -13,6 +13,21 @@ private def temp_dir
   d
 end
 
+# Records a pending inline snapshot in `dir` and returns the stored entry.
+private def inline_pending(dir, file = "spec/example_spec.cr", old_content = "old",
+                           new_content = "new", line = 1, name = nil)
+  Golden.reset_tracking!
+  record_inline_pending(dir, file, old_content, new_content, line, name)
+  Golden.pending_inline_snapshots(dir).find! { |entry| entry.file == file && entry.line == line }
+end
+
+private def record_inline_pending(dir, file, old_content, new_content, line, name)
+  Golden.with_settings(dir: dir) do
+    Golden.assert_inline(new_content, old_content, name, file: file, line: line)
+  end
+rescue
+end
+
 describe "Golden::ReviewItem" do
   it "has name, path, and content" do
     dir = temp_dir
@@ -444,6 +459,158 @@ describe "Golden::ReviewModel" do
     model.skipped.should eq(1)
     model.rejected.should eq(1)
     model.total.should eq(3)
+  end
+end
+
+describe "Golden::InlineReviewItem" do
+  it "exposes pending fields, description, and diff" do
+    dir = temp_dir
+    entry = inline_pending(dir, old_content: "old value", new_content: "new value", name: "greeting")
+    item = Golden::InlineReviewItem.new(entry)
+
+    item.name.should eq("greeting")
+    item.file.should eq("spec/example_spec.cr")
+    item.line.should eq(1)
+    item.has_existing?.should be_true
+    item.title.should eq("greeting")
+    item.description.should eq("inline changed")
+    item.diff.should contain("-old value")
+    item.diff.should contain("+new value")
+    item.inline_diff.should contain("\e[")
+  end
+
+  it "falls back to file:line when the pending snapshot has no name" do
+    dir = temp_dir
+    entry = inline_pending(dir)
+    item = Golden::InlineReviewItem.new(entry)
+    item.name.should eq("spec/example_spec.cr:1")
+  end
+
+  it "labels an empty old value as a new inline snapshot" do
+    dir = temp_dir
+    entry = inline_pending(dir, old_content: "", new_content: "fresh")
+    item = Golden::InlineReviewItem.new(entry)
+    item.has_existing?.should be_false
+    item.description.should eq("inline new")
+    item.diff.should eq("(new inline snapshot)")
+    item.inline_diff.should eq("")
+  end
+
+  it "shows surrounding source lines when the file exists" do
+    root = temp_dir
+    source = File.join(root, "spec/example_spec.cr")
+    FileUtils.mkdir_p(File.dirname(source))
+    File.write(source, "a\nb\nc\nd\n")
+    dir = temp_dir
+    entry = inline_pending(dir, file: source, line: 3)
+    item = Golden::InlineReviewItem.new(entry)
+    item.source_context.should contain("b")
+    item.source_context.should contain("c")
+    item.source_context.should contain("=> 3: c")
+  end
+end
+
+describe "Golden::ReviewModel with inline pendings" do
+  it "lists inline pendings alongside file pendings" do
+    dir = temp_dir
+    p = pending(dir, "file_snap")
+    entry = inline_pending(dir, name: "inline_snap")
+    model = Golden::ReviewModel.new([p], dir, [entry])
+
+    model.total.should eq(2)
+    view = model.view
+    view.content.should contain("file_snap")
+    view.content.should contain("inline_snap")
+  end
+
+  it "patches the source and clears the registry on accept" do
+    root = temp_dir
+    source = File.join(root, "spec/example_spec.cr")
+    FileUtils.mkdir_p(File.dirname(source))
+    File.write(source, %(Golden.assert_inline_snapshot(value, "old value")\n))
+    dir = File.join(root, ".golden")
+    entry = inline_pending(dir, old_content: "old value", new_content: "new value")
+
+    model = Golden::ReviewModel.new([] of String, dir, [entry], root: root)
+    model2, _ = model.update(Tea.key('y'))
+
+    model2 = model2.as(Golden::ReviewModel)
+    model2.actions.should eq([{"spec/example_spec.cr:1", "accepted"}])
+    File.read(source).should contain(%("new value"))
+    Golden.pending_inline_snapshots(dir).should be_empty
+  end
+
+  it "rejects the entry and leaves the source untouched on reject" do
+    root = temp_dir
+    source = File.join(root, "spec/example_spec.cr")
+    FileUtils.mkdir_p(File.dirname(source))
+    File.write(source, %(Golden.assert_inline_snapshot(value, "old value")\n))
+    dir = File.join(root, ".golden")
+    entry = inline_pending(dir, old_content: "old value", new_content: "new value")
+
+    model = Golden::ReviewModel.new([] of String, dir, [entry], root: root)
+    model.update(Tea.key('n'))
+
+    model.actions.should eq([{"spec/example_spec.cr:1", "rejected"}])
+    File.read(source).should contain(%("old value"))
+    Golden.pending_inline_snapshots(dir).should be_empty
+  end
+
+  it "keeps the entry and records a failure when the patch cannot apply" do
+    dir = temp_dir
+    entry = inline_pending(dir, file: "spec/missing_spec.cr")
+    model = Golden::ReviewModel.new([] of String, dir, [entry], root: dir)
+
+    model.update(Tea.key('y'))
+
+    model.actions.size.should eq(1)
+    model.actions.first[0].should eq("spec/missing_spec.cr:1")
+    model.actions.first[1].should start_with("failed")
+    model.failed.should eq(1)
+    Golden.pending_inline_snapshots(dir).size.should eq(1)
+  end
+
+  it "skips inline pendings without touching the registry" do
+    dir = temp_dir
+    entry = inline_pending(dir, name: "inline_snap")
+    model = Golden::ReviewModel.new([] of String, dir, [entry])
+
+    model.update(Tea.key('s'))
+
+    model.actions.should eq([{"inline_snap", "skipped"}])
+    model.skipped.should eq(1)
+    Golden.pending_inline_snapshots(dir).size.should eq(1)
+  end
+
+  it "accepts file and inline pendings together on 'A'" do
+    root = temp_dir
+    source = File.join(root, "spec/example_spec.cr")
+    FileUtils.mkdir_p(File.dirname(source))
+    File.write(source, %(Golden.assert_inline_snapshot(value, "old")\n))
+    dir = File.join(root, ".golden")
+    FileUtils.mkdir_p(dir)
+    p = pending(dir, "file_snap")
+    entry = inline_pending(dir, name: "inline_snap")
+
+    model = Golden::ReviewModel.new([p], dir, [entry], root: root)
+    model.update(Tea.key('A'))
+
+    model.accepted.should eq(2)
+    model.actions.map(&.[0]).should eq(["file_snap", "inline_snap"])
+    File.exists?(File.join(dir, "file_snap.golden")).should be_true
+    File.read(source).should contain(%("new"))
+    Golden.pending_inline_snapshots(dir).should be_empty
+  end
+
+  it "does not record a decision twice for the same item" do
+    dir = temp_dir
+    entry = inline_pending(dir, file: "spec/missing_spec.cr")
+    model = Golden::ReviewModel.new([] of String, dir, [entry], root: dir)
+
+    model.update(Tea.key('y'))
+    model.update(Tea.key('y'))
+
+    model.actions.count { |(_, action)| action.starts_with?("failed") }.should eq(1)
   end
 end
 

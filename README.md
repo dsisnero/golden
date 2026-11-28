@@ -297,7 +297,13 @@ golden inline-pending --json
 golden inline-accept --dry-run   # preview
 golden inline-accept             # add --root DIR for workspaces
 golden inline-reject
+golden review                    # inline pendings appear in the same list
 ```
+
+In `golden review`, accepting an inline entry patches its source literal and
+drops the registry entry, rejecting drops the entry without touching source,
+and skipping keeps it. Pass `--root DIR` when the source paths are relative to
+a workspace root other than the current directory.
 
 Running with `GOLDEN_UPDATE=1` (or `Golden.update = true`) patches inline
 literals automatically. The patcher only rewrites a single-line `"..."` or

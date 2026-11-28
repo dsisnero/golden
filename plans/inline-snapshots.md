@@ -1,8 +1,7 @@
 # Inline Snapshots Design (Phase 4.1)
 
-Status: design complete; 4.1b (registry/runtime), 4.1c (patcher/accept), and
-4.1d (CLI) implemented. Review-TUI integration (4.1e) is still pending, so
-inline ledger rows stay `partial` until it lands.
+Status: design complete; 4.1b (registry/runtime), 4.1c (patcher/accept), 4.1d
+(CLI), and 4.1e (review TUI) implemented.
 
 ## Goal
 
@@ -61,7 +60,7 @@ is line-based and conservative:
 | `golden inline-pending` | list pending inline records (`--json` supported) |
 | `golden inline-accept` | patch every pending record that can be patched safely |
 | `golden inline-reject` | drop the pending registry |
-| `golden review` | TUI integration is a follow-up sub-item |
+| `golden review` | TUI lists file and inline pendings; accept patches source, reject drops the entry, skip keeps it (`--root` sets the patch root) |
 
 ## Sub-items
 
@@ -71,7 +70,7 @@ is line-based and conservative:
 | 4.1b | done: pending registry, runtime compare/record, duplicate guard |
 | 4.1c | done: source patcher, `GOLDEN_UPDATE` auto-accept, accept/reject API |
 | 4.1d | done: CLI commands |
-| 4.1e | review TUI integration |
+| 4.1e | done: review TUI integration |
 
 ## Tests
 
@@ -82,6 +81,10 @@ is line-based and conservative:
   ambiguous, multi-line, or out-of-root patches fail and keep the entry.
 - Registry: upsert replaces an older entry for the same `file:line`;
   accept/reject clears entries.
+- Review TUI (4.1e): inline pendings appear next to file pendings; accept
+  patches the source and clears the registry entry, reject clears it without
+  touching source, skip leaves it, and an unpatched entry records a failure
+  action without a duplicate retry in the same session.
 - Optional end-to-end: generate a temporary spec file and run `crystal spec` on
   it, skipped in CI if the toolchain is unavailable.
 

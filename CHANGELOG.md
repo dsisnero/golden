@@ -39,7 +39,7 @@
   `INSTA_DIFF_TOOL` env vars: mismatches can be rendered by an external diff
   tool (`delta`, `difftastic`); the `similar`-backed unified diff stays the
   default and the fallback
-- inline snapshots (stages 4.1b/4.1c): `Golden.assert_inline_snapshot(value,
+- inline snapshots (stages 4.1b/4.1c/4.1e): `Golden.assert_inline_snapshot(value,
   expected)` compares normalized text, records mismatches in
   `.golden-inline.json`, and guards duplicate `file:line` assertions;
   `Golden.accept_inline!` patches single-line literals atomically (with
@@ -47,7 +47,13 @@
   `GOLDEN_UPDATE=1` / `Golden.update = true` patches automatically. Ambiguous,
   multi-line, or out-of-project edits fail safely. CLI: `golden inline-pending
   [--json]`, `golden inline-accept [--dry-run] [--root DIR]`, and
-  `golden inline-reject`; review-TUI integration arrives with 4.1e
+  `golden inline-reject`
+- review TUI lists inline pendings next to file pendings: accept patches the
+  expected literal in its source (`--root` sets the patch root), reject drops
+  the entry without touching source, and skip keeps it; patch failures are
+  reported and keep the entry for a later retry
+- `Golden.accept_inline_entry` / `Golden.reject_inline_entry` patch or drop a
+  single pending inline snapshot instead of the whole registry
 
 ## 0.3.0 (2026-07-19)
 

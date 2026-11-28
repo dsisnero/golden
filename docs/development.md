@@ -110,9 +110,10 @@ parity becomes a contract, add a `ruby_port_inventory.tsv` and extend the
 
 ## Known gaps
 
-- Inline snapshots are at stage 4.1d: assertions record pendings, update mode
-  and `Golden.accept_inline!`/the CLI patch single-line literals, and unsafe
-  edits are refused. Review-TUI integration is pending. See
+- Inline snapshots are complete (4.1a–4.1e): assertions record pendings,
+  update mode and `Golden.accept_inline!`/the CLI patch single-line literals,
+  unsafe edits are refused, and `golden review` lists inline pendings and
+  patches them on accept. See
   [../plans/inline-snapshots.md](../plans/inline-snapshots.md).
 - `shard.yml` still advertises `0.2.0` while `CHANGELOG.md` and the README
   describe `0.3.0`; bump both when preparing the next release.

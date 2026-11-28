@@ -713,6 +713,32 @@ module Golden
     delete_file(path) if File.exists?(path)
   end
 
+  # Patches one pending inline snapshot into its source and drops the registry
+  # entry on success. Failures leave the entry in place so it can be retried.
+  def self.accept_inline_entry(pending : InlineSnapshotPending, dir : String? = nil,
+                               root : String? = nil, dry_run : Bool = false) : InlinePatchResult
+    result = patch_inline_pending(pending, root, write: !dry_run)
+    if result.patched? && !dry_run
+      registry = load_inline_registry(dir)
+      if registry.delete(inline_registry_key(pending.file, pending.line))
+        write_inline_registry(registry, dir)
+      end
+    end
+    result
+  end
+
+  # Drops one pending inline snapshot without patching its source.
+  def self.reject_inline_entry(pending : InlineSnapshotPending, dir : String? = nil)
+    registry = load_inline_registry(dir)
+    if registry.delete(inline_registry_key(pending.file, pending.line))
+      write_inline_registry(registry, dir)
+    end
+  end
+
+  private def self.inline_registry_key(file : String, line : Int32) : String
+    "#{file}:#{line}"
+  end
+
   # Applies every pending inline snapshot that can be patched safely. Failed
   # entries stay in the registry.
   def self.accept_inline!(dir : String? = nil, root : String? = nil,
