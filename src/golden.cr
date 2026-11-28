@@ -857,7 +857,7 @@ module Golden
       write_metadata(golden_path, full_name, metadata_line,
         expression: expression, source_file: source_file, input_file: input_file)
     in UpdateMode::No
-      compare_strict(golden_path, processed_output)
+      compare_strict(golden_path, processed_output, full_name, metadata_line, source_file, input_file)
     in UpdateMode::New
       handle_pending(golden_path, pending_path, processed_output,
         full_name, metadata_line, expression, source_file, input_file)
@@ -866,7 +866,7 @@ module Golden
         full_name, metadata_line, expression, source_file, input_file)
     in UpdateMode::Auto
       if ci?
-        compare_strict(golden_path, processed_output)
+        compare_strict(golden_path, processed_output, full_name, metadata_line, source_file, input_file)
       else
         handle_pending(golden_path, pending_path, processed_output,
           full_name, metadata_line, expression, source_file, input_file)
@@ -1704,7 +1704,9 @@ module Golden
     end
   end
 
-  private def self.compare_strict(golden_path : String, output : String)
+  private def self.compare_strict(golden_path : String, output : String,
+                                  test_name : String? = nil, metadata_line : Int32? = nil,
+                                  source_file : String? = nil, input_file : String? = nil)
     unless File.exists?(golden_path)
       raise "No golden file found at #{golden_path}. Set update mode to Always or New to create it."
     end
@@ -1714,7 +1716,8 @@ module Golden
     out_str = normalize(output)
 
     unless compare_outputs(golden_str, out_str)
-      raise mismatch_error(golden_path, golden_str, out_str)
+      summary = snapshot_summary(golden_path, test_name, metadata_line, source_file, input_file)
+      raise mismatch_error(golden_path, golden_str, out_str, summary)
     end
   end
 
@@ -1739,14 +1742,16 @@ module Golden
       if force_pass?
         return
       end
-      raise mismatch_error(golden_path, golden_str, out_str)
+      summary = snapshot_summary(golden_path, test_name, metadata_line, source_file, input_file)
+      raise mismatch_error(golden_path, golden_str, out_str, summary)
     else
       write_file(pending_path, output)
       write_pending_metadata(pending_meta, test_name, metadata_line, expression, source_file, input_file)
       if force_pass?
         return
       end
-      raise "New golden file: #{golden_path}. Run with GOLDEN_UPDATE=1 or cargo-insta to accept."
+      summary = snapshot_summary(golden_path, test_name, metadata_line, source_file, input_file)
+      raise "#{summary}\nNew golden file: #{golden_path}. Run with GOLDEN_UPDATE=1 or cargo-insta to accept."
     end
   end
 
@@ -1783,7 +1788,8 @@ module Golden
 
     write_file(pending_path, output)
     write_pending_metadata(pending_path + ".meta", test_name, metadata_line, expression, source_file, input_file)
-    raise mismatch_error(golden_path, golden_str, out_str)
+    summary = snapshot_summary(golden_path, test_name, metadata_line, source_file, input_file)
+    raise mismatch_error(golden_path, golden_str, out_str, summary)
   end
 
   private def self.delete_file(path : String)
@@ -1803,12 +1809,54 @@ module Golden
   # Builds the mismatch message, delegating rendering to `GOLDEN_DIFF_TOOL`
   # (or `INSTA_DIFF_TOOL`) when set. The built-in diff is still computed with
   # `similar` and is the fallback.
-  private def self.mismatch_error(golden_path : String, expected : String, actual : String) : String
-    message = "output does not match, expected:\n\n#{expected}\n\ngot:\n\n#{actual}"
+  private def self.mismatch_error(golden_path : String, expected : String, actual : String,
+                                  summary : String? = nil) : String
+    header = summary ? "#{summary}\n" : ""
+    message = "#{header}output does not match, expected:\n\n#{expected}\n\ngot:\n\n#{actual}"
     if tool = ENV["GOLDEN_DIFF_TOOL"]? || ENV["INSTA_DIFF_TOOL"]?
       return message if invoke_external_diff_tool(tool, expected, actual, golden_path)
     end
     "#{message}\n\ndiff:\n\n#{unified_diff("golden", "run", expected, actual)}"
+  end
+
+  # Renders the per-snapshot header insta prints before a diff
+  # (`output.rs::print_snapshot_summary`): file, name, source, and input file.
+  # Falls back to the `.golden.meta` sidecar when the assertion did not pass
+  # source information.
+  private def self.snapshot_summary(golden_path : String, test_name : String?,
+                                    metadata_line : Int32?, source_file : String?,
+                                    input_file : String?) : String
+    name = test_name || File.basename(golden_path, ".golden")
+    source = source_file
+    line = metadata_line
+    input = input_file
+    if source.nil? && File.exists?(golden_path + ".meta")
+      begin
+        meta = JSON.parse(File.read(golden_path + ".meta"))
+        source = meta["source_file"]?.try(&.as_s?)
+        line ||= meta["line"]?.try(&.as_i?)
+        input ||= meta["input_file"]?.try(&.as_s?)
+      rescue
+      end
+    end
+    String.build do |io|
+      io << "Snapshot file: " << display_path(golden_path) << "\n"
+      io << "Snapshot: " << name << "\n"
+      if src = relative_source(source)
+        io << "Source: " << src
+        io << ":" << line if line
+        io << "\n"
+      end
+      io << "Input file: " << input << "\n" if input
+    end
+  end
+
+  # Strips the current directory so snapshot paths read like upstream's
+  # workspace-relative paths.
+  private def self.display_path(path : String) : String
+    cwd = Dir.current
+    prefix = cwd.ends_with?(File::SEPARATOR) ? cwd : cwd + File::SEPARATOR
+    path.starts_with?(prefix) ? path[prefix.size..] : path
   end
 
   # Runs an external diff tool over temporary copies of the two snapshots.

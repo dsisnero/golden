@@ -69,6 +69,10 @@
   the exit status
 - `Golden.report_pending!` now includes pending inline snapshots as
   `file:line (inline)` entries
+- mismatch and new-snapshot errors now start with the snapshot summary insta
+  prints (`Snapshot file`, `Snapshot`, `Source: path:line`, `Input file`),
+  falling back to the `.golden.meta` sidecar and showing paths relative to the
+  current directory
 - path selectors can redact object keys through the synthetic `$key` segment
   (`.hm.$key`, `.users.*.$key`, `**.$key`); dynamic key redactions receive the
   key text and `.$key` path, and non-string replacements are stringified

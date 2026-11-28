@@ -170,6 +170,34 @@ describe Golden do
         end
       end
 
+      it "includes the snapshot summary in mismatch errors" do
+        File.write(File.join(temp_dir, "summary_test.golden"), "expected")
+        error = expect_raises(Exception, /output does not match/) do
+          Golden.with_settings(update_mode: Golden::UpdateMode::No, dir: temp_dir) do
+            Golden.require_equal("summary_test", "wrong", metadata_line: 12,
+              source_file: "spec/summary_spec.cr", input_file: "inputs/a.txt")
+          end
+        end
+        message = error.message || ""
+        message.should contain("Snapshot file: #{temp_dir}/summary_test.golden")
+        message.should contain("Snapshot: summary_test")
+        message.should contain("Source: spec/summary_spec.cr:12")
+        message.should contain("Input file: inputs/a.txt")
+      end
+
+      it "falls back to the metadata sidecar for the summary source" do
+        File.write(File.join(temp_dir, "meta_summary.golden"), "expected")
+        File.write(File.join(temp_dir, "meta_summary.golden.meta"),
+          %({"name":"meta_summary","line":42,"source_file":"spec/from_meta_spec.cr"}))
+        error = expect_raises(Exception, /output does not match/) do
+          Golden.with_settings(update_mode: Golden::UpdateMode::No, dir: temp_dir) do
+            Golden.require_equal("meta_summary", "wrong")
+          end
+        end
+        message = error.message || ""
+        message.should contain("Source: spec/from_meta_spec.cr:42")
+      end
+
       it "does not create .new file on mismatch" do
         File.write(File.join(temp_dir, "no_new_test.golden"), "expected")
         Golden.with_settings(update_mode: Golden::UpdateMode::No, dir: temp_dir) do
@@ -206,6 +234,19 @@ describe Golden do
           File.exists?(pending_path).should be_true
           File.read(pending_path).should eq("content")
         end
+      end
+
+      it "includes the snapshot summary for new snapshots" do
+        error = expect_raises(Exception, /New golden file/) do
+          Golden.with_settings(update_mode: Golden::UpdateMode::Auto, dir: temp_dir) do
+            Golden.require_equal("brand_new", "content", metadata_line: 7,
+              source_file: "spec/new_spec.cr")
+          end
+        end
+        message = error.message || ""
+        message.should contain("Snapshot file: #{temp_dir}/brand_new.golden")
+        message.should contain("Snapshot: brand_new")
+        message.should contain("Source: spec/new_spec.cr:7")
       end
 
       it "writes .snap.new and raises for changed snapshot" do

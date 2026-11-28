@@ -466,7 +466,9 @@ Golden.settings.has_info?      # => false after remove_info
    `.golden.new` is created
 3. On comparison, output is processed through redactions → filters, then compared
 4. Custom comparators can override the default equality check
-5. On mismatch, a unified diff is shown
+5. On mismatch, the error starts with the snapshot summary
+   (`Snapshot file`, `Snapshot`, `Source: path:line`, `Input file`) followed
+   by a unified diff
 
 ## Development
 

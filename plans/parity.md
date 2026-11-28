@@ -2,13 +2,12 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6.10 — snapshot summary on mismatch
-  (`output.rs::function::print_snapshot_summary`).
+- **Current focus:** Phase 6.11 — runtime assertion-context parity
+  (`runtime.rs::SnapshotAssertionContext`, `SnapshotValue`, `InlineValue`).
 - **Next up:**
-  1. 6.10 Print snapshot file, name, source, and input file with mismatches.
+  1. 6.11 Runtime value/context parity for the assertion pipeline.
   2. Remaining `partial` rows in `plans/inventory/rust_port_inventory.tsv`
-     (runtime assertion-context classes, settings binding, binary snapshot
-     objects, metadata privacy flag).
+     (settings binding, binary snapshot objects, metadata privacy flag).
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -34,10 +33,13 @@
     `golden test-review --unreferenced MODE`
   - Redaction key traversal (Phase 6.9): complete — selectors can rewrite
     object keys through the `$key` segment, matching upstream traversal order
+  - Snapshot summary (Phase 6.10): complete — mismatch and new-snapshot errors
+    start with file, name, source (`path:line`), and input file, falling back
+    to the metadata sidecar
   - Inline snapshots (Phase 4.1): complete — 4.1a–4.1e done; assertions record
     pendings, the CLI and review TUI patch source on accept, and reject/skip
     drop or keep registry entries without touching source
-  - Rust parity inventory: bootstrapped — 554 rows (124 `ported`, 16 `partial`,
+  - Rust parity inventory: bootstrapped — 554 rows (125 `ported`, 15 `partial`,
     0 `missing`, 414 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
@@ -53,10 +55,10 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** redaction key traversal (6.9) on top of the unreferenced
-  snapshot policy (6.8), end-of-run reporter (5.2), pending directory (6.7),
-  and inline review TUI (4.1e).
-- **Gates:** `make lint` pass; `make test` pass (282 examples); `make inventory`
+- **Last commit:** snapshot summary on mismatch (6.10) on top of redaction
+  key traversal (6.9), unreferenced policy (6.8), end-of-run reporter (5.2),
+  pending directory (6.7), and inline review TUI (4.1e).
+- **Gates:** `make lint` pass; `make test` pass (285 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -71,9 +73,9 @@ display, source context, inline word-level highlighting), and the end-of-run
 pending report matches insta-ruby's suite hooks.
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 124 are `ported`, 16 `partial`, 0 `missing`, and 414 `skipped` (insta's
+which 125 are `ported`, 15 `partial`, 0 `missing`, and 414 `skipped` (insta's
 content/serialization engine, cargo internals, and documented divergences).
-All planned phases are now implemented; remaining work closes the 16 `partial`
+All planned phases are now implemented; remaining work closes the 15 `partial`
 rows one feature at a time.
 
 ---
@@ -403,6 +405,13 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - [x] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes` removes CSI
       sequences before redactions; `sort_maps` sorts JSON object keys in
       `assert_json_snapshot`; `allow_empty_glob` controls empty glob matches.
+- [x] **6.10 Snapshot summary on mismatch** —
+      `Golden.snapshot_summary` renders upstream's `print_snapshot_summary`
+      header (`Snapshot file`, `Snapshot`, `Source: path:line`, `Input file`)
+      and prefixes mismatch and new-snapshot errors. Source/line/input fall
+      back to the `.golden.meta` sidecar when the assertion does not supply
+      them, and paths under the current directory are shown relative
+      (`output.rs`).
 - [x] **6.9 Redaction key traversal** — object keys are redacted through the
       synthetic `$key` segment (`.hm.$key`, `.users.*.$key`, `**.$key`), the
       original key is used for value paths, dynamic key redactions receive
@@ -462,6 +471,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 6.7   | Pending snapshot directory | Medium | Small | ✅ Done |
 | 6.8   | Unreferenced snapshot policy | Medium | Medium | ✅ Done |
 | 6.9   | Redaction key traversal | Medium | Small | ✅ Done |
+| 6.10  | Snapshot summary on mismatch | Medium | Small | ✅ Done |
 
 ## Intentional divergences
 

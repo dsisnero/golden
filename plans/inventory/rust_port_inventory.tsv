@@ -334,7 +334,7 @@ insta/src/output.rs::function::invoke_external_diff_tool	function	ported	src/gol
 insta/src/output.rs::function::newlines_matter	function	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::function::print_info	function	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::function::print_line	function	skipped	-	CLI returns strings and the TUI renders them
-insta/src/output.rs::function::print_snapshot_summary	function	partial	src/golden.cr::method::Golden.report_pending!	pending report helper
+insta/src/output.rs::function::print_snapshot_summary	function	ported	src/golden.cr::method::Golden.snapshot_summary	file, name, source and input-file header before mismatch diffs
 insta/src/output.rs::function::render_invisible	function	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::function::trailing_newline	function	skipped	-	CLI returns strings and the TUI renders them
 insta/src/output.rs::method::SnapshotPrinter<'a>.new	method	skipped	-	CLI returns strings and the TUI renders them
