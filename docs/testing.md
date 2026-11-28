@@ -78,6 +78,12 @@ staging state, never commit them.
 
 ## CI behavior
 
-`Golden::UpdateMode::Auto` compares strictly when `CI=true` or `TF_BUILD` is
-set, so a new snapshot fails instead of silently staging a `.golden.new`. Use
-`GOLDEN_FORCE_PASS=1` only for exploratory local runs.
+`Golden::UpdateMode::Auto` compares strictly when CI is detected (`CI` set to
+anything but `false`/`0`/empty, or `TF_BUILD` set), so a new snapshot fails
+instead of silently staging a `.golden.new`. Use `GOLDEN_FORCE_PASS=1` only
+for exploratory local runs.
+
+Deleting snapshots is CI-hostile, so set `GOLDEN_UNREFERENCED=reject` (or
+`unreferenced: reject` in `.golden.yml`) in CI: the end-of-run hook then fails
+the run when a snapshot is no longer referenced. `auto` already rejects in CI
+and deletes locally.

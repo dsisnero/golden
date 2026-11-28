@@ -67,6 +67,15 @@ inline entries to stderr with a `golden review` hint. It is advisory (no exit
 status change), runs at most once, and is disabled with
 `GOLDEN_REPORT_PENDING=0`.
 
+Snapshot assertions also append each touched file to
+`GOLDEN_SNAPSHOT_REFERENCES_FILE` (with `INSTA_SNAPSHOT_REFERENCES_FILE` as a
+fallback), the protocol cargo-insta uses to find files no test referenced. The
+same end-of-run hook applies `Golden.unreferenced`
+(`auto`/`reject`/`delete`/`warn`/`ignore`, default `ignore`) after reporting:
+`delete` removes the snapshot and its metadata sidecar, `reject` raises
+`Golden::UnreferencedSnapshotsError` so the runner exits non-zero, and the
+references file is removed afterwards.
+
 Writes are atomic: content goes to a temporary file in the target directory and
 is then renamed over the destination, so an interrupted run cannot leave a
 partially written baseline.

@@ -130,6 +130,22 @@ describe "Golden::CLI" do
     result.should contain("failed")
   end
 
+  it "test-review rejects an unknown --unreferenced mode" do
+    dir = temp_dir
+    result = Golden::CLI.dispatch(["test-review", "--spec-cmd", "echo ok",
+                                   "--snapshot", dir, "--unreferenced", "bogus"])
+    result.should contain("unknown unreferenced mode")
+  end
+
+  it "test-review exports --unreferenced to the spec command" do
+    dir = temp_dir
+    marker = File.join(dir, "mode.txt")
+    cmd = "echo $GOLDEN_UNREFERENCED > #{marker}"
+    Golden::CLI.dispatch(["test-review", "--spec-cmd", cmd,
+                          "--snapshot", dir, "--unreferenced", "warn"])
+    File.read(marker).strip.should eq("warn")
+  end
+
   it "Makefile has test-review target" do
     File.exists?("Makefile").should be_true
     content = File.read("Makefile")

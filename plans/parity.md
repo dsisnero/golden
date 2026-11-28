@@ -2,13 +2,13 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6.8 — unreferenced snapshot tracking and
-  `golden clean` parity (`env.rs::UnreferencedSnapshots`).
+- **Current focus:** Phase 6.9 — redaction traversal for object keys
+  (`redaction.rs::Selector.redact_impl` / `redact_struct`).
 - **Next up:**
-  1. 6.8 Unreferenced snapshot tracking and `golden clean` parity.
+  1. 6.9 Redact JSON object keys, not just values.
   2. Remaining `partial` rows in `plans/inventory/rust_port_inventory.tsv`
-     (redaction key traversal, runtime assertion-context classes, settings
-     binding, binary snapshot objects).
+     (runtime assertion-context classes, settings binding, binary snapshot
+     objects).
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -28,11 +28,15 @@
   - Pending directory (Phase 6.7): complete — `GOLDEN_PENDING_DIR`
     (`INSTA_PENDING_DIR` fallback) mirrors pending snapshots outside the
     snapshot tree; binary sidecar storage is closed as a divergence
+  - Unreferenced snapshots (Phase 6.8): complete — references-file
+    memoization plus Auto/Reject/Delete/Warn/Ignore policy applied after the
+    suite; `GOLDEN_UNREFERENCED`, config `unreferenced:`, and
+    `golden test-review --unreferenced MODE`
   - Inline snapshots (Phase 4.1): complete — 4.1a–4.1e done; assertions record
     pendings, the CLI and review TUI patch source on accept, and reject/skip
     drop or keep registry entries without touching source
-  - Rust parity inventory: bootstrapped — 554 rows (118 `ported`, 19 `partial`,
-    0 `missing`, 417 `skipped`)
+  - Rust parity inventory: bootstrapped — 554 rows (122 `ported`, 18 `partial`,
+    0 `missing`, 414 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
   - Upstream pins: `vendor/insta` `1.48.0` (`3d62572`), `vendor/insta-ruby`
@@ -40,16 +44,16 @@
     and is not a parity target.
   - Ledger scope is `insta/src,insta/tests` with `tree-sitter` discovery. Keep
     that scope/parser or every id churns.
-  - 417 rows are `skipped` because they are insta's content/serialization
+  - 414 rows are `skipped` because they are insta's content/serialization
     engine (vendored YAML parser, content scanner/emitter), cargo/nextest
     workspace internals, or deliberate divergences (strict match, binary
     sidecar data files); Crystal replaces those with stdlib or does not expose
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** end-of-run pending reporter (5.2) on top of the pending
-  snapshot directory (6.7) and inline review TUI (4.1e).
-- **Gates:** `make lint` pass; `make test` pass (262 examples); `make inventory`
+- **Last commit:** unreferenced snapshot policy (6.8) on top of the end-of-run
+  reporter (5.2), pending directory (6.7), and inline review TUI (4.1e).
+- **Gates:** `make lint` pass; `make test` pass (276 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -64,9 +68,9 @@ display, source context, inline word-level highlighting), and the end-of-run
 pending report matches insta-ruby's suite hooks.
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 118 are `ported`, 19 `partial`, 0 `missing`, and 417 `skipped` (insta's
+which 122 are `ported`, 18 `partial`, 0 `missing`, and 414 `skipped` (insta's
 content/serialization engine, cargo internals, and documented divergences).
-All planned phases are now implemented; remaining work closes the 19 `partial`
+All planned phases are now implemented; remaining work closes the 18 `partial`
 rows one feature at a time.
 
 ---
@@ -396,6 +400,20 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - [x] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes` removes CSI
       sequences before redactions; `sort_maps` sorts JSON object keys in
       `assert_json_snapshot`; `allow_empty_glob` controls empty glob matches.
+- [x] **6.8 Unreferenced snapshot policy** — `Golden::UnreferencedMode`
+      (`auto`, `reject`/`error`, `delete`, `warn`, `ignore`; `auto` resolves
+      to reject in CI and delete locally) with
+      `Golden.handle_unreferenced_snapshots!`, which walks `.golden` files
+      under the snapshot dir, prints to stderr, deletes (including the
+      metadata sidecar) or raises `Golden::UnreferencedSnapshotsError`.
+      `Golden.memoize_snapshot_file` appends every asserted snapshot to
+      `GOLDEN_SNAPSHOT_REFERENCES_FILE` (`INSTA_SNAPSHOT_REFERENCES_FILE`
+      fallback) and the file is removed after handling, so detection works
+      across processes. Configured by `GOLDEN_UNREFERENCED`, the flat
+      `unreferenced:` config key, and `golden test-review --unreferenced MODE`
+      (exported to the spec child), default `ignore` (`env.rs`,
+      `cargo-insta/src/cli.rs`). `ci?` now matches `utils.rs::is_ci`
+      (`CI=false|0|""` is not CI).
 - [x] **6.7 Pending snapshot directory** — `Golden.pending_dir` reads
       `GOLDEN_PENDING_DIR` with an `INSTA_PENDING_DIR` fallback;
       `Golden.pending_snapshot_path` mirrors a snapshot's path (relative to
@@ -432,6 +450,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 6.5   | Settings and pending helpers | Medium | Small | ✅ Done |
 | 6.6   | ANSI and map ordering | Low | Small | ✅ Done |
 | 6.7   | Pending snapshot directory | Medium | Small | ✅ Done |
+| 6.8   | Unreferenced snapshot policy | Medium | Medium | ✅ Done |
 
 ## Intentional divergences
 
@@ -467,6 +486,12 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
   installs a reporter (`Spec.after_suite` when spec is loaded, `at_exit`
   otherwise). Disable it with `GOLDEN_REPORT_PENDING=0`; the report is
   advisory and never changes the exit status.
+- **Unreferenced detection walks the snapshot dir, not packages.** cargo-insta
+  walks every workspace package and skips files that do not look like insta
+  snapshots; Golden has no workspace concept, so it walks `Golden.dir` for
+  `*.golden` files and reads the same references-file protocol. Environment
+  names accept a `GOLDEN_` alias (`GOLDEN_SNAPSHOT_REFERENCES_FILE`,
+  `GOLDEN_UNREFERENCED`) with upstream's `INSTA_` names as fallbacks.
 - **Pending snapshots can live outside the snapshot tree.** `GOLDEN_PENDING_DIR`
   (with upstream's `INSTA_PENDING_DIR` as a fallback name) mirrors the path
   relative to the snapshot dir instead of cargo-insta's workspace-relative

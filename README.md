@@ -257,6 +257,22 @@ Golden.cleanup!(dry_run: true)   # preview
 Golden.cleanup!                   # actually delete
 ```
 
+Post-run policy (the `cargo insta test --unreferenced` equivalent) is also
+available. Set `GOLDEN_UNREFERENCED` (or config `unreferenced:`) to `auto`,
+`reject`, `delete`, `warn`, or `ignore` (default). The end-of-run hook then
+applies it: `auto` deletes locally and rejects in CI, `reject` fails the run,
+`delete` removes the files (and their metadata), and `warn` only prints.
+
+```bash
+GOLDEN_UNREFERENCED=reject crystal spec
+golden test-review --unreferenced=delete
+```
+
+Assertions append each touched snapshot to
+`GOLDEN_SNAPSHOT_REFERENCES_FILE` (upstream's
+`INSTA_SNAPSHOT_REFERENCES_FILE` is accepted too) when set, so a runner in
+another process can compare it against the snapshot tree.
+
 ### Metadata
 
 Every accepted snapshot gets a `.golden.meta` JSON sidecar. Assertion macros
@@ -330,6 +346,7 @@ Create `.golden.yml` in your project root:
 ```yaml
 update_mode: "auto"
 dir: "spec/testdata"
+unreferenced: "warn"
 filters:
   - pattern: "\\d{4}-\\d{2}-\\d{2}"
     replacement: "[DATE]"

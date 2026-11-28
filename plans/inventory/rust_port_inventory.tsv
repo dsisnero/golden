@@ -285,13 +285,13 @@ insta/src/env.rs::class::SnapshotUpdate	class	ported	src/golden.cr::enum::Update
 insta/src/env.rs::class::SnapshotUpdateBehavior	class	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::class::TestRunner	class	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::class::ToolConfig	class	skipped	-	cargo, nextest and workspace internals
-insta/src/env.rs::class::UnreferencedSnapshots	class	partial	src/golden.cr::method::Golden.unreferenced_snapshots	orphan tracking and cleanup
+insta/src/env.rs::class::UnreferencedSnapshots	class	ported	src/golden.cr::enum::UnreferencedMode	Auto/Reject/Delete/Warn/Ignore plus post-run handling
 insta/src/env.rs::class::Workspace	class	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::get_cargo_workspace	function	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::get_cargo_workspace_from_metadata	function	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::get_pending_dir	function	ported	src/golden.cr::method::Golden.pending_dir	GOLDEN_PENDING_DIR with INSTA_PENDING_DIR fallback
 insta/src/env.rs::function::get_tool_config	function	skipped	-	cargo, nextest and workspace internals
-insta/src/env.rs::function::memoize_snapshot_file	function	skipped	-	cargo, nextest and workspace internals
+insta/src/env.rs::function::memoize_snapshot_file	function	ported	src/golden.cr::method::Golden.memoize_snapshot_file	GOLDEN_SNAPSHOT_REFERENCES_FILE with INSTA_SNAPSHOT_REFERENCES_FILE fallback
 insta/src/env.rs::function::memoize_warning	function	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::function::pending_snapshot_path	function	ported	src/golden.cr::method::Golden.pending_snapshot_path	snapshot-relative mirror under the pending dir; refuses escaping paths
 insta/src/env.rs::function::resolve	function	skipped	-	cargo, nextest and workspace internals
@@ -315,8 +315,8 @@ insta/src/env.rs::method::ToolConfig.review_warn_undiscovered	method	skipped	-	c
 insta/src/env.rs::method::ToolConfig.snapshot_update	method	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::method::ToolConfig.test_runner	method	skipped	-	cargo, nextest and workspace internals
 insta/src/env.rs::method::ToolConfig.test_runner_fallback	method	skipped	-	cargo, nextest and workspace internals
-insta/src/env.rs::method::ToolConfig.test_unreferenced	method	skipped	-	cargo, nextest and workspace internals
-insta/src/env.rs::method::UnreferencedSnapshots.from_str	method	skipped	-	Rust config parsing
+insta/src/env.rs::method::ToolConfig.test_unreferenced	method	ported	src/golden.cr::method::Golden.configure_with	flat `unreferenced` key plus GOLDEN_UNREFERENCED
+insta/src/env.rs::method::UnreferencedSnapshots.from_str	method	ported	src/golden.cr::enum::UnreferencedMode	parse accepts auto/reject/error/delete/warn/ignore
 insta/src/filters.rs::class::Filters	class	ported	src/golden.cr::method::Golden.add_filter	filters live on Golden::Settings
 insta/src/filters.rs::function::strip_ansi_escape_codes	function	ported	src/golden.cr::method::Golden.strip_ansi_escape_codes	Golden.strip_ansi_escape_codes
 insta/src/filters.rs::method::Filters.add	method	ported	src/golden.cr::method::Golden.add_filter	Golden.add_filter

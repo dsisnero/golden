@@ -15,6 +15,38 @@ module Golden
     Unseen
   end
 
+  # What to do with snapshot files no assertion referenced during the run.
+  # Mirrors insta's `test.unreferenced` / `cargo insta test --unreferenced`.
+  enum UnreferencedMode
+    Auto
+    Reject
+    Delete
+    Warn
+    Ignore
+
+    # Parses the CLI/config spellings; `error` is accepted as a Reject alias.
+    def self.parse(value : String) : UnreferencedMode?
+      case value.strip.downcase
+      when "auto"            then Auto
+      when "reject", "error" then Reject
+      when "delete"          then Delete
+      when "warn"            then Warn
+      when "ignore"          then Ignore
+      end
+    end
+
+    # `Auto` means Reject in CI and Delete locally, like cargo-insta.
+    def resolve(ci : Bool) : UnreferencedMode
+      return self unless self.auto?
+      ci ? Reject : Delete
+    end
+
+    # Lower-case spelling used in configs, env vars, and CLI flags.
+    def config_name : String
+      to_s.downcase
+    end
+  end
+
   struct Redaction
     getter pattern : Regex
     getter replacement : String
@@ -197,6 +229,17 @@ module Golden
   @@settings = Settings.new
   @@duplicate_snapshots = {} of String => String
 
+  # Post-run policy for snapshot files no assertion referenced.
+  @@unreferenced = UnreferencedMode::Ignore
+
+  def self.unreferenced : UnreferencedMode
+    @@unreferenced
+  end
+
+  def self.unreferenced=(mode : UnreferencedMode)
+    @@unreferenced = mode
+  end
+
   def self.settings : Settings
     @@settings
   end
@@ -354,6 +397,11 @@ module Golden
     if ENV["GOLDEN_UPDATE"]? == "1"
       @@settings.update_mode = UpdateMode::Always
     end
+    if raw = ENV["GOLDEN_UNREFERENCED"]? || ENV["INSTA_UNREFERENCED"]?
+      mode = UnreferencedMode.parse(raw)
+      raise "invalid unreferenced mode in GOLDEN_UNREFERENCED: #{raw}" unless mode
+      @@unreferenced = mode
+    end
     install_exit_reporter! if report_pending_on_exit?
   end
 
@@ -381,6 +429,12 @@ module Golden
     end
     if d = config["dir"]?
       @@settings.dir = d.to_s
+    end
+    if ur = config["unreferenced"]?
+      raw = ur.to_s
+      mode = UnreferencedMode.parse(raw)
+      raise "invalid unreferenced mode in #{path}: #{raw}" unless mode
+      @@unreferenced = mode
     end
     config["filters"]?.try do |filters_val|
       filters_val.as_a.each do |filter_json|
@@ -415,8 +469,83 @@ module Golden
 
   def self.unreferenced_snapshots(dir : String? = nil) : Array(String)
     search_dir = dir || @@settings.dir
-    all = Dir.glob(File.join(search_dir, "**/*.golden")).sort
-    all.reject { |path| @@accessed_snapshots.includes?(path) }
+    referenced = referenced_snapshot_paths
+    Dir.glob(File.join(search_dir, "**/*.golden")).sort.reject do |path|
+      referenced.includes?(File.expand_path(path))
+    end
+  end
+
+  # Path of the file the test runner uses to record which snapshots were
+  # referenced, from `GOLDEN_SNAPSHOT_REFERENCES_FILE` (or upstream's
+  # `INSTA_SNAPSHOT_REFERENCES_FILE`).
+  def self.snapshot_references_file : String?
+    raw = ENV["GOLDEN_SNAPSHOT_REFERENCES_FILE"]? || ENV["INSTA_SNAPSHOT_REFERENCES_FILE"]?
+    return nil if raw.nil?
+    path = raw.strip
+    path.empty? ? nil : path
+  end
+
+  # Appends a snapshot path to the references file so the runner can detect
+  # snapshots no assertion touched (upstream `memoize_snapshot_file`). Raises
+  # on IO errors, matching upstream's `unwrap`.
+  def self.memoize_snapshot_file(snapshot_file : String) : Nil
+    return unless path = snapshot_references_file
+    File.open(path, "a", &.puts(snapshot_file))
+  end
+
+  private def self.clear_snapshot_references_file : Nil
+    if path = snapshot_references_file
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  private def self.referenced_snapshot_paths : Set(String)
+    paths = Set(String).new
+    @@accessed_snapshots.each { |path| paths << File.expand_path(path) }
+    if ref = snapshot_references_file
+      if File.exists?(ref)
+        File.read_lines(ref).each do |line|
+          value = line.strip
+          paths << File.expand_path(value) unless value.empty?
+        end
+      end
+    end
+    paths
+  end
+
+  # Raised by `handle_unreferenced_snapshots!` under the `reject` policy so the
+  # runner fails the run.
+  class UnreferencedSnapshotsError < Exception
+  end
+
+  # Applies the configured `unreferenced` policy to snapshot files that no
+  # assertion referenced. Mirrors cargo-insta's post-run handling: prints to
+  # stderr, deletes under `delete`, raises under `reject`, and removes the
+  # references file afterwards. `ignore` is a no-op and the default.
+  def self.handle_unreferenced_snapshots!(dir : String? = nil,
+                                          mode : UnreferencedMode? = nil) : Array(String)
+    action = (mode || @@unreferenced).resolve(ci?)
+    return [] of String if action.ignore?
+
+    files = unreferenced_snapshots(dir)
+    if files.empty?
+      STDERR.puts "no unreferenced snapshots found"
+    elsif action.delete?
+      STDERR.puts "deleted unreferenced snapshots:"
+      files.each do |path|
+        STDERR.puts "  #{path}"
+        delete_file(path)
+        delete_file(path + ".meta")
+      end
+    else
+      STDERR.puts "encountered unreferenced snapshots:"
+      files.each { |path| STDERR.puts "  #{path}" }
+    end
+    clear_snapshot_references_file
+    if !files.empty? && action.reject?
+      raise UnreferencedSnapshotsError.new("aborting because of unreferenced snapshots")
+    end
+    files
   end
 
   def self.status(dir : String? = nil) : Hash(String, Int32)
@@ -445,8 +574,10 @@ module Golden
     File.read(path) if File.exists?(path)
   end
 
-  def self.test_and_review!(spec_cmd : String = "crystal spec", snapshot_dir : String? = nil) : Array(Tuple(String, String))
-    result = Process.run(spec_cmd, shell: true)
+  def self.test_and_review!(spec_cmd : String = "crystal spec", snapshot_dir : String? = nil,
+                            unreferenced : UnreferencedMode? = nil) : Array(Tuple(String, String))
+    env = unreferenced ? {"GOLDEN_UNREFERENCED" => unreferenced.config_name} : nil
+    result = Process.run(spec_cmd, shell: true, env: env)
     if result.success?
       review!(snapshot_dir)
     else
@@ -650,8 +781,9 @@ module Golden
   end
 
   # :nodoc:
-  # Runs the end-of-run report at most once per process. Errors are swallowed
-  # so a failing report cannot mask a test failure or change the exit status.
+  # Runs the end-of-run reports at most once per process: pending snapshots
+  # first (errors swallowed), then the unreferenced-snapshot policy (whose
+  # `reject` mode intentionally raises so the runner fails).
   def self.run_exit_report
     return if @@exit_report_done
     @@exit_report_done = true
@@ -659,6 +791,7 @@ module Golden
       report_pending!
     rescue
     end
+    handle_unreferenced_snapshots!
   end
 
   def self.exit_reporter_installed? : Bool
@@ -714,6 +847,7 @@ module Golden
     end
     check_duplicate!(full_name, processed_output)
     @@accessed_snapshots.add(golden_path)
+    memoize_snapshot_file(golden_path)
 
     mode = effective_update_mode
 
@@ -1115,7 +1249,11 @@ module Golden
   end
 
   private def self.ci? : Bool
-    ENV["CI"]? == "true" || ENV["TF_BUILD"]? != nil
+    case ENV["CI"]?
+    when "false", "0", "" then false
+    when nil              then !ENV["TF_BUILD"]?.nil?
+    else                       true
+    end
   end
 
   private def self.force_pass? : Bool

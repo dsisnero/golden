@@ -69,6 +69,16 @@
   the exit status
 - `Golden.report_pending!` now includes pending inline snapshots as
   `file:line (inline)` entries
+- unreferenced snapshot policy matching `cargo insta test --unreferenced`:
+  `Golden::UnreferencedMode` (`auto`, `reject`/`error`, `delete`, `warn`,
+  `ignore`; `auto` rejects in CI and deletes locally) and
+  `Golden.handle_unreferenced_snapshots!`, applied by the end-of-run hook.
+  Configure with `GOLDEN_UNREFERENCED`, the `unreferenced:` config key, or
+  `golden test-review --unreferenced MODE` (exported to the spec child)
+- `Golden.memoize_snapshot_file` records each asserted snapshot in
+  `GOLDEN_SNAPSHOT_REFERENCES_FILE` (or `INSTA_SNAPSHOT_REFERENCES_FILE`) so
+  unreferenced detection works across processes; the file is removed after
+  handling
 
 ## 0.3.0 (2026-07-19)
 

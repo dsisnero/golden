@@ -1381,6 +1381,135 @@ describe Golden do
     end
   end
 
+  describe "unreferenced snapshot policy" do
+    temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
+    refs_file = File.join(Dir.tempdir, Random::Secure.hex(8))
+
+    before_each do
+      FileUtils.mkdir_p(temp_dir)
+      Golden.reset_tracking!
+    end
+
+    after_each do
+      ENV.delete("GOLDEN_SNAPSHOT_REFERENCES_FILE")
+      ENV.delete("GOLDEN_UNREFERENCED")
+      Golden.unreferenced = Golden::UnreferencedMode::Ignore
+      FileUtils.rm_rf(temp_dir)
+      File.delete(refs_file) if File.exists?(refs_file)
+      Golden.reset_tracking!
+    end
+
+    it "parses mode spellings and rejects unknown values" do
+      Golden::UnreferencedMode.parse("auto").should eq(Golden::UnreferencedMode::Auto)
+      Golden::UnreferencedMode.parse("reject").should eq(Golden::UnreferencedMode::Reject)
+      Golden::UnreferencedMode.parse("error").should eq(Golden::UnreferencedMode::Reject)
+      Golden::UnreferencedMode.parse("delete").should eq(Golden::UnreferencedMode::Delete)
+      Golden::UnreferencedMode.parse("warn").should eq(Golden::UnreferencedMode::Warn)
+      Golden::UnreferencedMode.parse("ignore").should eq(Golden::UnreferencedMode::Ignore)
+      Golden::UnreferencedMode.parse(" DELETE ").should eq(Golden::UnreferencedMode::Delete)
+      Golden::UnreferencedMode.parse("bogus").should be_nil
+    end
+
+    it "resolves auto to reject in CI and delete locally" do
+      auto = Golden::UnreferencedMode::Auto
+      auto.resolve(true).should eq(Golden::UnreferencedMode::Reject)
+      auto.resolve(false).should eq(Golden::UnreferencedMode::Delete)
+      Golden::UnreferencedMode::Warn.resolve(true).should eq(Golden::UnreferencedMode::Warn)
+    end
+
+    it "does nothing under ignore" do
+      File.write(File.join(temp_dir, "orphan.golden"), "x")
+      Golden.handle_unreferenced_snapshots!(temp_dir, Golden::UnreferencedMode::Ignore).should be_empty
+      File.exists?(File.join(temp_dir, "orphan.golden")).should be_true
+    end
+
+    it "keeps files under warn" do
+      File.write(File.join(temp_dir, "orphan.golden"), "x")
+      files = Golden.handle_unreferenced_snapshots!(temp_dir, Golden::UnreferencedMode::Warn)
+      files.size.should eq(1)
+      File.exists?(File.join(temp_dir, "orphan.golden")).should be_true
+    end
+
+    it "deletes files and metadata under delete" do
+      File.write(File.join(temp_dir, "orphan.golden"), "x")
+      File.write(File.join(temp_dir, "orphan.golden.meta"), "{}")
+      files = Golden.handle_unreferenced_snapshots!(temp_dir, Golden::UnreferencedMode::Delete)
+      files.size.should eq(1)
+      File.exists?(File.join(temp_dir, "orphan.golden")).should be_false
+      File.exists?(File.join(temp_dir, "orphan.golden.meta")).should be_false
+    end
+
+    it "raises under reject and keeps the files" do
+      File.write(File.join(temp_dir, "orphan.golden"), "x")
+      expect_raises(Golden::UnreferencedSnapshotsError, /unreferenced snapshots/) do
+        Golden.handle_unreferenced_snapshots!(temp_dir, Golden::UnreferencedMode::Reject)
+      end
+      File.exists?(File.join(temp_dir, "orphan.golden")).should be_true
+    end
+
+    it "uses the configured policy when no mode is passed" do
+      File.write(File.join(temp_dir, "orphan.golden"), "x")
+      Golden.unreferenced = Golden::UnreferencedMode::Delete
+      Golden.handle_unreferenced_snapshots!(temp_dir).size.should eq(1)
+      File.exists?(File.join(temp_dir, "orphan.golden")).should be_false
+    end
+
+    it "memoizes referenced snapshot paths to the references file" do
+      ENV["GOLDEN_SNAPSHOT_REFERENCES_FILE"] = refs_file
+      File.write(File.join(temp_dir, "used.golden"), "used")
+      File.write(File.join(temp_dir, "orphan.golden"), "orphan")
+
+      Golden.with_settings(update_mode: Golden::UpdateMode::No, dir: temp_dir) do
+        Golden.reset_tracking!
+        Golden.assert_snapshot("used", "used")
+      end
+
+      File.read(refs_file).should contain("used.golden")
+
+      # Clear in-process tracking to prove the file alone marks it referenced.
+      Golden.reset_tracking!
+      Golden.unreferenced_snapshots(temp_dir).map { |path| File.basename(path) }.should eq(["orphan.golden"])
+    end
+
+    it "removes the references file after handling" do
+      ENV["GOLDEN_SNAPSHOT_REFERENCES_FILE"] = refs_file
+      File.write(refs_file, "/tmp/used.golden\n")
+      File.write(File.join(temp_dir, "orphan.golden"), "x")
+
+      Golden.handle_unreferenced_snapshots!(temp_dir, Golden::UnreferencedMode::Warn)
+      File.exists?(refs_file).should be_false
+    end
+
+    it "is a no-op without a references file" do
+      Golden.snapshot_references_file.should be_nil
+      Golden.memoize_snapshot_file(File.join(temp_dir, "x.golden"))
+      File.exists?(refs_file).should be_false
+    end
+
+    it "reads the policy from GOLDEN_UNREFERENCED in init" do
+      ENV["GOLDEN_UNREFERENCED"] = "warn"
+      Golden.init
+      Golden.unreferenced.should eq(Golden::UnreferencedMode::Warn)
+
+      ENV["GOLDEN_UNREFERENCED"] = "bogus"
+      expect_raises(Exception, /invalid unreferenced mode/) do
+        Golden.init
+      end
+    end
+
+    it "reads the policy from the config file" do
+      config = File.join(temp_dir, ".golden.yml")
+      File.write(config, "unreferenced: delete\n")
+      Golden.configure_with(config)
+      Golden.unreferenced.should eq(Golden::UnreferencedMode::Delete)
+
+      File.write(config, "unreferenced: bogus\n")
+      expect_raises(Exception, /invalid unreferenced mode/) do
+        Golden.configure_with(config)
+      end
+    end
+  end
+
   describe "cleanup!" do
     temp_dir = File.join(Dir.tempdir, Random::Secure.hex(8))
 

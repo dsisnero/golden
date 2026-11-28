@@ -16,6 +16,7 @@ module Golden
       json_output = false
       dry_run = false
       spec_cmd = "crystal spec"
+      unreferenced : String? = nil
 
       parser = OptionParser.new do |opts|
         opts.on("--snapshot DIR", "") { |dir| snapshot_dir = dir }
@@ -23,6 +24,7 @@ module Golden
         opts.on("--json", "") { json_output = true }
         opts.on("--dry-run", "") { dry_run = true }
         opts.on("--spec-cmd CMD", "") { |cmd| spec_cmd = cmd }
+        opts.on("--unreferenced MODE", "") { |mode| unreferenced = mode }
         opts.invalid_option { }
       end
       parser.parse(remaining)
@@ -31,7 +33,8 @@ module Golden
       when "inline-pending", "inline-accept", "inline-reject"
         run_inline_command(command, snapshot_dir, root_dir, json_output, dry_run)
       else
-        run_snapshot_command(command, remaining, snapshot_dir, root_dir, json_output, dry_run, spec_cmd)
+        run_snapshot_command(command, remaining, snapshot_dir, root_dir, json_output, dry_run,
+          spec_cmd, unreferenced)
       end
     rescue e : OptionParser::InvalidOption
       "Error: #{e.message}"
@@ -40,7 +43,8 @@ module Golden
     private def self.run_snapshot_command(command : String, remaining : Array(String),
                                           snapshot_dir : String?, root_dir : String?,
                                           json_output : Bool,
-                                          dry_run : Bool, spec_cmd : String) : String
+                                          dry_run : Bool, spec_cmd : String,
+                                          unreferenced : String?) : String
       case command
       when "review"
         format_review(Golden.review!(snapshot_dir, root: root_dir))
@@ -55,7 +59,9 @@ module Golden
       when "clean"
         format_strings(Golden.cleanup!(snapshot_dir, dry_run: dry_run))
       when "test-review"
-        format_review(Golden.test_and_review!(spec_cmd, snapshot_dir))
+        mode = parse_unreferenced(unreferenced)
+        return mode if mode.is_a?(String)
+        format_review(Golden.test_and_review!(spec_cmd, snapshot_dir, mode))
       when "show"
         show_snapshot_cli(remaining)
       else
@@ -74,6 +80,14 @@ module Golden
       else
         reject_inline(snapshot_dir)
       end
+    end
+
+    private def self.parse_unreferenced(value : String?) : UnreferencedMode? | String
+      return nil unless value
+      mode = UnreferencedMode.parse(value)
+      return mode if mode
+      "Error: unknown unreferenced mode '#{value}' " \
+      "(expected auto, reject, delete, warn, or ignore)"
     end
 
     private def self.format_review(items : Array(Tuple(String, String))) : String
@@ -180,6 +194,8 @@ module Golden
         io << "  --root DIR          Project root for inline patches\n"
         io << "  --json              JSON output (pending, inline-pending)\n"
         io << "  --spec-cmd CMD      Spec command (default: crystal spec)\n"
+        io << "  --unreferenced MODE Unreferenced snapshot policy for test-review\n"
+        io << "                      (auto, reject, delete, warn, ignore)\n"
         io << "  --dry-run           Dry run (clean, inline-accept)"
       end
     end
