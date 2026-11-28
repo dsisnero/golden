@@ -62,8 +62,9 @@ The gate is `make lint && make test`. Both must be green before a commit.
 
 ## Pending snapshots during development
 
-A failing comparison writes `<name>.golden.new` and the spec run prints a
-pending report. Review with:
+A failing comparison writes `<name>.golden.new` and the end-of-run reporter
+(installed by `Golden.init`) prints the pending report when the process exits.
+Review with:
 
 ```bash
 crystal build src/golden_cli.cr -o bin/golden

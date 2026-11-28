@@ -354,6 +354,7 @@ module Golden
     if ENV["GOLDEN_UPDATE"]? == "1"
       @@settings.update_mode = UpdateMode::Always
     end
+    install_exit_reporter! if report_pending_on_exit?
   end
 
   def self.update=(value : Bool)
@@ -404,6 +405,8 @@ module Golden
 
   @@accessed_snapshots = Set(String).new
   @@inline_seen = Set(String).new
+  @@exit_reporter_installed = false
+  @@exit_report_done = false
 
   def self.reset_tracking!
     @@accessed_snapshots = Set(String).new
@@ -603,14 +606,63 @@ module Golden
   def self.report_pending!(dir : String? = nil) : String
     search_dir = dir || @@settings.dir
     pending = pending_snapshots(search_dir)
-    return "" if pending.empty?
+    inline = pending_inline_snapshots(search_dir)
+    return "" if pending.empty? && inline.empty?
     msg = String.build do |io|
-      io << "\n#{pending.size} pending snapshot(s) found.\n"
+      io << "\n#{pending.size + inline.size} pending snapshot(s) found.\n"
       pending.each { |pending_path| io << "  #{pending_path}\n" }
-      io << "Run `Golden.review!` to review them."
+      inline.each { |entry| io << "  #{entry.file}:#{entry.line} (inline)\n" }
+      io << "Run `golden review` to review them."
     end
     STDERR.puts msg
     msg
+  end
+
+  # Whether `Golden.init` installs the end-of-run reporter. Enabled by
+  # default; `GOLDEN_REPORT_PENDING=0` (or `false`/`no`/`off`) disables it.
+  def self.report_pending_on_exit? : Bool
+    value = ENV["GOLDEN_REPORT_PENDING"]?
+    return true if value.nil?
+    !%w[0 false no off].includes?(value.strip.downcase)
+  end
+
+  # Installs a suite/process-end hook that reports pending file and inline
+  # snapshots. Mirrors insta-ruby's `PendingReporter.flush_and_report!` wired
+  # through RSpec's `after(:suite)` and Minitest's `after_run`: the report is
+  # advisory (stderr only) and never changes the exit status. Idempotent.
+  #
+  # When `spec` is part of the program, the hook runs as
+  # `Spec.after_suite` (after the examples). It must not also register
+  # `at_exit`: our handler would run *before* the spec runner's own handler,
+  # report stale state, and consume the one-shot guard.
+  def self.install_exit_reporter! : Nil
+    return if @@exit_reporter_installed
+    @@exit_reporter_installed = true
+    {% if @top_level.has_constant?("Spec") %}
+      Spec.after_suite do
+        Golden.run_exit_report
+      end
+    {% else %}
+      at_exit do
+        Golden.run_exit_report
+      end
+    {% end %}
+  end
+
+  # :nodoc:
+  # Runs the end-of-run report at most once per process. Errors are swallowed
+  # so a failing report cannot mask a test failure or change the exit status.
+  def self.run_exit_report
+    return if @@exit_report_done
+    @@exit_report_done = true
+    begin
+      report_pending!
+    rescue
+    end
+  end
+
+  def self.exit_reporter_installed? : Bool
+    @@exit_reporter_installed
   end
 
   def self.accept_all!(dir : String? = nil) : Array(String)

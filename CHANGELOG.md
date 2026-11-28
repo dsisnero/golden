@@ -60,6 +60,15 @@
   `Golden.pending_snapshot_path`, and `Golden.golden_path_for_pending` expose
   the mapping, which `pending_snapshots`, `status`, `accept_all!`,
   `reject_all!`, and the review TUI all use
+- end-of-run pending reporter matching insta-ruby's suite hooks:
+  `Golden.init` installs a `Spec.after_suite` hook (or `at_exit` outside
+  specs, via `Golden.install_exit_reporter!`) that prints pending file and
+  inline snapshots to stderr with a `golden review` hint;
+  `GOLDEN_REPORT_PENDING=0` disables it and `Golden.report_pending_on_exit?`
+  exposes the decision. The report is advisory, runs once, and never changes
+  the exit status
+- `Golden.report_pending!` now includes pending inline snapshots as
+  `file:line (inline)` entries
 
 ## 0.3.0 (2026-07-19)
 

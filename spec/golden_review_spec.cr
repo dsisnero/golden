@@ -698,4 +698,61 @@ describe "Golden.report_pending!" do
       Golden.dir = old_dir
     end
   end
+
+  it "reports pending inline snapshots alongside file pendings" do
+    dir = temp_dir
+    pending(dir, "snap_a")
+    entry = inline_pending(dir, name: "inline_snap")
+    result = Golden.report_pending!(dir)
+    result.should contain("2 pending snapshot(s)")
+    result.should contain("snap_a.golden.new")
+    result.should contain("#{entry.file}:#{entry.line} (inline)")
+    result.should contain("golden review")
+  end
+
+  it "reports inline pendings even when no file pendings exist" do
+    dir = temp_dir
+    entry = inline_pending(dir)
+    result = Golden.report_pending!(dir)
+    result.should contain("1 pending snapshot(s)")
+    result.should contain("#{entry.file}:#{entry.line} (inline)")
+  end
+end
+
+describe "Golden end-of-run reporter" do
+  it "defaults to reporting on exit and honors GOLDEN_REPORT_PENDING" do
+    old = ENV["GOLDEN_REPORT_PENDING"]?
+    begin
+      ENV.delete("GOLDEN_REPORT_PENDING")
+      Golden.report_pending_on_exit?.should be_true
+
+      ENV["GOLDEN_REPORT_PENDING"] = "0"
+      Golden.report_pending_on_exit?.should be_false
+      ENV["GOLDEN_REPORT_PENDING"] = "off"
+      Golden.report_pending_on_exit?.should be_false
+
+      ENV["GOLDEN_REPORT_PENDING"] = "1"
+      Golden.report_pending_on_exit?.should be_true
+    ensure
+      if old
+        ENV["GOLDEN_REPORT_PENDING"] = old
+      else
+        ENV.delete("GOLDEN_REPORT_PENDING")
+      end
+    end
+  end
+
+  it "installs the end-of-run hook once" do
+    Golden.install_exit_reporter!
+    Golden.exit_reporter_installed?.should be_true
+    Golden.install_exit_reporter!
+    Golden.exit_reporter_installed?.should be_true
+  end
+
+  it "is installed by Golden.init when reporting is enabled" do
+    if Golden.report_pending_on_exit?
+      Golden.init
+      Golden.exit_reporter_installed?.should be_true
+    end
+  end
 end

@@ -215,6 +215,13 @@ under that directory. Accepting or rejecting moves/deletes them back through
 the same mapping, and `pending_snapshots`, `status`, and `golden review` all
 discover them there.
 
+`Golden.init` installs an end-of-run reporter (like insta-ruby's
+`after(:suite)` / `after_run` hooks): after the spec suite — or at process
+exit outside specs — it prints any pending file and inline snapshots plus a
+`golden review` hint to stderr. The report is advisory — it never changes the
+exit status. Set `GOLDEN_REPORT_PENDING=0` to disable it, or install it
+explicitly with `Golden.install_exit_reporter!`.
+
 ### Interactive Review
 
 ```crystal

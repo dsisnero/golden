@@ -14,6 +14,10 @@
   - Pending reporter (Phase 2): complete
   - CLI binary (Phase 3): complete
   - Test runner integration (Phase 5.1): complete
+  - End-of-run reporter (Phase 5.2): complete — `Golden.init` installs a
+    `Spec.after_suite` hook (or `at_exit` outside specs;
+    `GOLDEN_REPORT_PENDING=0` disables) that prints pending file and inline
+    snapshots; advisory only, no exit-status change
   - Settings metadata (Phase 6.1): complete
   - Snapshot naming (Phase 6.2): complete
   - Strict comparison (Phase 6.3): closed — always exact; `matches_fully` is
@@ -43,9 +47,9 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** pending snapshot directory (6.7) on top of inline snapshot
-  review TUI integration (4.1e).
-- **Gates:** `make lint` pass; `make test` pass (257 examples); `make inventory`
+- **Last commit:** end-of-run pending reporter (5.2) on top of the pending
+  snapshot directory (6.7) and inline review TUI (4.1e).
+- **Gates:** `make lint` pass; `make test` pass (262 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -56,7 +60,8 @@ Keep this block accurate after every feature: the next session reads it first
 Golden has **feature parity** with Rust/Ruby insta on snapshot fundamentals and
 the review TUI. All 6 quick wins and 3 Phase 1 features are implemented (skip,
 batch ops, g/G navigation, help overlay, review summary, pending reporter, diff
-display, source context, inline word-level highlighting).
+display, source context, inline word-level highlighting), and the end-of-run
+pending report matches insta-ruby's suite hooks.
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
 which 118 are `ported`, 19 `partial`, 0 `missing`, and 417 `skipped` (insta's
@@ -323,6 +328,40 @@ golden-test-review:
   crystal spec && golden review
 ```
 
+### 5.2 Add the end-of-run pending reporter hook
+
+**Problem:** pending snapshots are only reported when the caller remembers to
+call `Golden.report_pending!`; insta-ruby prints them automatically when the
+suite finishes.
+
+**Upstream reference:** Ruby only — Rust `insta` has no in-crate hook (the
+`cargo-insta` runner reports after the test process). insta-ruby installs
+`PendingReporter.flush_and_report!` from `RSpec.after(:suite)`
+(`lib/insta/rspec/hooks.rb`) and `Minitest.after_run`
+(`lib/minitest/insta_plugin.rb`); the reporter flushes buffered inline updates,
+then prints pending file snapshots and pending inline entries with a review
+hint.
+
+**Required:**
+- `Golden.install_exit_reporter!` registers one hook; it is idempotent and
+  installed by `Golden.init`. When `spec` is part of the program the hook is
+  `Spec.after_suite` (Crystal's spec runner registers its own `at_exit`, so a
+  plain `at_exit` would fire before the examples); otherwise it is `at_exit`.
+- The hook calls `Golden.report_pending!`, which now covers file pendings
+  (`pending_snapshots`) and inline pendings (`pending_inline_snapshots`) and
+  hints at `golden review`.
+- `GOLDEN_REPORT_PENDING=0|false|no|off` disables installation;
+  `Golden.report_pending_on_exit?` exposes the decision.
+- Advisory only: stderr output, no exit-status change, and errors in the hook
+  are swallowed so they cannot mask a test failure.
+
+**Divergence:** insta-ruby buffers inline updates in memory and flushes them in
+the hook; Golden patches inline literals immediately (or records pendings), so
+the Crystal hook only reports. Crystal has no Minitest/RSpec metaphor, so
+`Spec.after_suite` is the suite-level analogue and `at_exit` covers plain
+binaries. Cargo-insta’s post-run `test.unreferenced` handling is not part of
+this item (tracked as 6.8).
+
 ---
 
 ## Phase 6: Upstream settings and snapshot parity (from the Rust ledger)
@@ -385,6 +424,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 3.1   | CLI binary | Medium | Medium | ✅ Done |
 | 4.1   | Inline snapshots | Low | Large | ✅ Done |
 | 5.1   | Test runner integration | Low | Small | ✅ Done |
+| 5.2   | End-of-run pending reporter | Medium | Small | ✅ Done |
 | 6.1   | Settings metadata parity | High | Medium | ✅ Done |
 | 6.2   | Snapshot naming | Medium | Small | ✅ Done |
 | 6.3   | Strict comparison | Medium | Small | ✅ Closed (no code needed) |
@@ -421,6 +461,12 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
   metadata, so `Snapshot.build_binary_path` has nothing to name. Converting
   would require a snapshot container format, so those ledger rows are
   `skipped` rather than `missing`.
+- **The end-of-run hook reports, it does not buffer.** insta-ruby's suite hooks
+  flush in-memory inline updates before reporting; Golden patches inline
+  literals immediately (or records pending entries), so `Golden.init` only
+  installs a reporter (`Spec.after_suite` when spec is loaded, `at_exit`
+  otherwise). Disable it with `GOLDEN_REPORT_PENDING=0`; the report is
+  advisory and never changes the exit status.
 - **Pending snapshots can live outside the snapshot tree.** `GOLDEN_PENDING_DIR`
   (with upstream's `INSTA_PENDING_DIR` as a fallback name) mirrors the path
   relative to the snapshot dir instead of cargo-insta's workspace-relative

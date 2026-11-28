@@ -58,6 +58,15 @@ relative to `Golden.dir`; `promote_pending!` maps it back through
 `golden_path_for_pending` before moving it, and `discard_pending!` deletes the
 pending file and its sidecar where they are.
 
+`Golden.init` also installs an end-of-run reporter, mirroring insta-ruby's
+`RSpec.after(:suite)` / `Minitest.after_run` hook into
+`PendingReporter.flush_and_report!`. When `spec` is loaded it registers
+`Spec.after_suite`; otherwise it registers `at_exit`. The hook calls
+`Golden.report_pending!`, which prints pending file snapshots and pending
+inline entries to stderr with a `golden review` hint. It is advisory (no exit
+status change), runs at most once, and is disabled with
+`GOLDEN_REPORT_PENDING=0`.
+
 Writes are atomic: content goes to a temporary file in the target directory and
 is then renamed over the destination, so an interrupted run cannot leave a
 partially written baseline.
