@@ -69,6 +69,9 @@
   the exit status
 - `Golden.report_pending!` now includes pending inline snapshots as
   `file:line (inline)` entries
+- path selectors can redact object keys through the synthetic `$key` segment
+  (`.hm.$key`, `.users.*.$key`, `**.$key`); dynamic key redactions receive the
+  key text and `.$key` path, and non-string replacements are stringified
 - unreferenced snapshot policy matching `cargo insta test --unreferenced`:
   `Golden::UnreferencedMode` (`auto`, `reject`/`error`, `delete`, `warn`,
   `ignore`; `auto` rejects in CI and deletes locally) and

@@ -372,9 +372,9 @@ insta/src/redaction.rs::method::Selector<'a>.is_match	method	ported	src/golden.c
 insta/src/redaction.rs::method::Selector<'a>.make_static	method	skipped	-	no lifetimes in Crystal
 insta/src/redaction.rs::method::Selector<'a>.parse	method	ported	src/golden.cr::method::Golden.apply_path_redactions	selector parser
 insta/src/redaction.rs::method::Selector<'a>.redact	method	ported	src/golden.cr::method::Golden.apply_path_redactions	redaction traversal
-insta/src/redaction.rs::method::Selector<'a>.redact_impl	method	partial	src/golden.cr::method::Golden.apply_path_redactions	values only; object keys are not traversed
+insta/src/redaction.rs::method::Selector<'a>.redact_impl	method	ported	src/golden.cr::method::Golden.redact_json	keys via $key plus value traversal
 insta/src/redaction.rs::method::Selector<'a>.redact_seq	method	ported	src/golden.cr::method::Golden.apply_path_redactions	array traversal
-insta/src/redaction.rs::method::Selector<'a>.redact_struct	method	partial	src/golden.cr::method::Golden.apply_path_redactions	values only; object keys are not traversed
+insta/src/redaction.rs::method::Selector<'a>.redact_struct	method	ported	src/golden.cr::method::Golden.redact_json	map keys and values in one traversal
 insta/src/redaction.rs::method::Selector<'a>.segment_is_match	method	ported	src/golden.cr::method::Golden.apply_path_redactions	segment matching
 insta/src/redaction.rs::method::Selector<'a>.selector_is_match	method	ported	src/golden.cr::method::Golden.apply_path_redactions	selector matching with deep wildcards
 insta/src/redaction.rs::method::SelectorParseError.column	method	skipped	-	malformed selectors raise ArgumentError

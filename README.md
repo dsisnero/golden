@@ -410,6 +410,8 @@ Golden.add_path_redaction("users[-1:].id", "[id]")    # trailing range
 Golden.add_path_redaction("users.*.id", "[id]")       # single wildcard
 Golden.add_path_redaction("**.token", "[token]")      # deep wildcard
 Golden.add_path_redaction(%(user["full-name"]), "[name]")
+Golden.add_path_redaction("settings.$key", "[setting]") # map keys
+Golden.add_path_redaction("**.$key", "[key]")          # nested map keys
 
 # Computed replacements
 Golden.add_dynamic_redaction("user.email") { |_value, path| JSON::Any.new("<#{path}>") }
@@ -424,7 +426,10 @@ Golden.assert_json_snapshot("user", output)
 
 Selectors accept comma-separated alternatives and `.` for the document root.
 Dynamic redactions receive the matched value and its dotted path (for example
-`.user.email`).
+`.user.email`). The synthetic `$key` segment targets object keys, matching
+upstream's map traversal; dynamic key redactions receive the key text and a
+path ending in `.$key`. Redactions run in registration order, so register value
+selectors before key rewrites that would change their path.
 
 ## Configuration
 

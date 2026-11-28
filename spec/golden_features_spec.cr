@@ -620,6 +620,54 @@ describe Golden do
         Golden.add_path_redaction("users[0:bad]", "***")
       end
     end
+
+    it "redacts object keys through the $key segment" do
+      Golden.add_path_redaction(".hm.$key", "[key]")
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"hm":{"only":42}}))).as_h
+      parsed["hm"].as_h.should eq({"[key]" => JSON::Any.new(42)})
+    end
+
+    it "redacts keys under wildcard paths" do
+      Golden.add_path_redaction(".users.*.$key", "[key]")
+      parsed = JSON.parse(Golden.apply_path_redactions(
+        %({"users":{"a":{"id":"1"},"b":{"id":"2"}}}))).as_h
+      parsed["users"]["a"].as_h.keys.should eq(["[key]"])
+      parsed["users"]["b"].as_h.keys.should eq(["[key]"])
+    end
+
+    it "redacts keys at every depth with a deep wildcard" do
+      Golden.add_path_redaction("**.$key", "[key]")
+      parsed = JSON.parse(Golden.apply_path_redactions(
+        %({"root":{"nested":1}}))).as_h
+      parsed.keys.should eq(["[key]"])
+      parsed["[key]"].as_h.keys.should eq(["[key]"])
+    end
+
+    it "passes .$key and the original key to dynamic key redactions" do
+      seen = [] of String
+      Golden.add_dynamic_redaction(".hm.$key") do |value, path|
+        seen << "#{value.as_s}@#{path}"
+        JSON::Any.new("redacted")
+      end
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"hm":{"a":1}}))).as_h
+      parsed["hm"].as_h.keys.should eq(["redacted"])
+      seen.should eq(["a@.hm.$key"])
+    end
+
+    it "applies redactions in order (value first, then key)" do
+      Golden.add_path_redaction(".hm.a", "[v]")
+      Golden.add_path_redaction(".hm.$key", "[k]")
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"hm":{"a":1}}))).as_h
+      parsed["hm"].as_h.should eq({"[k]" => JSON::Any.new("[v]")})
+    end
+
+    it "stringifies non-string key replacements" do
+      Golden.add_dynamic_redaction(".hm.$key") do |_value, _path|
+        JSON::Any.new(0)
+      end
+      parsed = JSON.parse(Golden.apply_path_redactions(%({"hm":{"a":1}}))).as_h
+      parsed["hm"].as_h.keys.should eq(["0"])
+    end
   end
 
   describe "assert_json_snapshot" do

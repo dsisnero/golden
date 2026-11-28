@@ -1403,7 +1403,8 @@ module Golden
     when Hash
       updated = {} of String => JSON::Any
       raw.each do |key, value|
-        updated[key] = redact_json(value, selectors, transform, path + [PathItem.new(key: key)])
+        new_key = redact_json_key(key, selectors, transform, path)
+        updated[new_key] = redact_json(value, selectors, transform, path + [PathItem.new(key: key)])
       end
       JSON::Any.new(updated)
     when Array
@@ -1414,6 +1415,18 @@ module Golden
     else
       node
     end
+  end
+
+  # Applies key redactions through the synthetic `$key` segment, matching
+  # upstream's map handling. Replacement values are stringified because JSON
+  # object keys are always strings.
+  private def self.redact_json_key(key : String, selectors : Array(Array(SelectorSegment)),
+                                   transform : Proc(JSON::Any, String, JSON::Any),
+                                   path : Array(PathItem)) : String
+    key_path = path + [PathItem.new(key: "$key")]
+    return key unless selectors.any? { |segments| selector_matches?(segments, key_path) }
+    replacement = transform.call(JSON::Any.new(key), path_to_string(key_path))
+    replacement.as_s? || replacement.to_json
   end
 
   private def self.selector_matches?(segments : Array(SelectorSegment), path : Array(PathItem)) : Bool

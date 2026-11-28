@@ -2,13 +2,13 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6.9 — redaction traversal for object keys
-  (`redaction.rs::Selector.redact_impl` / `redact_struct`).
+- **Current focus:** Phase 6.10 — snapshot summary on mismatch
+  (`output.rs::function::print_snapshot_summary`).
 - **Next up:**
-  1. 6.9 Redact JSON object keys, not just values.
+  1. 6.10 Print snapshot file, name, source, and input file with mismatches.
   2. Remaining `partial` rows in `plans/inventory/rust_port_inventory.tsv`
      (runtime assertion-context classes, settings binding, binary snapshot
-     objects).
+     objects, metadata privacy flag).
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -32,10 +32,12 @@
     memoization plus Auto/Reject/Delete/Warn/Ignore policy applied after the
     suite; `GOLDEN_UNREFERENCED`, config `unreferenced:`, and
     `golden test-review --unreferenced MODE`
+  - Redaction key traversal (Phase 6.9): complete — selectors can rewrite
+    object keys through the `$key` segment, matching upstream traversal order
   - Inline snapshots (Phase 4.1): complete — 4.1a–4.1e done; assertions record
     pendings, the CLI and review TUI patch source on accept, and reject/skip
     drop or keep registry entries without touching source
-  - Rust parity inventory: bootstrapped — 554 rows (122 `ported`, 18 `partial`,
+  - Rust parity inventory: bootstrapped — 554 rows (124 `ported`, 16 `partial`,
     0 `missing`, 414 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
@@ -51,9 +53,10 @@
     them. Do not "fix" those rows into `missing`.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** unreferenced snapshot policy (6.8) on top of the end-of-run
-  reporter (5.2), pending directory (6.7), and inline review TUI (4.1e).
-- **Gates:** `make lint` pass; `make test` pass (276 examples); `make inventory`
+- **Last commit:** redaction key traversal (6.9) on top of the unreferenced
+  snapshot policy (6.8), end-of-run reporter (5.2), pending directory (6.7),
+  and inline review TUI (4.1e).
+- **Gates:** `make lint` pass; `make test` pass (282 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
 Keep this block accurate after every feature: the next session reads it first
@@ -68,9 +71,9 @@ display, source context, inline word-level highlighting), and the end-of-run
 pending report matches insta-ruby's suite hooks.
 
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
-which 122 are `ported`, 18 `partial`, 0 `missing`, and 414 `skipped` (insta's
+which 124 are `ported`, 16 `partial`, 0 `missing`, and 414 `skipped` (insta's
 content/serialization engine, cargo internals, and documented divergences).
-All planned phases are now implemented; remaining work closes the 18 `partial`
+All planned phases are now implemented; remaining work closes the 16 `partial`
 rows one feature at a time.
 
 ---
@@ -400,6 +403,13 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - [x] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes` removes CSI
       sequences before redactions; `sort_maps` sorts JSON object keys in
       `assert_json_snapshot`; `allow_empty_glob` controls empty glob matches.
+- [x] **6.9 Redaction key traversal** — object keys are redacted through the
+      synthetic `$key` segment (`.hm.$key`, `.users.*.$key`, `**.$key`), the
+      original key is used for value paths, dynamic key redactions receive
+      the key text and `.$key` path, and non-string replacements are
+      stringified. Redactions apply sequentially in registration order, so a
+      value selector registered after a key rewrite no longer matches, same
+      as upstream (`redaction.rs::Selector.redact_impl` / `redact_struct`).
 - [x] **6.8 Unreferenced snapshot policy** — `Golden::UnreferencedMode`
       (`auto`, `reject`/`error`, `delete`, `warn`, `ignore`; `auto` resolves
       to reject in CI and delete locally) with
@@ -451,6 +461,7 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 6.6   | ANSI and map ordering | Low | Small | ✅ Done |
 | 6.7   | Pending snapshot directory | Medium | Small | ✅ Done |
 | 6.8   | Unreferenced snapshot policy | Medium | Medium | ✅ Done |
+| 6.9   | Redaction key traversal | Medium | Small | ✅ Done |
 
 ## Intentional divergences
 
@@ -486,6 +497,10 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
   installs a reporter (`Spec.after_suite` when spec is loaded, `at_exit`
   otherwise). Disable it with `GOLDEN_REPORT_PENDING=0`; the report is
   advisory and never changes the exit status.
+- **Only JSON object keys are redactable.** Upstream supports structured map
+  keys (structs/tuples) through nested `$key` selectors; Crystal's JSON model
+  keys are strings, so `.hm.$key` rewrites the string key and non-string
+  replacements are stringified.
 - **Unreferenced detection walks the snapshot dir, not packages.** cargo-insta
   walks every workspace package and skips files that do not look like insta
   snapshots; Golden has no workspace concept, so it walks `Golden.dir` for
