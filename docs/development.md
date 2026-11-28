@@ -99,10 +99,11 @@ redactions:
 
 `make inventory` runs the canonical checkers from the installed
 cross-language-crystal-parity skill over all three. The curated ledger currently
-reads: 116 `ported`, 23 `partial`, 0 `missing`, 415 `skipped`. Most `skipped`
-rows are insta's content/serialization engine and cargo/nextest internals, which
-Crystal replaces with stdlib or does not expose; the `missing` rows are the
-feature backlog in `plans/parity.md` Phase 6.
+reads: 125 `ported`, 15 `partial`, 0 `missing`, 414 `skipped`. Most `skipped`
+rows are insta's content/serialization engine, cargo/nextest internals, and
+documented divergences, which Crystal replaces with stdlib or does not expose;
+the `partial` rows are the remaining backlog (Phase 6.11–6.13 in
+`plans/parity.md`).
 
 `vendor/insta-ruby` stays a behavior reference only (no Ruby ledger). If Ruby
 parity becomes a contract, add a `ruby_port_inventory.tsv` and extend the

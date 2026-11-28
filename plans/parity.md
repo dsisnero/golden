@@ -2,12 +2,35 @@
 
 ## Where we are
 
-- **Current focus:** Phase 6.11 — runtime assertion-context parity
-  (`runtime.rs::SnapshotAssertionContext`, `SnapshotValue`, `InlineValue`).
-- **Next up:**
-  1. 6.11 Runtime value/context parity for the assertion pipeline.
-  2. Remaining `partial` rows in `plans/inventory/rust_port_inventory.tsv`
-     (settings binding, binary snapshot objects, metadata privacy flag).
+- **Current focus:** Phase 6.11 — info block in the snapshot summary
+  (`runtime.rs::SnapshotAssertionContext.print_snapshot_info`,
+  `snapshot.rs::MetaData.private_info`).
+- **Next up (in order):**
+  1. **6.11 Info block in the summary.** Extend `Golden.snapshot_summary`
+     (`src/golden.cr`) to print `Expression:`, the description, and the
+     `Info:` body ahead of the mismatch text, sourced from the assertion
+     args with `.golden.meta` fallback. Reference:
+     `vendor/insta/insta/src/output.rs::print_info` (~427) and
+     `runtime.rs::print_snapshot_info` (~635). Closes 2 `partial` rows; add
+     specs beside the 6.10 summary cases in
+     `spec/golden_features_spec.cr`.
+  2. **6.12 Fiber-local settings binding.** Make `Golden.settings` prefer a
+     per-fiber `Settings` while `with_settings` is active (upstream
+     `Settings.bind` / `clone_current`) and route
+     `add_filter`/`add_redaction`/`add_path_redaction`/`dir=` through the
+     getter so scoped overrides do not leak across fibers. Acceptance: two
+     interleaved fibers inside `with_settings` see only their own settings;
+     full suite green. Closes 2 `partial` rows.
+  3. **6.13 Ledger hygiene for internal-shape rows.** No new behavior:
+     reclassify `SnapshotAssertionContext*`, `SnapshotValue*`, `InlineValue`,
+     `Snapshot`, `Snapshot.from_components`, and `Snapshot.module_name` as
+     `ported`/`skipped` with a one-line rationale (single-pass function API,
+     String/Bytes values, content-only files, user-set group prefix) so
+     `partial` reaches 0. Add the shape divergence to **Intentional
+     divergences**, rerun `make inventory`, refresh counts here.
+  4. **Release chores.** `shard.yml` and `Golden::VERSION` still say `0.2.0`
+     while `CHANGELOG.md` describes `0.3.0`: bump both, cut the changelog
+     section, tag, publish.
 - **Status by area:**
   - Review TUI (Phase 1): complete
   - Pending reporter (Phase 2): complete
@@ -39,7 +62,7 @@
   - Inline snapshots (Phase 4.1): complete — 4.1a–4.1e done; assertions record
     pendings, the CLI and review TUI patch source on accept, and reject/skip
     drop or keep registry entries without touching source
-  - Rust parity inventory: bootstrapped — 554 rows (125 `ported`, 15 `partial`,
+  - Rust parity inventory: 554 rows (125 `ported`, 15 `partial`,
     0 `missing`, 414 `skipped`)
   - Ruby ledger: not tracked (`vendor/insta-ruby` is a reference only)
 - **Scoping notes / gotchas:**
@@ -53,11 +76,26 @@
     workspace internals, or deliberate divergences (strict match, binary
     sidecar data files); Crystal replaces those with stdlib or does not expose
     them. Do not "fix" those rows into `missing`.
+  - `spec_helper` calls `Golden.init`, so the suite installs the end-of-run
+    reporter as `Spec.after_suite`. Do not add a plain `at_exit` reporter for
+    specs: it runs before Crystal's spec runner and reports stale state.
+  - An early feature spec sets `Golden.update = false`, which means
+    `UpdateMode::No` for the rest of the suite. New specs that rely on the
+    ambient update mode must pass `update_mode:` explicitly.
+  - Process-global switches (`GOLDEN_PENDING_DIR`,
+    `GOLDEN_SNAPSHOT_REFERENCES_FILE`, `GOLDEN_UNREFERENCED`,
+    `GOLDEN_REPORT_PENDING`, `GOLDEN_DIFF_TOOL`) must be saved/restored in
+    specs; also reset `Golden.unreferenced` to `Ignore`.
+  - Untracked `package.json` / `package-lock.json` in the workspace root are
+    tree-sitter scratch files, not part of the shard. Do not commit them.
   - `shard.yml` and `Golden::VERSION` still say `0.2.0` while `CHANGELOG.md`
     describes `0.3.0`; bump both at the next release.
-- **Last commit:** snapshot summary on mismatch (6.10) on top of redaction
-  key traversal (6.9), unreferenced policy (6.8), end-of-run reporter (5.2),
-  pending directory (6.7), and inline review TUI (4.1e).
+- **Resume gate:** `make lint && make test && make inventory` (expected: 285
+  examples, 554 ledger rows, `PARITY_DISCOVERY_BACKEND=chiasmus-tree-sitter`),
+  then `make format-check`.
+- **Last commit:** `b263017` snapshot summary on mismatch (6.10), on top of
+  redaction key traversal (6.9), unreferenced policy (6.8), end-of-run reporter
+  (5.2), pending directory (6.7), and inline review TUI (4.1e).
 - **Gates:** `make lint` pass; `make test` pass (285 examples); `make inventory`
   pass (554 items tracked, tree-sitter backend).
 
@@ -75,8 +113,9 @@ pending report matches insta-ruby's suite hooks.
 The Rust ledger now measures symbol-level parity: 554 scoped declarations, of
 which 125 are `ported`, 15 `partial`, 0 `missing`, and 414 `skipped` (insta's
 content/serialization engine, cargo internals, and documented divergences).
-All planned phases are now implemented; remaining work closes the 15 `partial`
-rows one feature at a time.
+Phases 1–5 and 6.1–6.10 are complete. Remaining work is the 6.11–6.13 backlog
+in **Where we are**, which closes the 15 `partial` rows, followed by the release
+chores.
 
 ---
 
@@ -405,20 +444,16 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 - [x] **6.6 ANSI and map ordering** — `strip_ansi_escape_codes` removes CSI
       sequences before redactions; `sort_maps` sorts JSON object keys in
       `assert_json_snapshot`; `allow_empty_glob` controls empty glob matches.
-- [x] **6.10 Snapshot summary on mismatch** —
-      `Golden.snapshot_summary` renders upstream's `print_snapshot_summary`
-      header (`Snapshot file`, `Snapshot`, `Source: path:line`, `Input file`)
-      and prefixes mismatch and new-snapshot errors. Source/line/input fall
-      back to the `.golden.meta` sidecar when the assertion does not supply
-      them, and paths under the current directory are shown relative
-      (`output.rs`).
-- [x] **6.9 Redaction key traversal** — object keys are redacted through the
-      synthetic `$key` segment (`.hm.$key`, `.users.*.$key`, `**.$key`), the
-      original key is used for value paths, dynamic key redactions receive
-      the key text and `.$key` path, and non-string replacements are
-      stringified. Redactions apply sequentially in registration order, so a
-      value selector registered after a key rewrite no longer matches, same
-      as upstream (`redaction.rs::Selector.redact_impl` / `redact_struct`).
+- [x] **6.7 Pending snapshot directory** — `Golden.pending_dir` reads
+      `GOLDEN_PENDING_DIR` with an `INSTA_PENDING_DIR` fallback;
+      `Golden.pending_snapshot_path` mirrors a snapshot's path (relative to
+      the snapshot dir) under that directory and refuses paths that would
+      escape it; `Golden.golden_path_for_pending` maps a pending file back.
+      Mismatches, `pending_snapshots`, `status`, `accept_all!`,
+      `reject_all!`, `review!`, and pending promotion all route through these
+      helpers. Binary sidecar data files (`Snapshot.build_binary_path`) are
+      closed as a divergence: `.golden` stays content-only and binary
+      payloads stay base64 (`env.rs`, `snapshot.rs`).
 - [x] **6.8 Unreferenced snapshot policy** — `Golden::UnreferencedMode`
       (`auto`, `reject`/`error`, `delete`, `warn`, `ignore`; `auto` resolves
       to reject in CI and delete locally) with
@@ -433,16 +468,42 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
       (exported to the spec child), default `ignore` (`env.rs`,
       `cargo-insta/src/cli.rs`). `ci?` now matches `utils.rs::is_ci`
       (`CI=false|0|""` is not CI).
-- [x] **6.7 Pending snapshot directory** — `Golden.pending_dir` reads
-      `GOLDEN_PENDING_DIR` with an `INSTA_PENDING_DIR` fallback;
-      `Golden.pending_snapshot_path` mirrors a snapshot's path (relative to
-      the snapshot dir) under that directory and refuses paths that would
-      escape it; `Golden.golden_path_for_pending` maps a pending file back.
-      Mismatches, `pending_snapshots`, `status`, `accept_all!`,
-      `reject_all!`, `review!`, and pending promotion all route through these
-      helpers. Binary sidecar data files (`Snapshot.build_binary_path`) are
-      closed as a divergence: `.golden` stays content-only and binary
-      payloads stay base64 (`env.rs`, `snapshot.rs`).
+- [x] **6.9 Redaction key traversal** — object keys are redacted through the
+      synthetic `$key` segment (`.hm.$key`, `.users.*.$key`, `**.$key`), the
+      original key is used for value paths, dynamic key redactions receive
+      the key text and `.$key` path, and non-string replacements are
+      stringified. Redactions apply sequentially in registration order, so a
+      value selector registered after a key rewrite no longer matches, same
+      as upstream (`redaction.rs::Selector.redact_impl` / `redact_struct`).
+- [x] **6.10 Snapshot summary on mismatch** —
+      `Golden.snapshot_summary` renders upstream's `print_snapshot_summary`
+      header (`Snapshot file`, `Snapshot`, `Source: path:line`, `Input file`)
+      and prefixes mismatch and new-snapshot errors. Source/line/input fall
+      back to the `.golden.meta` sidecar when the assertion does not supply
+      them, and paths under the current directory are shown relative
+      (`output.rs`).
+- [ ] **6.11 Info block in the summary** — extend `Golden.snapshot_summary`
+      with upstream `print_info`: `Expression:`, the description line, and the
+      `Info:` body before the mismatch text. Values come from the assertion
+      arguments (`expression`/`description`/`info` settings and macro capture)
+      with `.golden.meta` fallback. Closes
+      `runtime.rs::SnapshotAssertionContext.print_snapshot_info` and
+      `snapshot.rs::MetaData.private_info`.
+- [ ] **6.12 Fiber-local settings binding** — `Golden.settings` should prefer
+      a per-fiber `Settings` while `with_settings` is active (upstream
+      `Settings.bind` / `clone_current`), so concurrent fibers cannot observe
+      each other's overrides. Route `add_filter`, `add_redaction`,
+      `add_path_redaction`, and `dir=` through the getter. Acceptance: two
+      interleaved fibers inside `with_settings` see only their own settings;
+      full suite green. Closes `settings.rs::Settings.bind` and
+      `clone_current`.
+- [ ] **6.13 Ledger hygiene for internal-shape rows** — reclassify
+      `SnapshotAssertionContext*`, `SnapshotValue*`, `InlineValue`,
+      `Snapshot`, `Snapshot.from_components`, and `Snapshot.module_name` as
+      `ported`/`skipped` with a one-line rationale (single-pass function API,
+      String/Bytes values, content-only `.golden` files, user-set group
+      prefix) so `partial` reaches 0. Document the shape divergence under
+      **Intentional divergences** and refresh the counts.
 
 ---
 
@@ -472,6 +533,9 @@ group of `missing`/`partial` rows and must update those rows in the same commit.
 | 6.8   | Unreferenced snapshot policy | Medium | Medium | ✅ Done |
 | 6.9   | Redaction key traversal | Medium | Small | ✅ Done |
 | 6.10  | Snapshot summary on mismatch | Medium | Small | ✅ Done |
+| 6.11  | Info block in the summary | Medium | Small | ⬜ Next |
+| 6.12  | Fiber-local settings binding | Medium | Medium | ⬜ Planned |
+| 6.13  | Ledger hygiene (internal shapes) | Low | Small | ⬜ Planned |
 
 ## Intentional divergences
 
